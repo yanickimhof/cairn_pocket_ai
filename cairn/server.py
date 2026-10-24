@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
-from . import config, jobs, llm, notes, pocket, render
+from . import config, jobs, llm, models, notes, pocket, render
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg"}
@@ -63,6 +63,7 @@ class App:
         self.jobs = jobs.Jobs(self.store)
         self.token = secrets.token_urlsafe(24)
         self.port = 0
+        self.downloads = models.Downloader()
 
     # Pocket
 
@@ -107,6 +108,7 @@ class App:
             "pocket": self.pocket_state(),
             "job": self.jobs.snapshot(),
             "ollama": llm.available(),
+            "download": self.downloads.state(),
             "settings": config.load_settings(),
             "totals": {"notes": len(everything), "done": sum(1 for n in everything if n.get("status") == "done"),
                        "waiting": sum(1 for n in everything if n.get("status") in ("waiting", "error"))},
@@ -310,6 +312,27 @@ def make_handler(app):
                 try:
                     return self._json(200, config.save_settings(body))
                 except (ValueError, OSError) as error:
+                    raise ApiError(400, str(error))
+            if method == "GET" and path == "/api/models":
+                return self._json(200, models.listing(app.downloads.state()))
+            if method == "POST" and path == "/api/models/install":
+                if body.get("confirm") is not True:
+                    raise ApiError(400, "confirm_required")
+                if app.jobs.snapshot().get("running"):
+                    raise ApiError(409, "busy")
+                try:
+                    app.downloads.start(body.get("kind"), body.get("id"))
+                except RuntimeError:
+                    raise ApiError(409, "busy")
+                except ValueError as error:
+                    raise ApiError(400, str(error))
+                return self._json(202, {"ok": True})
+            if method == "POST" and path == "/api/models/select":
+                if app.jobs.snapshot().get("running"):
+                    raise ApiError(409, "busy")
+                try:
+                    return self._json(200, models.select(body.get("kind"), body.get("id")))
+                except ValueError as error:
                     raise ApiError(400, str(error))
             if method == "POST" and path == "/api/pick-folder":
                 return self._json(200, app.pick_folder())

@@ -1,0 +1,159 @@
+"""Models on demand: list, download (only when the user asks) and select."""
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+import threading
+import time
+import urllib.request
+from pathlib import Path
+
+from . import catalog, config, llm
+
+MARK = ".cairn-complete"
+_PULL_STATUS_KEYS = ("status", "total", "completed")
+
+
+def speech_entries():
+    cfg = config.install_config()
+    return catalog.SPEECH.get(cfg.get("engine"), [])
+
+
+def speech_dir(model_id):
+    return config.home() / "models" / model_id
+
+
+def speech_installed(entry):
+    cfg = config.install_config()
+    if (speech_dir(entry["id"]) / MARK).exists():
+        return True
+    # the model the installer downloaded (folder "whisper")
+    return cfg.get("whisper_repo") == entry["repo"] and os.path.isdir(cfg.get("whisper_dir") or "")
+
+
+def speech_path(entry):
+    cfg = config.install_config()
+    if (speech_dir(entry["id"]) / MARK).exists():
+        return str(speech_dir(entry["id"]))
+    return cfg.get("whisper_dir") or ""
+
+
+def selected_speech():
+    wanted = config.load_settings().get("speech")
+    entries = speech_entries()
+    for entry in entries:
+        if entry["id"] == wanted and speech_installed(entry):
+            return wanted
+    cfg = config.install_config()
+    for entry in entries:
+        if entry["repo"] == cfg.get("whisper_repo"):
+            return entry["id"]
+    return None
+
+
+def listing(job):
+    installed_llm = {m.get("name") for m in llm.models()}
+    chosen_llm = config.install_config()["llm"]
+    chosen_speech = selected_speech()
+    out_llm = [
+        dict(m, installed=m["id"] in installed_llm, selected=m["id"] == chosen_llm) for m in catalog.LLM
+    ]
+    out_speech = [
+        dict({k: v for k, v in m.items() if k != "repo"}, installed=speech_installed(m), selected=m["id"] == chosen_speech)
+        for m in speech_entries()
+    ]
+    return {"llm": out_llm, "speech": out_speech, "job": job, "server_up": llm.available()}
+
+
+class Downloader:
+    """One model download at a time, started only by an explicit request."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self.job = None
+
+    def state(self):
+        with self._lock:
+            return dict(self.job) if self.job else None
+
+    def _set(self, **fields):
+        with self._lock:
+            if self.job is not None:
+                self.job.update(fields)
+
+    def start(self, kind, model_id):
+        with self._lock:
+            if self.job and self.job["state"] == "running":
+                raise RuntimeError("busy")
+            if kind == "llm":
+                entry = next((m for m in catalog.LLM if m["id"] == model_id), None)
+            else:
+                entry = next((m for m in speech_entries() if m["id"] == model_id), None)
+            if entry is None:
+                raise ValueError("unknown_model")
+            self.job = {"kind": kind, "id": model_id, "state": "running", "pct": 0, "error": ""}
+        target = self._pull_llm if kind == "llm" else self._fetch_speech
+        threading.Thread(target=target, args=(entry,), daemon=True).start()
+
+    def _pull_llm(self, entry):
+        try:
+            body = json.dumps({"model": entry["id"], "stream": True}).encode()
+            request = urllib.request.Request(
+                "http://%s/api/pull" % llm._host(), data=body, headers={"Content-Type": "application/json"}
+            )
+            # Loopback only, plain http: the local model server fetches the model itself.
+            with urllib.request.urlopen(request, timeout=3600) as response:  # nosec B310
+                for raw in response:
+                    try:
+                        line = json.loads(raw)
+                    except ValueError:
+                        continue
+                    if line.get("error"):
+                        raise RuntimeError(str(line["error"])[:160])
+                    if line.get("total"):
+                        self._set(pct=int(100 * line.get("completed", 0) / line["total"]))
+            self._set(state="done", pct=100)
+        except Exception as error:  # reported to the page, never raised
+            self._set(state="error", error=str(error)[:200])
+
+    def _fetch_speech(self, entry):
+        target = speech_dir(entry["id"])
+        part = target.with_name(target.name + ".part")
+        try:
+            shutil.rmtree(part, ignore_errors=True)
+            part.mkdir(parents=True, exist_ok=True)
+            env = dict(os.environ, HF_HUB_OFFLINE="0", HF_HUB_DISABLE_TELEMETRY="1", DO_NOT_TRACK="1")
+            code = "import sys; from huggingface_hub import snapshot_download as d; d(sys.argv[1], local_dir=sys.argv[2])"
+            flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+            proc = subprocess.Popen(  # nosec B603
+                [sys.executable, "-c", code, entry["repo"], str(part)],
+                env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, creationflags=flags,
+            )
+            while proc.poll() is None:
+                size = sum(f.stat().st_size for f in part.rglob("*") if f.is_file())
+                self._set(pct=min(99, int(100 * size / max(entry["bytes"], 1))))
+                time.sleep(1)
+            if proc.returncode != 0:
+                tail = (proc.stderr.read() or "").strip().splitlines()[-1:]
+                raise RuntimeError("Download failed. " + " ".join(tail))
+            (part / MARK).write_text("ok", encoding="utf-8")
+            shutil.rmtree(target, ignore_errors=True)
+            os.replace(part, target)
+            self._set(state="done", pct=100)
+        except Exception as error:  # reported to the page, never raised
+            shutil.rmtree(part, ignore_errors=True)
+            self._set(state="error", error=str(error)[:200])
+
+
+def select(kind, model_id):
+    """Use an installed model from now on."""
+    if kind == "llm":
+        if model_id not in catalog.LLM_IDS or model_id not in {m.get("name") for m in llm.models()}:
+            raise ValueError("not_installed")
+        return config.save_settings({"llm": model_id})
+    entry = next((m for m in speech_entries() if m["id"] == model_id), None)
+    if entry is None or not speech_installed(entry):
+        raise ValueError("not_installed")
+    return config.save_settings({"speech": model_id})

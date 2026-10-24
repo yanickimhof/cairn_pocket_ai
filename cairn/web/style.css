@@ -70,3 +70,10 @@ svg{flex-shrink:0}
 #toast.show{opacity:1}
 #toast span{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:#fff;border-radius:999px;padding:12px 20px;font-size:15px;box-shadow:0 8px 30px rgba(0,0,0,.2);max-width:90vw}
 [data-tip]:hover:not(:has([data-tip]:hover))::after{content:attr(data-tip);position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1F2A44;color:#fff;font-size:12.5px;font-weight:500;line-height:1.35;letter-spacing:0;text-transform:none;text-align:left;font-style:normal;padding:7px 10px;border-radius:8px;width:max-content;max-width:230px;white-space:normal;z-index:50;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.22)}
+.mlist{display:flex;flex-direction:column;gap:10px;padding:12px 0}
+.mgroup{font-size:13px;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:.04em;margin-top:4px}
+.mrow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px}
+.mname{font-size:15px;font-weight:600;color:var(--ink)}
+.mbtn{min-height:36px;padding:0 16px;border:0;border-radius:999px;background:var(--soft);color:var(--ink);font-weight:600;font-size:14px;font-family:inherit;cursor:pointer}
+.mbtn:disabled{opacity:.4;cursor:default}
+.mtag{font-size:13px;font-weight:600;color:#1B7F3B}
