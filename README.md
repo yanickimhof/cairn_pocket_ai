@@ -70,7 +70,7 @@ See [docs/PRIVACY.md](docs/PRIVACY.md) for how to verify it yourself.
 
 ## Buying a Pocket
 
-Cairn is free and works with any Pocket you already own. If you are still thinking about getting one, you can buy it on the official site, [heypocket.com](https://heypocket.com). Using the maintainer's [referral link](https://referral.heypocketai.com/refer/39179caf?source=desktop_copy) is entirely optional. It is Pocket's own referral programme: the offer (currently 10% off at the time of writing) and its availability are set solely by Pocket, can change or end at any time, and the maintainer has no control over them. If you use the link, the maintainer receives a reward from Pocket's programme at no cost to you. Cairn works the same whether you use it or not.
+Cairn is free and works with any Pocket you already own. If you are still thinking about getting one, you can buy it on the official site, [heypocket.com](https://heypocket.com). Using the maintainer's [referral link](https://referral.heypocketai.com/refer/39179caf?source=desktop_qr) is entirely optional. It is Pocket's own referral programme: the offer (currently 10% off at the time of writing) and its availability are set solely by Pocket, can change or end at any time, and the maintainer has no control over them. If you use the link, the maintainer receives a reward from Pocket's programme at no cost to you. Cairn works the same whether you use it or not.
 
 ## Disclaimer
 
