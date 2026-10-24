@@ -35,6 +35,15 @@ else
   DEFAULT_WHISPER="deepdml/faster-whisper-large-v3-turbo-ct2"
 fi
 WHISPER_REPO="${CAIRN_WHISPER_REPO:-$DEFAULT_WHISPER}"
+# Models too small to give useful notes are refused, except for the automated tests.
+if [ "${CAIRN_ALLOW_TEST_MODELS:-}" != "1" ]; then
+  case "$(printf '%s' "$WHISPER_REPO" | tr '[:upper:]' '[:lower:]')" in
+    *whisper-tiny*|*whisper-base*) die "The speech model $WHISPER_REPO is too small to give reliable notes. Use the default or a small/medium/large model." ;;
+  esac
+  case "$(printf '%s' "$LLM" | tr '[:upper:]' '[:lower:]')" in
+    *:0.*b*|*:1b*|*:1.*b*|*:2b*) die "The language model $LLM is too small to give useful summaries. Use qwen3:4b or larger." ;;
+  esac
+fi
 say "System detected: $OS $ARCH, speech engine: $ENGINE"
 
 mkdir -p "$CAIRN_HOME"/{Audio,Texts,Exports,models,bin}
