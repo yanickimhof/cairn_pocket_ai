@@ -53,6 +53,7 @@ if [ -z "$HERE" ] || [ ! -d "$HERE/requirements" ]; then
   curl --proto '=https' --tlsv1.2 -fsSL "https://codeload.github.com/$REPO/tar.gz/$REF" | tar -xz -C "$HERE" --strip-components=1
 fi
 [ -f "$HERE/requirements/$REQ" ] || die "Missing requirements/$REQ in the downloaded files."
+[ -d "$HERE/cairn" ] || die "Missing the cairn application folder in the downloaded files."
 
 # 3. Python tooling, kept inside the Cairn folder
 export UV_PYTHON_INSTALL_DIR="$CAIRN_HOME/python"
@@ -127,10 +128,32 @@ say "Downloading the speech model: $WHISPER_REPO"
   printf 'export DO_NOT_TRACK=1\n'
 } >"$CAIRN_HOME/env.sh"
 
-# 7. Self test: one short audio file and one question, all local
+# 7. The application: configuration and launchers
+"$PY" -c '
+import json, sys
+home, engine, model, repo, llm, host, ollama, app = sys.argv[1:9]
+config = {"engine": engine, "whisper_model": model, "whisper_repo": repo, "llm": llm, "ollama_host": host, "ollama_bin": ollama, "app_dir": app}
+with open(home + "/config.json", "w") as handle:
+    json.dump(config, handle, indent=2)
+' "$CAIRN_HOME" "$ENGINE" "$CAIRN_HOME/models/whisper" "$WHISPER_REPO" "$LLM" "$OLLAMA_ADDR" "$OLLAMA" "$HERE"
+{
+  echo '#!/bin/bash'
+  printf 'export CAIRN_HOME=%q\n' "$CAIRN_HOME"
+  printf 'export PYTHONPATH=%q\n' "$HERE"
+  # shellcheck disable=SC2016
+  printf 'export PATH=%q:"$PATH"\n' "$CAIRN_HOME/bin"
+  # shellcheck disable=SC2016
+  printf 'exec %q -m cairn "$@"\n' "$PY"
+} >"$CAIRN_HOME/bin/cairn"
+cp "$CAIRN_HOME/bin/cairn" "$CAIRN_HOME/Cairn.command"
+chmod 700 "$CAIRN_HOME/bin/cairn" "$CAIRN_HOME/Cairn.command"
+
+# 8. Self test: one short audio file and one question, all local
 say "Running the self test"
 # shellcheck disable=SC1091
 source "$CAIRN_HOME/env.sh"
 "$PY" "$HERE/scripts/selftest.py"
+PYTHONPATH="$HERE" "$PY" -c "import cairn.server"
 
-say "Done. Cairn is ready in $CAIRN_HOME"
+say "Done. Cairn is ready."
+printf '\nStart Cairn: double-click Cairn.command in %s\nor run: %s/bin/cairn\n' "$CAIRN_HOME" "$CAIRN_HOME"

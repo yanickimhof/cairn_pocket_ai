@@ -13,6 +13,7 @@ Cairn is built on one rule: **your recordings never leave your computer.**
 - No cloud service, no account, no sign-in.
 - No telemetry, analytics or crash reports.
 - No call to a hosted AI service.
+- The Cairn interface is a local page served on `127.0.0.1` only, with a one-time session key, a Host check and a strict content policy. Exports are saved in `~/Cairn/Exports`. The only optional outgoing request is the update check you trigger yourself (one request to GitHub).
 - No listening on the network: the local model server is bound to `127.0.0.1`. This address means "this computer only" (also called localhost), so no other device can reach it.
 
 ## Network use

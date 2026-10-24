@@ -1,11 +1,8 @@
 # Roadmap
 
-## Now
+## v0.1 (preview): done
 
 - Terminal installer, one command, detects the system and sets up the engines
-- Interface mockup and processing pipeline validated
-
-## v0.1: the app
 
 - Pocket detection (green dot connected, orange dot not detected)
 - Resumable import with byte-for-byte verification
@@ -16,11 +13,11 @@
 - Rename, copy, export (Markdown, HTML)
 - Secure mode (list hidden by default), FR/EN interface
 - Empty the Pocket only after verification, with double confirmation
-- Built-in check that nothing makes an outgoing connection
 - List of required components and a manual update check (opt-in, a single request to GitHub)
 
 ## Later
 
+- Built-in check that nothing makes an outgoing connection
 - Linux
 - Offline installation for computers without Internet access
 - Import from any folder of audio files

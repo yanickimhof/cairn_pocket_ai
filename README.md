@@ -8,7 +8,7 @@ No cloud. No account. No telemetry. Nothing leaves your machine.
 |---|---|---|
 | ![Secure mode](docs/screenshots/secure-mode.png) | ![Recordings](docs/screenshots/recordings.png) | ![Note](docs/screenshots/note.png) |
 
-> **Status: early stage.** The installer sets up and tests all the engines with one command. The app interface shown above is the target design and is under construction, see the [roadmap](docs/ROADMAP.md).
+> **Status: v0.1, preview.** The app runs on your computer in your browser, entirely offline. Checked end to end on macOS by automated tests; Windows checks run in CI, see the [roadmap](docs/ROADMAP.md).
 
 ## Install
 
@@ -43,10 +43,12 @@ Details and Pocket setup: [docs/INSTALL.md](docs/INSTALL.md). The full list of d
 
 ## How to use it
 
-Cairn is being built in two steps.
+1. Run the install command once. It ends with "Done. Cairn is ready".
+2. Start Cairn: double-click `Cairn.command` in your Cairn folder (Start menu shortcut or `Cairn.cmd` on Windows), or run `~/Cairn/bin/cairn`. Your browser opens a page served only by your own computer (127.0.0.1), protected by a one-time session key.
+3. Plug in your Pocket (USB mode) and click **Import**. Cairn copies and verifies every recording, transcribes it, then cleans and summarizes it.
+4. Read, rename, copy or export each note (Markdown, HTML). Exports are saved in `~/Cairn/Exports`.
 
-1. **Today:** the installer sets up the speech engine, the local language model and the model server, then runs a self test (a short audio file and one question, all local). If it ends with "Cairn is ready", your computer is set.
-2. **Next:** the app, with the flow shown above. Plug in your Pocket, click **Import**, then read, rename, copy or export each note. Follow progress in the [roadmap](docs/ROADMAP.md).
+Secure mode hides the list of notes until you reveal it.
 
 ## What it does
 
@@ -65,6 +67,10 @@ Cairn is being built in two steps.
 - Each note shows a reliability score and flags passages worth checking.
 
 See [docs/PRIVACY.md](docs/PRIVACY.md) for how to verify it yourself.
+
+## Buying a Pocket
+
+Cairn is free and works with any Pocket you already own. If you are still thinking about getting one, you can buy it on the official site, [heypocket.com](https://heypocket.com). Using the maintainer's [referral link](https://referral.heypocketai.com/refer/39179caf?source=desktop_copy) is entirely optional. It is Pocket's own referral programme: the offer (currently 10% off at the time of writing) and its availability are set solely by Pocket, can change or end at any time, and the maintainer has no control over them. If you use the link, the maintainer receives a reward from Pocket's programme at no cost to you. Cairn works the same whether you use it or not.
 
 ## Disclaimer
 

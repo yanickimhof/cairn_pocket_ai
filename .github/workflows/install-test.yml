@@ -6,6 +6,8 @@ on:
     paths:
       - install.sh
       - install.ps1
+      - cairn/**
+      - tests/**
       - scripts/**
       - requirements/**
       - .github/workflows/**
@@ -13,23 +15,33 @@ on:
 permissions:
   contents: read
 
+env:
+  SPEECH_TEXT: "Hello team. The launch moves to March. Anna sends the plan on Friday."
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
       - name: Shell and Python checks
         run: |
           pip install shellcheck-py bandit
           shellcheck install.sh
-          bandit -q -r scripts
+          bandit -q -ll -r cairn scripts
+      - name: Unit and application tests (stub speech engine and stub model server)
+        run: python -m unittest discover -s tests -v
+      - name: Interface script syntax
+        run: node --check cairn/web/app.js
       - name: No secrets, no personal paths
         run: |
           if grep -rIn -E "(/Users/[a-z]+|C:\\\\Users\\\\[A-Za-z]+|BEGIN (RSA|OPENSSH|PRIVATE) KEY|ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16})" . --exclude-dir=.git --exclude-dir=.github; then exit 1; fi
 
   macos:
     runs-on: macos-14
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Install and self test (small models to keep the test fast)
@@ -37,10 +49,15 @@ jobs:
           CAIRN_LLM: qwen3:0.6b
           CAIRN_WHISPER_REPO: mlx-community/whisper-tiny
         run: bash install.sh
+      - name: Application check, from a simulated Pocket to an exported note
+        run: |
+          say -o "$RUNNER_TEMP/speech.aiff" "$SPEECH_TEXT"
+          "$HOME/Cairn/bin/ffmpeg" -loglevel error -i "$RUNNER_TEMP/speech.aiff" -ac 1 -ar 16000 "$RUNNER_TEMP/speech.mp3"
+          "$HOME/Cairn/.venv/bin/python" scripts/appcheck.py --audio "$RUNNER_TEMP/speech.mp3" --expect "launch,march"
 
   windows:
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Install and self test (small models to keep the test fast)
@@ -49,3 +66,12 @@ jobs:
           CAIRN_LLM: qwen3:0.6b
           CAIRN_WHISPER_REPO: Systran/faster-whisper-tiny
         run: ./install.ps1
+      - name: Application check, from a simulated Pocket to an exported note
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Speech
+          $s = New-Object System.Speech.Synthesis.SpeechSynthesizer
+          $s.SetOutputToWaveFile("$env:RUNNER_TEMP\speech.wav")
+          $s.Speak($env:SPEECH_TEXT)
+          $s.Dispose()
+          & "$env:USERPROFILE\Cairn\.venv\Scripts\python.exe" scripts/appcheck.py --audio "$env:RUNNER_TEMP\speech.wav" --expect "launch,march"
