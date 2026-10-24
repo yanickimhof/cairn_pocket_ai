@@ -100,6 +100,13 @@ def _run(engine, model_dir, audio, output, mark, progress):
     return data
 
 
+def abort():
+    """Kill the speech process right now (a transcription in progress then fails and is stopped)."""
+    proc = _WORKER["proc"]
+    if proc and proc.poll() is None:
+        proc.kill()
+
+
 def shutdown():
     with _LOCK:
         _stop_worker()

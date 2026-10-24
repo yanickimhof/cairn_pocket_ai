@@ -34,6 +34,7 @@
       deleteConfirm: "Supprimer audio et textes ? Si le Pocket est vidé, plus aucune copie.",
       copied: "Copié", rerunning: "Résumé relancé : ", renamed: "Nom enregistré", deleted: "Supprimé", pocketEmptied: "Pocket vidé",
       ready: "Prêt", waiting: "En attente", failed: "Échec : relancer le résumé", done: "Terminé", modelDown: "Moteur local arrêté : relance Cairn",
+      processNow: "Traiter maintenant", skipIt: "Ignorer", skipped: "Ignoré", putBack: "Remettre dans la file", stopJob: "Arrêter",
       steps: { copying: "Copie depuis le Pocket", transcribing: "Transcription", cleaning: "Nettoyage du texte", summarizing: "Rédaction de la note" },
       none: "Aucun enregistrement.", tldr: "En bref", actions: "Actions", points: "Points clés", noSpeech: "Aucune parole détectée.",
       months: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."], error: "Erreur : "
@@ -70,6 +71,7 @@
       deleteConfirm: "Delete audio and texts? If the Pocket is emptied, no copy remains.",
       copied: "Copied", rerunning: "Summary rerun: ", renamed: "Name saved", deleted: "Deleted", pocketEmptied: "Pocket emptied",
       ready: "Ready", waiting: "Waiting", failed: "Failed: rerun the summary", done: "Done", modelDown: "Local engine stopped: restart Cairn",
+      processNow: "Process now", skipIt: "Skip", skipped: "Skipped", putBack: "Put back in the queue", stopJob: "Stop",
       steps: { copying: "Copying from the Pocket", transcribing: "Transcribing", cleaning: "Cleaning the text", summarizing: "Writing the note" },
       none: "No recordings.", tldr: "TL;DR", actions: "Actions", points: "Key points", noSpeech: "No speech detected.",
       months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], error: "Error: "
@@ -100,6 +102,9 @@
     done: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3368A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m8 12.5 2.8 2.8L16 9.5"></path></svg>',
     wait: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B8B8BE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>',
     busy: '<svg class="spin" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3368A0" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"></path></svg>',
+    skip: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B8B8BE" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12h8"></path></svg>',
+    play: '<svg width="20" height="20" viewBox="0 0 24 24" fill="#3368A0" aria-hidden="true"><path d="M8 5l11 7-11 7z"></path></svg>',
+    stop: '<svg width="18" height="18" viewBox="0 0 24 24" fill="#C4271B" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>',
     fail: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C86D51" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><path d="M12 16h.01"></path></svg>',
     lvl: {
       short: '<path d="M7 12h10"></path>',
@@ -287,7 +292,7 @@
     if (n.status === "done") { return I.done; }
     if (n.status === "error") { return I.fail; }
     if (job.running && job.id === n.id) { return I.busy; }
-    return I.wait;
+    return n.status === "skipped" ? I.skip : I.wait;
   }
 
   function viewDetail(n, t) {
@@ -333,19 +338,33 @@
     return h + "</div>";
   }
 
+  function queueActions(n, job, t) {
+    var h = '<div class="detail"><div class="row gap8">';
+    if (job.running && job.id === n.id) {
+      h += '<button type="button" class="ib" data-a="stopJob"' + tip(t.stopJob) + ">" + I.stop + "</button>";
+    } else {
+      h += '<button type="button" class="ib" data-a="procOne" data-id="' + esc(n.id) + '"' + (job.running ? " disabled" : "") + tip(t.processNow) + ">" + I.play + "</button>";
+      h += n.status === "skipped"
+        ? '<button type="button" class="mbtn" data-a="restoreOne" data-id="' + esc(n.id) + '">' + esc(t.putBack) + "</button>"
+        : '<button type="button" class="mbtn" data-a="skipOne" data-id="' + esc(n.id) + '">' + esc(t.skipIt) + "</button>";
+    }
+    return h + "</div></div>";
+  }
+
   function viewList(t, st) {
     var notes = st.notes || [];
     if (!notes.length) { return '<div class="card" style="padding:22px;text-align:center"><span class="small">' + esc(t.none) + "</span></div>"; }
     return '<div class="list">' + notes.map(function (n) {
       var done = n.status === "done", running = st.job.running && st.job.id === n.id;
       var main = done ? n.title : fmtDate(n.date) || n.id;
-      var sub = done ? [fmtDate(n.date), fmtDur(n.duration)].filter(Boolean).join(" · ") : (running ? stepText(st.job, t) : fmtDur(n.duration));
+      var sub = done ? [fmtDate(n.date), fmtDur(n.duration)].filter(Boolean).join(" · ") : (running ? stepText(st.job, t) : (n.status === "skipped" ? t.skipped + " · " : "") + fmtDur(n.duration));
       var open = S.open === n.id;
       var bar = running && st.job.pct != null ? '<span class="pbar"><span style="width:' + st.job.pct + '%"></span></span>' : "";
       var q = done && n.quality != null ? '<span class="q" style="color:' + (n.quality < 85 ? "var(--orange)" : "var(--mute)") + '"' + tip(t.qualityHint) + ">" + n.quality + " %</span>" : "";
       return '<div class="item"><button type="button" class="rowbtn" data-a="row" data-id="' + esc(n.id) + '" aria-expanded="' + open + '"' + tip(t.rowHint) + '><span class="st">' + statusIcon(n, st.job) +
         '</span><span class="mid"><span class="main">' + esc(main) + '</span><span class="sub"' + tip(t.dateDur) + ">" + esc(sub) + "</span>" + bar + '</span><span style="min-width:54px;display:inline-flex;justify-content:flex-end">' + q + "</span></button>" +
-        (open && (done || n.status === "error") ? viewDetail(n, t) : "") + "</div>";
+        (open && (done || n.status === "error") ? viewDetail(n, t) : "") +
+        (open && !done ? queueActions(n, st.job, t) : "") + "</div>";
     }).join("") + "</div>";
   }
 
@@ -396,6 +415,11 @@
     } else if (S.edit && document.getElementById("nameInput")) {
       var inp = document.getElementById("nameInput"); inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length);
     }
+  }
+
+  function noteAction(id, action) {
+    api("POST", "/api/note/" + encodeURIComponent(id) + "/" + action).then(refresh)
+      .catch(function (e) { flash(T().error + (e.message === "busy" ? T().mBusy : e.message)); });
   }
 
   function loadModels() {
@@ -522,6 +546,10 @@
     },
     refQr: function () { S.refQr = !S.refQr; },
     fixModel: function () { S.aboutOpen = false; S.settingsOpen = true; S.modelsOpen = true; loadModels(); },
+    procOne: function (v, id) { noteAction(id, "process"); },
+    skipOne: function (v, id) { noteAction(id, "skip"); },
+    restoreOne: function (v, id) { noteAction(id, "restore"); },
+    stopJob: function () { api("POST", "/api/cancel").then(refresh); },
     mAsk: function (kind, id) { S.mAsk = { kind: kind, id: id }; S.mDel = null; },
     mDel: function (kind, id) { S.mDel = { kind: kind, id: id }; S.mAsk = null; },
     mDelGo: function () {

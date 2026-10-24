@@ -160,8 +160,13 @@ with open(home + "/config.json", "w") as handle:
   # shellcheck disable=SC2016
   printf 'exec %q -m cairn "$@"\n' "$PY"
 } >"$CAIRN_HOME/bin/cairn"
-cp "$CAIRN_HOME/bin/cairn" "$CAIRN_HOME/Cairn.command"
-chmod 700 "$CAIRN_HOME/bin/cairn" "$CAIRN_HOME/Cairn.command"
+chmod 700 "$CAIRN_HOME/bin/cairn"
+# Double-click launcher: starts Cairn in the background if needed and opens the page
+{
+  echo '#!/bin/bash'
+  printf 'exec %q service open\n' "$CAIRN_HOME/bin/cairn"
+} >"$CAIRN_HOME/Cairn.command"
+chmod 700 "$CAIRN_HOME/Cairn.command"
 
 # 8. Self test: one short audio file and one question, all local
 say "Running the self test"
@@ -171,4 +176,10 @@ source "$CAIRN_HOME/env.sh"
 PYTHONPATH="$HERE" "$PY" -c "import cairn.server"
 
 say "Done. Cairn is ready."
-printf '\nStart Cairn: double-click Cairn.command in %s\nor run: %s/bin/cairn\n' "$CAIRN_HOME" "$CAIRN_HOME"
+if [ "$(uname -s)" = "Darwin" ] && [ -z "${CI:-}" ]; then
+  # Background mode: starts at login and restarts by itself if it stops (remove with: cairn service uninstall)
+  "$CAIRN_HOME/bin/cairn" service install || true
+  printf '\nCairn runs in the background. Open it with %s/Cairn.app\nor run: %s/bin/cairn service open\n' "$CAIRN_HOME" "$CAIRN_HOME"
+else
+  printf '\nStart Cairn: double-click Cairn.command in %s\nor run: %s/bin/cairn\n' "$CAIRN_HOME" "$CAIRN_HOME"
+fi

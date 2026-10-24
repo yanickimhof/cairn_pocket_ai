@@ -55,6 +55,10 @@ Processing happens on your computer, so a faster machine means faster notes. Eve
 
 **Speed.** Transcription keeps the speech model loaded between recordings, and frees it after five idle minutes. The optional setting **Polish the transcript** (Settings) rewrites the raw transcript for readability with the language model; it is off by default because it is by far the slowest step. Summaries do not depend on it.
 
+**Background mode and web app (macOS).** The installer sets Cairn up as a small background service that starts at login and restarts by itself if it stops. Open it with `~/Cairn/Cairn.app` (no Terminal window). If the page does not answer, opening `Cairn.app` again restarts it; `~/Cairn/bin/cairn service restart` does the same from a terminal, and `~/Cairn/bin/cairn service uninstall` removes the background mode. Cairn is also an installable web app: in Chrome choose Install Cairn, in Safari File, Add to Dock. It then opens in its own window, still served from your computer on `127.0.0.1`.
+
+**Choosing what to process.** Tap a waiting recording to process it now, or skip it so it is left out of the queue (it can be put back later). Newest recordings are processed first, and Stop interrupts the current job.
+
 **More powerful models, on demand.** Open Cairn, then **Settings, Models**. Pick a larger model (Qwen3 8B, Qwen3 14B, Whisper large-v3), confirm the download, and wait for the progress to finish. Then press **Use**. Nothing is downloaded without your click. A model you no longer need can be removed from the same screen (trash icon, with confirmation) to free disk space.
 
 Details and Pocket setup: [docs/INSTALL.md](docs/INSTALL.md). The full list of downloads, with versions and sizes: [SECURITY.md](SECURITY.md).
