@@ -16,7 +16,7 @@ Use GitHub's private vulnerability reporting (Security tab, "Report a vulnerabil
 | Language model | Qwen3 8B (`CAIRN_LLM`, default `qwen3:8b`), 5.2 GB. Qwen3 4B: 2.5 GB | 5.2 GB | Ollama registry | Layers verified by digest |
 | Speech model | Whisper large-v3-turbo | 1.6 GB | Hugging Face | Downloaded once, then used offline (`HF_HUB_OFFLINE=1`) |
 
-About 9 GB in total. The install page shows the exact minimum version and the sizes for your system.
+About 9 GB in total on a clean computer. If Ollama and the language model are already installed, Cairn reuses them and only downloads the speech model and the Python packages. The install page shows the exact minimum version and the sizes for your system.
 
 ## Safeguards
 
