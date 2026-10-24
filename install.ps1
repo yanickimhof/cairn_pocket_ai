@@ -21,6 +21,10 @@ $CairnHome = Opt 'CAIRN_HOME' (Join-Path $env:USERPROFILE 'Cairn')
 $Llm = Opt 'CAIRN_LLM' 'qwen3:8b'
 $OllamaAddr = '127.0.0.1:11434'
 $WhisperRepo = Opt 'CAIRN_WHISPER_REPO' 'deepdml/faster-whisper-large-v3-turbo-ct2'
+if ($env:CAIRN_ALLOW_TEST_MODELS -ne '1') {
+  if ($WhisperRepo -match '(?i)whisper-(tiny|base)') { throw "The speech model $WhisperRepo is too small to give reliable notes. Use the default or a small/medium/large model." }
+  if ($Llm -match '(?i):(0\.\d+|1|1\.\d+|2)b') { throw "The language model $Llm is too small to give useful summaries. Use qwen3:4b or larger." }
+}
 
 # 1. Detect the system
 if (-not [Environment]::Is64BitOperatingSystem) { Fail 'A 64-bit system is required.' }

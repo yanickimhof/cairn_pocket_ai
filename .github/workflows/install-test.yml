@@ -46,6 +46,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install and self test (small models to keep the test fast)
         env:
+          CAIRN_ALLOW_TEST_MODELS: "1"
           CAIRN_LLM: qwen3:0.6b
           CAIRN_WHISPER_REPO: mlx-community/whisper-tiny
         run: bash install.sh
@@ -63,6 +64,7 @@ jobs:
       - name: Install and self test (small models to keep the test fast)
         shell: pwsh
         env:
+          CAIRN_ALLOW_TEST_MODELS: "1"
           CAIRN_LLM: qwen3:0.6b
           CAIRN_WHISPER_REPO: Systran/faster-whisper-tiny
         run: ./install.ps1
