@@ -14,7 +14,7 @@ import time
 import webbrowser
 from pathlib import Path
 
-from . import config, llm, server, service, speech
+from . import config, llm, netguard, server, service, speech
 
 
 find_ollama = llm.find_ollama
@@ -59,6 +59,7 @@ def main(argv=None):
     parser.add_argument("--port", type=int, default=int(os.environ.get("CAIRN_PORT", str(server.DEFAULT_PORT))))
     parser.add_argument("--no-browser", action="store_true", default=bool(os.environ.get("CAIRN_NO_BROWSER")))
     args = parser.parse_args(args_in)
+    netguard.install()  # from here on, only connections to this computer are possible
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
     os.environ.setdefault("DO_NOT_TRACK", "1")
     config.home().mkdir(parents=True, exist_ok=True)

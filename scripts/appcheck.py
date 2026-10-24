@@ -153,6 +153,22 @@ def main():
         if client.call("POST", "/api/note/%s/delete" % note["id"])[0] != 200:
             fail("delete")
         print("OK: export, rename, verified copy, emptied the simulated Pocket, delete", flush=True)
+
+        if client.call("POST", "/api/privacy/check")[0] != 202:
+            fail("the privacy check was not accepted")
+        for _ in range(120):
+            time.sleep(2)
+            if not client.call("GET", "/api/state")[1]["job"]["running"]:
+                break
+        report = client.call("GET", "/api/privacy")[1]["report"] or {}
+        print("Privacy check:", json.dumps(report), flush=True)
+        if report.get("external") or report.get("blocked"):
+            fail("outgoing connections detected: %s %s" % (report.get("external"), report.get("blocked")))
+        if report.get("errors"):
+            fail("the privacy check could not exercise the engines: %s" % report["errors"])
+        if not report.get("model_server_seen"):
+            fail("the privacy check did not see the local model server")
+        print("OK: no connection leaves this computer (Cairn, speech engine, model server)", flush=True)
     finally:
         stop(process)
         shutil.rmtree(work, ignore_errors=True)

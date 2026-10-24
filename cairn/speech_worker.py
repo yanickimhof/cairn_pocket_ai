@@ -119,6 +119,9 @@ def serve(engine, model_dir):
 
 
 def main(argv):
+    from . import netguard
+
+    netguard.install()  # the speech engine never needs the network
     if argv[1] == "--serve":
         return serve(argv[2], argv[3])
     engine, model_dir, audio, output = argv[1:5]

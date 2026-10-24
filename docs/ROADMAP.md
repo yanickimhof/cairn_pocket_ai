@@ -15,10 +15,11 @@
 - Secure mode (list hidden by default), FR/EN interface
 - Empty the Pocket only after verification, with double confirmation
 - List of required components and a manual update check (opt-in, a single request to GitHub)
+- Network guard and built-in privacy check (nothing leaves this computer)
+- Background mode and installable web app (macOS), process, skip or stop recordings, remove models
 
 ## Later
 
-- Built-in check that nothing makes an outgoing connection
 - Linux
 - Offline installation for computers without Internet access
 - Import from any folder of audio files

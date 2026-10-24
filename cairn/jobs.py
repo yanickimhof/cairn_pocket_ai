@@ -5,7 +5,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import config, llm, pocket, speech
+from . import config, llm, pocket, privacy, speech
 from .notes import guess_date, make_id
 
 
@@ -56,6 +56,14 @@ class Jobs:
                 return
             self.cancelled = True
         speech.abort()
+
+    def start_privacy(self):
+        """Run the privacy check: a tiny transcription and question, watching the network."""
+        self._start("privacy", self._privacy)
+
+    def _privacy(self):
+        self._set(step="privacy", total=1, done=0)
+        privacy.run_check()
 
     def skip(self, note_id):
         """Leave a recording out of the queue (it stays available and can be put back)."""

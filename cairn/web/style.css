@@ -87,3 +87,4 @@ svg{flex-shrink:0}
 h1.brand{margin:0;font-weight:inherit}
 :root{--warn:#A4452A}
 .comp .cn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.priv{display:flex;flex-direction:column;gap:6px}:root{--green-ink:#17743F}

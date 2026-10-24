@@ -34,8 +34,9 @@
       deleteConfirm: "Supprimer audio et textes ? Si le Pocket est vidé, plus aucune copie.",
       copied: "Copié", rerunning: "Résumé relancé : ", renamed: "Nom enregistré", deleted: "Supprimé", pocketEmptied: "Pocket vidé",
       ready: "Prêt", waiting: "En attente", failed: "Échec : relancer le résumé", done: "Terminé", modelDown: "Moteur local arrêté : relance Cairn",
+      privTitle: "Contrôle de confidentialité", privRun: "Lancer le contrôle", privOk: "Aucune connexion vers l’extérieur", privBad: "Connexions détectées", privWait: "Contrôle en cours…", privNever: "Observe les connexions de Cairn et de ses moteurs pendant un test local.", privWhen: "le",
       processNow: "Traiter maintenant", skipIt: "Ignorer", skipped: "Ignoré", putBack: "Remettre dans la file", stopJob: "Arrêter",
-      steps: { copying: "Copie depuis le Pocket", transcribing: "Transcription", cleaning: "Nettoyage du texte", summarizing: "Rédaction de la note" },
+      steps: { copying: "Copie depuis le Pocket", transcribing: "Transcription", cleaning: "Nettoyage du texte", summarizing: "Rédaction de la note", privacy: "Vérification de la confidentialité" },
       none: "Aucun enregistrement.", tldr: "En bref", actions: "Actions", points: "Points clés", noSpeech: "Aucune parole détectée.",
       months: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."], error: "Erreur : "
     },
@@ -71,8 +72,9 @@
       deleteConfirm: "Delete audio and texts? If the Pocket is emptied, no copy remains.",
       copied: "Copied", rerunning: "Summary rerun: ", renamed: "Name saved", deleted: "Deleted", pocketEmptied: "Pocket emptied",
       ready: "Ready", waiting: "Waiting", failed: "Failed: rerun the summary", done: "Done", modelDown: "Local engine stopped: restart Cairn",
+      privTitle: "Privacy check", privRun: "Run the check", privOk: "No connection to the outside", privBad: "Connections detected", privWait: "Checking…", privNever: "Watches the connections of Cairn and its engines during a local test.", privWhen: "on",
       processNow: "Process now", skipIt: "Skip", skipped: "Skipped", putBack: "Put back in the queue", stopJob: "Stop",
-      steps: { copying: "Copying from the Pocket", transcribing: "Transcribing", cleaning: "Cleaning the text", summarizing: "Writing the note" },
+      steps: { copying: "Copying from the Pocket", transcribing: "Transcribing", cleaning: "Cleaning the text", summarizing: "Writing the note", privacy: "Checking privacy" },
       none: "No recordings.", tldr: "TL;DR", actions: "Actions", points: "Key points", noSpeech: "No speech detected.",
       months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], error: "Error: "
     }
@@ -259,6 +261,19 @@
     return bytes < 1e9 ? Math.round(bytes / 1e6) + " MB" : (bytes / 1e9).toFixed(1) + " GB";
   }
 
+  function viewPrivacy(t) {
+    var P = S.priv || {}, rep = P.report, running = P.running || (S.server && S.server.job.running && S.server.job.kind === "privacy");
+    var h = '<div class="priv"><div class="row between gap12"><span style="font-size:14px;font-weight:600">' + esc(t.privTitle) + "</span>" +
+      '<button type="button" class="mbtn" data-a="privRun"' + (running || (S.server && S.server.job.running) ? " disabled" : "") + ">" + esc(t.privRun) + "</button></div>";
+    if (running) { h += '<div class="small">' + esc(t.privWait) + "</div>"; }
+    else if (rep && rep.ok) { h += '<div class="small" style="color:var(--green-ink)">✓ ' + esc(t.privOk) + " · " + esc(t.privWhen + " " + fmtDate(rep.when)) + "</div>"; }
+    else if (rep) { h += '<div class="small" style="color:var(--warn)">' + esc(t.privBad) + ": " + esc((rep.external || []).concat(rep.blocked || [], rep.errors || []).join(" · ")) + "</div>"; }
+    else { h += '<div class="small">' + esc(t.privNever) + "</div>"; }
+    return h + "</div>";
+  }
+
+  function loadPriv() { return api("GET", "/api/privacy").then(function (p) { S.priv = p; render(); }).catch(function () { /* keep */ }); }
+
   function viewAbout(t) {
     var h = '<div class="card about"><div><div class="t">Cairn</div><div class="small">' + esc(t.aboutTagline) + "</div></div>";
     h += '<div class="text">' + esc(t.aboutText) + "</div>";
@@ -273,6 +288,7 @@
     else if (upd && upd.available) { text = t.updAvail + upd.latest; ink = "var(--warn)"; }
     h += '<div class="row between gap12"><span style="font-size:14px;font-weight:600;color:' + ink + '">' + esc(text) + "</span>";
     h += '<button type="button" class="ib" data-a="checkUpdate"' + tip(t.checkUpd) + ">" + I.refresh + "</button></div>";
+    h += viewPrivacy(t);
     var ref = S.about && S.about.referral;
     if (ref) {
       h += '<div class="ref"><a href="' + esc(ref) + '" target="_blank" rel="noopener noreferrer"' + tip(t.refNote) + ">" + esc(t.refText) + " ↗</a>" +
@@ -439,6 +455,7 @@
       if (was && !st.job.running) {
         if (st.job.errors.length) { flash(T().error + st.job.errors[0]); } else { flash(T().done); }
         S.full = {};
+        if (S.aboutOpen) { loadPriv(); }
       }
       if (S.open && !S.hidden) { loadFull(S.open); }
       if (S.modelsOpen && (!S.models || (st.download && st.download.state === "running") || (S.models.job && S.models.job.state === "running"))) { loadModels(); }
@@ -483,7 +500,7 @@
     settings: function () { S.settingsOpen = !S.settingsOpen; S.emptyConfirm = false; },
     about: function () {
       S.aboutOpen = !S.aboutOpen;
-      if (S.aboutOpen) { api("GET", "/api/about").then(function (a) { S.about = a; render(); }); }
+      if (S.aboutOpen) { api("GET", "/api/about").then(function (a) { S.about = a; render(); }); loadPriv(); }
     },
     eye: function () {
       S.hidden = !S.hidden;
@@ -549,6 +566,10 @@
     procOne: function (v, id) { noteAction(id, "process"); },
     skipOne: function (v, id) { noteAction(id, "skip"); },
     restoreOne: function (v, id) { noteAction(id, "restore"); },
+    privRun: function () {
+      S.priv = { report: null, running: true };
+      api("POST", "/api/privacy/check").then(refresh).catch(function (e) { S.priv = null; flash(T().error + (e.message === "busy" ? T().mBusy : e.message)); render(); });
+    },
     stopJob: function () { api("POST", "/api/cancel").then(refresh); },
     mAsk: function (kind, id) { S.mAsk = { kind: kind, id: id }; S.mDel = null; },
     mDel: function (kind, id) { S.mDel = { kind: kind, id: id }; S.mAsk = null; },
