@@ -1,6 +1,6 @@
 # Privacy and sovereignty
 
-Cairn is built on one rule: **your recordings never leave your computer.**
+One rule: **your recordings never leave your computer.**
 
 ## What Cairn does
 
@@ -13,33 +13,32 @@ Cairn is built on one rule: **your recordings never leave your computer.**
 - No cloud service, no account, no sign-in.
 - No telemetry, analytics or crash reports.
 - No call to a hosted AI service.
-- The Cairn interface is a local page served on `127.0.0.1` only, with a private session key stored in a file only you can read, a Host check and a strict content policy. Exports are saved in `~/Cairn/Exports`. The only optional outgoing request is the update check you trigger yourself (one request to GitHub).
-- No listening on the network: the local model server is bound to `127.0.0.1`. This address means "this computer only" (also called localhost), so no other device can reach it.
+- No listening on the network. The interface is a local page on `127.0.0.1` only (this computer), with a private session key in a file only you can read, a Host check and a strict content policy. The local model server is bound to `127.0.0.1` too, so no other device can reach it.
 
 ## Network use
 
 | When | Connections |
 |---|---|
-| Installation (once) | Downloads of the engines and models (see SECURITY.md) |
+| Installation (once) | Downloads of the engines and models (see [SECURITY.md](../SECURITY.md)) |
 | Everyday use | None |
-| When you ask for it | Download of an optional model (Ollama registry or Hugging Face), after your explicit confirmation in the app. Update check: one request to GitHub. Referral link in **About**: nothing is sent by Cairn; the link opens Pocket's website in your browser only if you click it. |
+| When you ask for it | An optional model download (Ollama registry or Hugging Face), after your confirmation. The update check: one request to GitHub. The referral link in **About** opens Pocket's website in your browser only if you click it; Cairn sends nothing. |
 
-Runtime is configured with `HF_HUB_OFFLINE=1` and `DO_NOT_TRACK=1`.
+The runtime sets `HF_HUB_OFFLINE=1` and `DO_NOT_TRACK=1`.
 
-## Sharing is always your decision
+## Sharing is your decision
 
-Cairn gives you export (Markdown, HTML) and copy with formatting. What you do with an exported note is up to you. Cairn also offers a button that copies the doubtful passages of a transcript to your clipboard, so that you can have them checked elsewhere if you choose. That step is manual, optional and happens outside Cairn.
+Cairn offers export (Markdown, HTML) and copy with formatting. What you do with an exported note is up to you. A button copies the doubtful passages of a transcript to your clipboard so you can have them checked elsewhere. That step is manual, optional and happens outside Cairn.
 
 ## Verify it yourself
 
 1. Disconnect the Internet and run an import. It must work the same.
 2. List open connections during processing: `lsof -i -n -P | grep -i -E "ollama|python"`. You should see only `127.0.0.1`.
-3. Use a firewall to block all outgoing connections for Cairn and its models.
+3. Block all outgoing connections for Cairn and its models with a firewall.
 
-Cairn also checks it for you: open About, then click the shield icon. It runs a small local test and lists every connection that leaves this computer (expected: none). The model server (Ollama) is a third party program: it is observed by the check but not blocked by Cairn, so a firewall remains the absolute guarantee.
+Cairn can also check for you: in About, click the shield icon. A small local test lists every connection that leaves this computer (expected: none). The model server (Ollama) is a third party program: the check observes it but Cairn does not block it, so a firewall remains the absolute guarantee.
 
 ## Where your data lives
 
-Everything is stored under `~/Cairn` by default (audio, texts, exports). You can change the audio folder in the settings. Use full disk encryption to protect it if the computer is lost or stolen.
+Under `~/Cairn` by default (audio, texts, exports). The audio folder can be changed in Settings. Use full disk encryption in case the computer is lost or stolen.
 
-Delete a recording from the app and its local files are removed. Emptying the Pocket is a separate action that is only offered once every copy is verified.
+Deleting a recording in the app removes its local files. Emptying the Pocket is a separate action, offered only once every copy is verified.
