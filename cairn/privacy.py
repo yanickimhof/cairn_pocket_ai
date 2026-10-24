@@ -64,7 +64,7 @@ def watched_pids():
 
 def _remote_is_outside(remote):
     host = remote.rsplit(":", 1)[0].strip("[]").split("%")[0]
-    if host in ("*", "", "0.0.0.0", "::"):  # listening or unconnected sockets
+    if host in ("*", ""):  # unconnected sockets
         return False
     try:
         address = ipaddress.ip_address(host)
