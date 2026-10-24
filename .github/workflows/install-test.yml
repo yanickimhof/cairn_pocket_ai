@@ -1,0 +1,51 @@
+name: install-test
+
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - install.sh
+      - install.ps1
+      - scripts/**
+      - requirements/**
+      - .github/workflows/**
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell and Python checks
+        run: |
+          pip install shellcheck-py bandit
+          shellcheck install.sh
+          bandit -q -r scripts
+      - name: No secrets, no personal paths
+        run: |
+          if grep -rIn -E "(/Users/[a-z]+|C:\\\\Users\\\\[A-Za-z]+|BEGIN (RSA|OPENSSH|PRIVATE) KEY|ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16})" . --exclude-dir=.git --exclude-dir=.github; then exit 1; fi
+
+  macos:
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install and self test (small models to keep the test fast)
+        env:
+          CAIRN_LLM: qwen3:0.6b
+          CAIRN_WHISPER_REPO: mlx-community/whisper-tiny
+        run: bash install.sh
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install and self test (small models to keep the test fast)
+        shell: pwsh
+        env:
+          CAIRN_LLM: qwen3:0.6b
+          CAIRN_WHISPER_REPO: Systran/faster-whisper-tiny
+        run: ./install.ps1
