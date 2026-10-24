@@ -44,7 +44,7 @@ irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/main/install.p
 | System | macOS 14, Windows 10 22H2 | Latest version |
 | Graphics card | Not required | Not required |
 | Internet | Installation only: about 5.5 GB (Mac) or 7 GB (Windows), about 2.5 GB if Ollama and a Qwen3 model are already installed | |
-| Pocket | USB-C data port, USB mode enabled in the Pocket app | |
+| Pocket | USB-C data port. In the Pocket app: USB mode on, automatic and cloud sync off ([details](docs/INSTALL.md)) | |
 
 A faster machine means faster notes. Everything works offline once installed. Pocket setup and troubleshooting: [docs/INSTALL.md](docs/INSTALL.md). Every download, with versions and sizes: [SECURITY.md](SECURITY.md).
 
@@ -71,7 +71,7 @@ Secure mode hides the list of notes until you reveal it. Tap a waiting recording
 ## Why sovereign
 
 - Audio, transcripts and summaries stay on your computer.
-- No outgoing connection once installed. A network guard refuses any outside connection in the app and the speech engine, and the shield icon in About runs a privacy check that proves it. The automated tests run the same check on macOS and Windows.
+- No outgoing connection once installed. A network guard refuses any outside connection in the app and the speech engine, and a privacy check runs by itself once a day. The shield next to **Local** shows the result. The automated tests run the same check on macOS and Windows.
 - The model server answers only on `127.0.0.1` (your computer talking to itself), so no other device on your network can reach it.
 - Open models you can swap.
 

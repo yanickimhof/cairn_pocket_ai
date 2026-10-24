@@ -17,7 +17,7 @@ LOOPBACK = re.compile(r"127\.0\.0\.1:\d{2,5}")
 DEFAULT_LLM = "qwen3:4b"
 LEVELS = ("short", "mid", "full")
 LANGS = ("fr", "en")
-DEFAULT_SETTINGS = {"ui": None, "tr": None, "level": "mid", "audio_dir": None, "llm": None, "speech": None, "polish": False}
+DEFAULT_SETTINGS = {"ui": None, "tr": None, "level": "mid", "audio_dir": None, "llm": None, "speech": None, "polish": False, "autocheck": True}
 
 _lock = threading.RLock()
 
@@ -103,8 +103,8 @@ def save_settings(patch):
                 current["tr"] = value
             elif key == "level" and value in LEVELS:
                 current["level"] = value
-            elif key == "polish" and isinstance(value, bool):
-                current["polish"] = value
+            elif key in ("polish", "autocheck") and isinstance(value, bool):
+                current[key] = value
             elif key == "llm" and value in catalog.LLM_IDS:
                 current["llm"] = value
             elif key == "speech" and value in catalog.SPEECH_IDS:

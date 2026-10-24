@@ -85,4 +85,6 @@ svg{flex-shrink:0}
 h1.brand{margin:0;font-weight:700}.bw{display:flex;flex-direction:column;line-height:1.2}.bw .sub{font-size:12px;color:var(--mute)}
 :root{--warn:#A4452A;--orange-ink:#B4541A}
 .comp .cn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.priv{display:flex;flex-direction:column;gap:6px}:root{--green-ink:#17743F}
+:root{--green-ink:#17743F}
+
+.ib.upd{position:relative}.ib.upd::after{content:"";position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--orange)}

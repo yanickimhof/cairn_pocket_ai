@@ -14,7 +14,7 @@ import time
 import webbrowser
 from pathlib import Path
 
-from . import config, llm, netguard, server, service, speech
+from . import config, llm, netguard, server, service, speech, watch
 
 
 find_ollama = llm.find_ollama
@@ -67,6 +67,7 @@ def main(argv=None):
     app, httpd = server.make_server(args.port)
     url = "http://127.0.0.1:%d/?k=%s" % (app.port, app.token)
     write_url(app)
+    watch.start(app)
     print("Cairn is running. Everything stays on this computer.")
     print("Open: %s" % url, flush=True)
     print("Close this window to quit.")
