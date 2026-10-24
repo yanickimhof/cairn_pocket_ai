@@ -13,10 +13,10 @@ Use GitHub's private vulnerability reporting (Security tab, "Report a vulnerabil
 | Python | 3.11 | About 90 MB | uv | Kept inside the Cairn folder |
 | Python packages | Pinned in `requirements/` | About 1 GB | PyPI | Versions and SHA-256 hashes pinned, installed with `--require-hashes` |
 | Local model server (Ollama) | Latest | 0.2 to 1.7 GB, depending on your system | ollama.com | Code signature checked before use, installed for your user only |
-| Language model | Qwen3 8B (`CAIRN_LLM`, default `qwen3:8b`), 5.2 GB. Qwen3 4B: 2.5 GB | 5.2 GB | Ollama registry | Layers verified by digest |
-| Speech model | Whisper large-v3-turbo | 1.6 GB | Hugging Face | Downloaded once, then used offline (`HF_HUB_OFFLINE=1`) |
+| Language model | Qwen3 4B (`qwen3:4b`, default). Optional, on demand from the app: Qwen3 8B (5.2 GB), Qwen3 14B (9.3 GB) | 2.5 GB | Ollama registry | Layers verified by digest |
+| Speech model | Whisper large-v3-turbo. Optional, on demand: Whisper large-v3 (3.1 GB) | 1.6 GB | Hugging Face | Downloaded once, then used offline (`HF_HUB_OFFLINE=1`) |
 
-About 9 GB in total on a clean computer. If Ollama and the language model are already installed, Cairn reuses them and only downloads the speech model and the Python packages. The install page shows the exact minimum version and the sizes for your system.
+About 5.5 GB in total on a clean Mac and about 7 GB on Windows (estimate). If Ollama and a Qwen3 model are already installed, Cairn reuses them. Optional models are downloaded only when you confirm it in the app. The install page shows the exact minimum version and the sizes for your system.
 
 ## Safeguards
 

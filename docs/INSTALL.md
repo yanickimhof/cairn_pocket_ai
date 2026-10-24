@@ -19,7 +19,7 @@ Good to know
 
 ## Options
 
-Set before the command: `CAIRN_HOME` (install folder), `CAIRN_LLM` (language model, default `qwen3:8b`), `CAIRN_WHISPER_REPO` (speech model), `CAIRN_REF` (branch or tag). Models too small to be useful (Whisper tiny or base, language models under 3B) are refused. If Ollama is already installed, Cairn reuses it and the models it holds.
+Set before the command: `CAIRN_HOME` (install folder), `CAIRN_LLM` (language model, default `qwen3:4b`), `CAIRN_WHISPER_REPO` (speech model), `CAIRN_REF` (branch or tag). Models too small to be useful (Whisper tiny or base, language models under 3B) are refused. If Ollama is already installed, Cairn reuses it and the models it holds. Larger models can be added later from **Settings, Models** in the app.
 
 ## Troubleshooting
 
@@ -28,7 +28,7 @@ Set before the command: `CAIRN_HOME` (install folder), `CAIRN_LLM` (language mod
 | The Pocket drive does not appear | Enable USB storage on the computer, replug, switch USB mode off and on, try another cable |
 | Ollama is blocked at launch | Allow it in the security settings of your system |
 | Downloads fail | Check that the network allows the sources listed in [SECURITY.md](../SECURITY.md) |
-| Not enough memory | Use a smaller model, for example `CAIRN_LLM=qwen3:4b` |
+| Not enough memory | Keep the default model (`qwen3:4b`) and close other large applications |
 
 ## Uninstall
 

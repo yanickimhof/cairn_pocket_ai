@@ -11,6 +11,7 @@
 - Automatic summary templates (meeting, call, presentation, idea, other)
 - Short, standard and detailed levels, rerun on one recording
 - Rename, copy, export (Markdown, HTML)
+- Light default install, larger models added on demand from the app
 - Secure mode (list hidden by default), FR/EN interface
 - Empty the Pocket only after verification, with double confirmation
 - List of required components and a manual update check (opt-in, a single request to GitHub)

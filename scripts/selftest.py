@@ -14,7 +14,7 @@ import wave
 
 ENGINE = os.environ.get("CAIRN_ENGINE", "")
 MODEL_DIR = os.environ.get("CAIRN_WHISPER_MODEL", "")
-LLM = os.environ.get("CAIRN_LLM", "qwen3:8b")
+LLM = os.environ.get("CAIRN_LLM", "qwen3:4b")
 HOST = os.environ.get("OLLAMA_HOST", "127.0.0.1:11434")
 
 
