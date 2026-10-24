@@ -28,16 +28,20 @@ PowerShell:
 irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/main/install.ps1 | iex
 ```
 
-**Requirements**
+**Minimum and recommended machine**
 
-| | |
-|---|---|
-| Computer | 64-bit, 16 GB of memory recommended (8 GB with a smaller model) |
-| Operating system | A current version, the install page shows the minimum for yours |
-| Disk space | 15 GB free, about 9 GB used once installed |
-| Internet | During installation only, about 9 GB to download |
-| USB | A USB-C port with data access (USB storage allowed) |
-| Pocket | USB mode enabled in the Pocket app |
+| | Minimum | Recommended |
+|---|---|---|
+| Processor | 64-bit, 4 cores. Intel Mac or Windows PC: works, but slower | Apple silicon (M1 or later), or a recent 8-core PC |
+| Memory | 8 GB, with the lighter language model (`CAIRN_LLM=qwen3:4b`) | 16 GB or more, with the default model |
+| Disk space | 15 GB free | 20 GB free (notes and audio take extra space) |
+| Operating system | macOS 14 or later, Windows 10 22H2 or later | The latest version of either |
+| Graphics card | Not required | Not required |
+| Internet | During installation only, about 9 to 10 GB to download (about 3.5 GB if Ollama and the language model are already installed) | |
+| USB | A USB-C port with data access (USB storage allowed) | |
+| Pocket | USB mode enabled in the Pocket app | |
+
+Processing happens on your computer, so a faster machine means faster notes. Everything works offline once installed.
 
 **Models.** Cairn installs models that do the job well: Whisper large-v3-turbo for transcription and Qwen3 8B for notes. If you already have Ollama, Cairn reuses it and any model it already holds (nothing is reinstalled or modified, so the download is smaller). Models too small to give reliable notes are refused by the installer. For a modest computer, use `CAIRN_LLM=qwen3:4b`.
 
