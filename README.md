@@ -55,7 +55,7 @@ Processing happens on your computer, so a faster machine means faster notes. Eve
 
 **Speed.** Transcription keeps the speech model loaded between recordings, and frees it after five idle minutes. The optional setting **Polish the transcript** (Settings) rewrites the raw transcript for readability with the language model; it is off by default because it is by far the slowest step. Summaries do not depend on it.
 
-**More powerful models, on demand.** Open Cairn, then **Settings, Models**. Pick a larger model (Qwen3 8B, Qwen3 14B, Whisper large-v3), confirm the download, and wait for the progress to finish. Then press **Use**. Nothing is downloaded without your click.
+**More powerful models, on demand.** Open Cairn, then **Settings, Models**. Pick a larger model (Qwen3 8B, Qwen3 14B, Whisper large-v3), confirm the download, and wait for the progress to finish. Then press **Use**. Nothing is downloaded without your click. A model you no longer need can be removed from the same screen (trash icon, with confirmation) to free disk space.
 
 Details and Pocket setup: [docs/INSTALL.md](docs/INSTALL.md). The full list of downloads, with versions and sizes: [SECURITY.md](SECURITY.md).
 

@@ -46,6 +46,12 @@ class StubModel(BaseHTTPRequestHandler):
         names = ["stub:1b"] + StubModel.pulled
         self._send({"version": "0"} if self.path == "/api/version" else {"models": [{"name": n, "size": 1500000000} for n in names]})
 
+    def do_DELETE(self):
+        body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        if body["model"] in StubModel.pulled:
+            StubModel.pulled.remove(body["model"])
+        self._send({})
+
     def do_POST(self):
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         if self.path == "/api/pull":
@@ -251,6 +257,11 @@ class AppTest(unittest.TestCase):
         self.assertEqual((status, settings["llm"]), (200, "qwen3:4b"))
         self.assertEqual(self.c.call("POST", "/api/settings", {"llm": "anything:1b"})[0], 400)
         self.assertEqual(self.c.call("POST", "/api/models/install", {"kind": "llm", "id": "qwen3:4b"}, cookie=False)[0], 403)
+        # removal needs a confirmation and a model that is installed
+        self.assertEqual(self.c.call("POST", "/api/models/remove", {"kind": "llm", "id": "qwen3:4b"})[0], 400)
+        self.assertEqual(self.c.call("POST", "/api/models/remove", {"kind": "llm", "id": "qwen3:14b", "confirm": True})[0], 400)
+        self.assertEqual(self.c.call("POST", "/api/models/remove", {"kind": "llm", "id": "qwen3:4b", "confirm": True})[0], 200)
+        self.assertFalse([m for m in self.c.call("GET", "/api/models")[1]["llm"] if m["id"] == "qwen3:4b"][0]["installed"])
 
 
     def test_11_about_components(self):

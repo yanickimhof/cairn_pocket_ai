@@ -11,7 +11,7 @@
       polish: "Réécrire le transcript", polishHint: "Plus lisible, mais nettement plus lent", off: "Non", on: "Oui",
       processedIn: "traité en", notInstalled: "Non installé", getIt: "Installer", refText: "Offrir un Pocket : 10 % de réduction", refQr: "QR code", refNote: "Lien de parrainage facultatif. L’offre dépend uniquement de Pocket et peut changer.",
       models: "Modèles", modelsHint: "Choisir ou ajouter des modèles", modelsSpeech: "Transcription", modelsLlm: "Résumés",
-      mUse: "Utiliser", mInUse: "Utilisé", mInstall: "Installer", mTier: { light: "Léger", standard: "Standard", high: "Élevé" },
+      tagline: "Votre Pocket. Votre ordinateur. Vos données.", mUse: "Utiliser", mRemove: "Supprimer ce modèle", mRemoveConfirm: "Supprimer {name} de cet ordinateur ? Vous pourrez le télécharger à nouveau.", mInUse: "Utilisé", mInstall: "Installer", mTier: { light: "Léger", standard: "Standard", high: "Élevé" },
       mRam: "{n} Go de mémoire conseillés", mConfirm: "Télécharger {name} ({size}) ? Une connexion internet est utilisée pour ce seul téléchargement.",
       mDownloading: "Téléchargement {pct} %", mFailed: "Échec du téléchargement : ", mDone: "Modèle installé", mDown: "Moteur local arrêté", mBusy: "Un traitement est en cours",
       settings: "Réglages", transcriptLang: "Langue du transcript", transcriptLangHint: "Langue des résumés",
@@ -47,7 +47,7 @@
       polish: "Polish the transcript", polishHint: "More readable, but much slower", off: "Off", on: "On",
       processedIn: "processed in", notInstalled: "Not installed", getIt: "Install", refText: "Get a Pocket: 10 % off", refQr: "QR code", refNote: "Optional referral link. The offer is set by Pocket alone and may change.",
       models: "Models", modelsHint: "Choose or add models", modelsSpeech: "Transcription", modelsLlm: "Summaries",
-      mUse: "Use", mInUse: "In use", mInstall: "Install", mTier: { light: "Light", standard: "Standard", high: "High" },
+      tagline: "Your Pocket. Your computer. Your data.", mUse: "Use", mRemove: "Remove this model", mRemoveConfirm: "Remove {name} from this computer? You can download it again later.", mInUse: "In use", mInstall: "Install", mTier: { light: "Light", standard: "Standard", high: "High" },
       mRam: "{n} GB of memory advised", mConfirm: "Download {name} ({size})? An internet connection is used for this download only.",
       mDownloading: "Downloading {pct}%", mFailed: "Download failed: ", mDone: "Model installed", mDown: "Local engine stopped", mBusy: "A job is running",
       settings: "Settings", transcriptLang: "Transcript language", transcriptLangHint: "Summary language",
@@ -77,7 +77,7 @@
   };
 
   var I = {
-    lock: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>',
+    lock: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1E8E3E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>',
     info: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path></svg>',
     gear: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg>',
     doc: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v4h4"></path><path d="M10 12h5"></path><path d="M10 16h5"></path></svg>',
@@ -189,7 +189,10 @@
     h += '<div class="small">' + esc(t.mTier[m.tier] + " · " + gb(m.bytes) + " · " + t.mRam.replace("{n}", m.ram)) + "</div></div>";
     if (running) { h += '<span class="small">' + esc(t.mDownloading.replace("{pct}", job.pct)) + "</span>"; }
     else if (m.selected) { h += '<span class="mtag">' + esc(t.mInUse) + "</span>"; }
-    else if (m.installed) { h += '<button type="button" class="mbtn" data-a="mUse" data-v="' + kind + '" data-id="' + esc(m.id) + '">' + esc(t.mUse) + "</button>"; }
+    else if (m.installed) {
+      h += '<span class="row gap8"><button type="button" class="mbtn" data-a="mUse" data-v="' + kind + '" data-id="' + esc(m.id) + '">' + esc(t.mUse) + "</button>" +
+        '<button type="button" class="ib" data-a="mDel" data-v="' + kind + '" data-id="' + esc(m.id) + '"' + tip(t.mRemove) + ">" + I.trash + "</button></span>";
+    }
     else { h += '<button type="button" class="mbtn" data-a="mAsk" data-v="' + kind + '" data-id="' + esc(m.id) + '"' + (job && job.state === "running" ? " disabled" : "") + ">" + esc(t.mInstall) + "</button>"; }
     return h + "</div>";
   }
@@ -205,6 +208,11 @@
       var list = S.mAsk.kind === "llm" ? M.llm : M.speech;
       var m = list.filter(function (x) { return x.id === S.mAsk.id; })[0];
       if (m) { h += confirmBox(t.mConfirm.replace("{name}", m.label).replace("{size}", gb(m.bytes)), "mGo", t); }
+    }
+    if (S.mDel) {
+      var dl = S.mDel.kind === "llm" ? M.llm : M.speech;
+      var dm = dl.filter(function (x) { return x.id === S.mDel.id; })[0];
+      if (dm) { h += confirmBox(t.mRemoveConfirm.replace("{name}", dm.label), "mDelGo", t); }
     }
     if (M.job && M.job.state === "error") { h += '<div class="small" style="color:#C0392B">' + esc(t.mFailed + M.job.error) + "</div>"; }
     return h + "</div>";
@@ -367,6 +375,7 @@
     if (!st.ollama) { h += '<div class="err">' + esc(t.modelDown) + "</div>"; }
     h += "</div>";
     if (!S.hidden) { h += viewList(t, st); }
+    h += '<footer class="foot"><b>Cairn</b> · ' + esc(t.tagline) + "</footer>";
     return h + "</div>";
   }
 
@@ -489,7 +498,7 @@
       var id = S.open;
       api("POST", "/api/note/" + encodeURIComponent(id) + "/delete").then(function () { S.open = null; S.delConfirm = false; flash(T().deleted); refresh(); });
     },
-    cancel: function () { S.delConfirm = false; S.emptyConfirm = false; S.mAsk = null; },
+    cancel: function () { S.delConfirm = false; S.emptyConfirm = false; S.mAsk = null; S.mDel = null; },
     askEmpty: function () {
       S.emptyConfirm = true; S.verify = null;
       api("GET", "/api/pocket/verify").then(function (v) { S.verify = v; render(); }).catch(function () { S.verify = { total: 0, verified: 0 }; render(); });
@@ -513,7 +522,13 @@
     },
     refQr: function () { S.refQr = !S.refQr; },
     fixModel: function () { S.aboutOpen = false; S.settingsOpen = true; S.modelsOpen = true; loadModels(); },
-    mAsk: function (kind, id) { S.mAsk = { kind: kind, id: id }; },
+    mAsk: function (kind, id) { S.mAsk = { kind: kind, id: id }; S.mDel = null; },
+    mDel: function (kind, id) { S.mDel = { kind: kind, id: id }; S.mAsk = null; },
+    mDelGo: function () {
+      var a = S.mDel; S.mDel = null;
+      api("POST", "/api/models/remove", { kind: a.kind, id: a.id, confirm: true }).then(function () { return loadModels(); }).then(refresh)
+        .catch(function (e) { flash(T().error + (e.message === "busy" ? T().mBusy : e.message)); });
+    },
     mGo: function () {
       var a = S.mAsk; S.mAsk = null;
       api("POST", "/api/models/install", { kind: a.kind, id: a.id, confirm: true }).then(loadModels)

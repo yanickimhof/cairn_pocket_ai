@@ -36,6 +36,16 @@ def _post(path, body, timeout=1800):
         return json.load(response)
 
 
+def delete_model(name):
+    """Remove one model from the local model server (loopback only)."""
+    request = urllib.request.Request(
+        "http://%s/api/delete" % _host(), data=json.dumps({"model": name}).encode(),
+        headers={"Content-Type": "application/json"}, method="DELETE",
+    )
+    with urllib.request.urlopen(request, timeout=60):  # nosec B310 (loopback, fixed scheme)
+        return True
+
+
 def _get(path, timeout=5):
     # Loopback only, plain http, fixed scheme: the address is validated in _host().
     with urllib.request.urlopen("http://%s%s" % (_host(), path), timeout=timeout) as response:  # nosec B310
