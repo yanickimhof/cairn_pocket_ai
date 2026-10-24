@@ -6,15 +6,16 @@ One command in a terminal (see the [README](../README.md)). It detects your syst
 
 You need neither the Pocket desktop app nor a Pocket account on the computer. Menu names can vary between app versions: see [heypocket.com](https://heypocket.com).
 
-1. In the Pocket mobile app, open the device settings and turn on **USB Mode** (Pocket Web Sync). It is off by default, and the USB-C port then only charges.
-2. Connect the Pocket with a USB-C **data** cable.
-3. Check that a drive named `Pocket` appears, with a `RECORD` folder. In Cairn, the dot next to the name turns green.
-4. Close the Pocket desktop app if you use it, so that only one program reads the device.
+1. In the Pocket mobile app, open the device settings and turn **on** USB Mode (Pocket Web Sync). It is off by default, and the USB-C port then only charges.
+2. In the same settings, turn **off** every automatic or cloud sync option (auto-sync, Wi-Fi or online sync, cloud backup, and any similar option). Otherwise the Pocket sends recordings to Pocket's online service on its own, and the phone app then removes them from the drive, so Cairn never sees them.
+3. Connect the Pocket with a USB-C **data** cable.
+4. Check that a drive named `Pocket` appears, with a `RECORD` folder. In Cairn, the dot next to the name turns green.
+5. Close the Pocket desktop app if you use it, so that only one program reads the device.
 
 Good to know:
 
-- Recordings already transferred by the Pocket mobile app are no longer on the drive.
-- To keep recordings out of Pocket's online service, turn off automatic sync in the mobile app before you record.
+- Option names vary between app versions: look for anything that syncs or backs up online.
+- Recordings already synced by the phone app are no longer on the drive.
 - USB mode can drop under load. Cairn copies file by file, verifies each copy and resumes.
 
 ## Options
@@ -23,7 +24,7 @@ Set before the command: `CAIRN_HOME` (install folder), `CAIRN_LLM` (language mod
 
 ## Update
 
-Run the install command again. It replaces the engine and keeps your notes, settings and models. In the app, the refresh icon in About checks for a new version.
+Cairn looks for a new version once a day (switch in **Settings, Check for updates**) and puts a dot on the info icon when one exists. To update, run the install command again: it replaces the engine and keeps your notes, settings and models.
 
 ## Troubleshooting
 

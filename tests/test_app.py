@@ -327,6 +327,32 @@ class UnitTest(unittest.TestCase):
         with fake([]):
             self.assertIsNone(app.check_update()["latest"])
 
+    def test_watcher_runs_daily_upkeep_only_when_idle(self):
+        from types import SimpleNamespace
+        from unittest import mock
+
+        from cairn import jobs, watch
+
+        calls = []
+        idle = {"running": False}
+        app = SimpleNamespace(
+            jobs=SimpleNamespace(snapshot=lambda: idle, start_privacy=lambda: calls.append("privacy")),
+            check_update=lambda: calls.append("update") or {"available": False}, update_info=None)
+        with mock.patch.object(watch.config, "load_settings", return_value={"autocheck": True}), mock.patch.object(watch.privacy, "last_report", return_value=None):
+            watcher = watch.Watcher(app)
+            idle["running"] = True
+            watcher.tick(now=10**9)
+            self.assertEqual(calls, [])  # never while the user's job runs
+            idle["running"] = False
+            watcher.tick(now=10**9)
+            self.assertEqual(calls, ["update", "privacy"])
+            watcher.tick(now=10**9 + 60)
+            self.assertEqual(calls, ["update", "privacy"])  # once a day
+        calls.clear()
+        with mock.patch.object(watch.config, "load_settings", return_value={"autocheck": False}), mock.patch.object(watch.privacy, "last_report", return_value=None):
+            watch.Watcher(app).tick(now=10**9)
+        self.assertEqual(calls, ["privacy"])  # update check turned off
+
     def test_network_guard_blocks_outside_connections(self):
         import subprocess
 

@@ -14,8 +14,8 @@
 - Process one recording, skip or restore, stop, newest first
 - Secure mode (list hidden by default), FR/EN interface
 - Empty the Pocket only after verification, with double confirmation
-- Component list and manual update check (opt-in, one request to GitHub)
-- Network guard and built-in privacy check
+- Component list and daily update check (one request to GitHub, can be turned off)
+- Network guard and automatic daily privacy check
 - Background mode and installable web app (macOS)
 
 ## Later

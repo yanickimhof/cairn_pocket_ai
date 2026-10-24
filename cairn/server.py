@@ -80,6 +80,11 @@ def session_key():
     return value
 
 
+def _privacy_summary():
+    report = privacy.last_report()
+    return {"ok": bool(report.get("ok")), "when": report.get("when")} if report else None
+
+
 class App:
     """Everything the handlers share."""
 
@@ -89,6 +94,7 @@ class App:
         self.token = session_key()
         self.port = 0
         self.downloads = models.Downloader()
+        self.update_info = None  # set by the background watcher
 
     # Pocket
 
@@ -135,6 +141,8 @@ class App:
             "ollama": llm.available(),
             "download": self.downloads.state(),
             "settings": config.load_settings(),
+            "update": self.update_info,
+            "privacy": _privacy_summary(),
             "totals": {"notes": len(everything), "done": sum(1 for n in everything if n.get("status") == "done"),
                        "waiting": sum(1 for n in everything if n.get("status") in ("waiting", "error"))},
         }
@@ -152,7 +160,6 @@ class App:
         model_dir = Path(cfg["whisper_model"])
         speech = next((m for m in models.speech_entries() if m["id"] == models.selected_speech()), None)
         comps = [
-            {"name": "Cairn", "ver": config.VERSION, "size": _size(Path(__file__).parent), "ok": True},
             {"name": "Qwen3", "ver": (llm_entry or {}).get("label", llm_name).replace("Qwen3 ", "") or llm_name,
              "size": llm_size, "ok": bool(llm_size), "fix": "llm"},
             {"name": "Whisper", "ver": (speech or {}).get("label", "").replace("Whisper ", "") or re.sub(
@@ -405,8 +412,6 @@ def make_handler(app):
                     raise ApiError(400, str(error))
             if method == "POST" and path == "/api/pick-folder":
                 return self._json(200, app.pick_folder())
-            if method == "POST" and path == "/api/update":
-                return self._json(200, app.check_update())
             if method == "GET" and path == "/api/pocket/verify":
                 files, good = app.verify_pocket()
                 return self._json(200, {"total": len(files), "verified": len(good)})

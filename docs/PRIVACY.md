@@ -20,8 +20,8 @@ One rule: **your recordings never leave your computer.**
 | When | Connections |
 |---|---|
 | Installation (once) | Downloads of the engines and models (see [SECURITY.md](../SECURITY.md)) |
-| Everyday use | None |
-| When you ask for it | An optional model download (Ollama registry or Hugging Face), after your confirmation. The update check: one request to GitHub. The referral link in **About** opens Pocket's website in your browser only if you click it; Cairn sends nothing. |
+| Everyday use | One request a day to GitHub to look for a new version (nothing about you is sent; turn it off in **Settings, Check for updates**) |
+| When you ask for it | An optional model download (Ollama registry or Hugging Face), after your confirmation. The referral link in **About** opens Pocket's website in your browser only if you click it; Cairn sends nothing. |
 
 The runtime sets `HF_HUB_OFFLINE=1` and `DO_NOT_TRACK=1`.
 
@@ -35,7 +35,7 @@ Cairn offers export (Markdown, HTML) and copy with formatting. What you do with 
 2. List open connections during processing: `lsof -i -n -P | grep -i -E "ollama|python"`. You should see only `127.0.0.1`.
 3. Block all outgoing connections for Cairn and its models with a firewall.
 
-Cairn can also check for you: in About, click the shield icon. A small local test lists every connection that leaves this computer (expected: none). The model server (Ollama) is a third party program: the check observes it but Cairn does not block it, so a firewall remains the absolute guarantee.
+Cairn also checks for you. Once a day, when idle, it runs a small local test and lists every connection that leaves this computer (expected: none). The shield next to **Local** shows the result: hover it for the date. The model server (Ollama) is a third party program: the check observes it but Cairn does not block it, so a firewall remains the absolute guarantee.
 
 ## Where your data lives
 

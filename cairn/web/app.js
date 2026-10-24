@@ -3,8 +3,8 @@
 
   var D = {
     fr: {
-      brand: "Cairn · Pocket AI souverain", components: "Composants", checkUpd: "Rechercher une mise à jour",
-      upToDate: "À jour", checking: "Vérification…", verIs: "Version ", updAvail: "Mise à jour disponible : ", updFail: "Vérification impossible", updFlash: "Relancez la commande d’installation",
+      brand: "Cairn · Pocket AI souverain", components: "Composants",
+      updAvail: "Mise à jour disponible : ", updFlash: "Relancez la commande d’installation",
       about: "À propos", aboutTagline: "Pocket AI souverain",
       aboutText: "Importez, transcrivez et résumez vos enregistrements Pocket, entièrement sur cet ordinateur. Aucun compte, aucun cloud, aucune télémétrie.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · Licence MIT · Non affilié à Pocket.", uiLang: "Langue de l’interface",
@@ -34,15 +34,15 @@
       deleteConfirm: "Supprimer audio et textes ? Si le Pocket est vidé, plus aucune copie.",
       copied: "Copié", rerunning: "Résumé relancé : ", renamed: "Nom enregistré", deleted: "Supprimé", pocketEmptied: "Pocket vidé",
       ready: "Prêt", waiting: "En attente", failed: "Échec : relancer le résumé", done: "Terminé", modelDown: "Moteur local arrêté : relancez Cairn",
-      privTitle: "Contrôle de confidentialité", privRun: "Lancer le contrôle", privOk: "Aucune connexion vers l’extérieur", privBad: "Connexions détectées", privWait: "Contrôle en cours…", privNever: "Observe les connexions de Cairn et de ses moteurs pendant un test local.", privWhen: "le", privLeft: "Connexion déjà ouverte avant le test (téléchargement antérieur)",
+      privAuto: "Contrôle automatique", privOk: "aucune connexion vers l’extérieur", privBad: "connexions détectées, voir docs/PRIVACY.md", privNone: "en attente", autoCheck: "Vérifier les mises à jour", autoHint: "Une requête à GitHub par jour",
       processNow: "Traiter maintenant", skipIt: "Ignorer", skipped: "Ignoré", putBack: "Remettre dans la file", stopJob: "Arrêter",
       steps: { copying: "Copie depuis le Pocket", transcribing: "Transcription", cleaning: "Nettoyage du texte", summarizing: "Rédaction de la note", privacy: "Vérification de la confidentialité" },
       none: "Aucun enregistrement.", tldr: "En bref", actions: "Actions", points: "Points clés", noSpeech: "Aucune parole détectée.",
       months: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."], error: "Erreur : "
     },
     en: {
-      brand: "Cairn · Sovereign Pocket AI", components: "Components", checkUpd: "Check for updates",
-      upToDate: "Up to date", checking: "Checking…", verIs: "Version ", updAvail: "Update available: ", updFail: "Check failed", updFlash: "Run the install command again",
+      brand: "Cairn · Sovereign Pocket AI", components: "Components",
+      updAvail: "Update available: ", updFlash: "Run the install command again",
       about: "About", aboutTagline: "Sovereign Pocket AI",
       aboutText: "Import, transcribe and summarize your Pocket recordings, entirely on this computer. No account, no cloud, no telemetry.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · MIT license · Not affiliated with Pocket.", uiLang: "Interface language",
@@ -72,7 +72,7 @@
       deleteConfirm: "Delete audio and texts? If the Pocket is emptied, no copy remains.",
       copied: "Copied", rerunning: "Summary rerun: ", renamed: "Name saved", deleted: "Deleted", pocketEmptied: "Pocket emptied",
       ready: "Ready", waiting: "Waiting", failed: "Failed: rerun the summary", done: "Done", modelDown: "Local engine stopped: restart Cairn",
-      privTitle: "Privacy check", privRun: "Run the check", privOk: "No connection to the outside", privBad: "Connections detected", privWait: "Checking…", privNever: "Watches the connections of Cairn and its engines during a local test.", privWhen: "on", privLeft: "Connection already open before the test (earlier download)",
+      privAuto: "Automatic check", privOk: "no connection to the outside", privBad: "connections detected, see docs/PRIVACY.md", privNone: "pending", autoCheck: "Check for updates", autoHint: "One request to GitHub per day",
       processNow: "Process now", skipIt: "Skip", skipped: "Skipped", putBack: "Put back in the queue", stopJob: "Stop",
       steps: { copying: "Copying from the Pocket", transcribing: "Transcribing", cleaning: "Cleaning the text", summarizing: "Writing the note", privacy: "Checking privacy" },
       none: "No recordings.", tldr: "TL;DR", actions: "Actions", points: "Key points", noSpeech: "No speech detected.",
@@ -81,7 +81,6 @@
   };
 
   var I = {
-    lock: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1E8E3E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>',
     info: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path></svg>',
     gear: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg>',
     doc: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v4h4"></path><path d="M10 12h5"></path><path d="M10 16h5"></path></svg>',
@@ -92,7 +91,7 @@
     trash: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4271B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="M6 7l1 13h10l1-13"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>',
     x: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>',
     checkW: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"></path></svg>',
-    shield: function (c) { return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 2.9 8.2 7 9.5 4.1-1.3 7-5 7-9.5V6l-7-3Z"></path><path d="m9 12 2 2 4-4"></path></svg>'; },
+    shield: function (c, n) { n = n || 20; return '<svg width="' + n + '" height="' + n + '" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 2.9 8.2 7 9.5 4.1-1.3 7-5 7-9.5V6l-7-3Z"></path><path d="m9 12 2 2 4-4"></path></svg>'; },
     checkB: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3368A0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"></path></svg>',
     warnB: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C86D51" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4 3 20h18z"></path><path d="M12 10v4"></path><path d="M12 17h.01"></path></svg>',
     refresh: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg>',
@@ -234,6 +233,10 @@
       [["0", t.off, false], ["1", t.on, true]].map(function (o) {
         return '<button type="button" data-a="polish" data-v="' + o[0] + '" class="' + bg(!!st.settings.polish === o[2]).trim() + '">' + esc(o[1]) + "</button>";
       }).join("") + "</div></div>";
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.autoHint) + '><span class="text" style="font-size:14px">' + esc(t.autoCheck) + '</span><div class="seg s38">' +
+      [["0", t.off, false], ["1", t.on, true]].map(function (o) {
+        return '<button type="button" data-a="autocheck" data-v="' + o[0] + '" class="' + bg(st.settings.autocheck !== false === o[2]).trim() + '">' + esc(o[1]) + "</button>";
+      }).join("") + "</div></div>";
     h += '<div class="hr"></div><div class="setrow"' + tip(t.folderHint) + ">" + I.folder;
     h += '<div class="row gap8" style="min-width:0"><span class="text" style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(shortPath(st.settings.audio_dir)) + "</span>";
     h += '<button type="button" class="ib" data-a="folder"' + tip(t.folderChange) + ">" + I.pencil + "</button></div></div>";
@@ -262,22 +265,6 @@
     return bytes < 1e9 ? Math.round(bytes / 1e6) + " MB" : (bytes / 1e9).toFixed(1) + " GB";
   }
 
-  function viewPrivacy(t) {
-    var P = S.priv || {}, rep = P.report, running = P.running || (S.server && S.server.job.running && S.server.job.kind === "privacy");
-    var h = '<div class="priv"><div class="row between gap12"><span style="font-size:14px;font-weight:600">' + esc(t.privTitle) + "</span>" +
-      '<button type="button" class="mbtn" data-a="privRun"' + (running || (S.server && S.server.job.running) ? " disabled" : "") + ">" + esc(t.privRun) + "</button></div>";
-    if (running) { h += '<div class="small">' + esc(t.privWait) + "</div>"; }
-    else if (rep && rep.ok) {
-      h += '<div class="small" style="color:var(--green-ink)">✓ ' + esc(t.privOk) + " · " + esc(t.privWhen + " " + fmtDate(rep.when)) + "</div>";
-      if (rep.leftover && rep.leftover.length) { h += '<div class="small">' + esc(t.privLeft + ": " + rep.leftover.join(" · ")) + "</div>"; }
-    }
-    else if (rep) { h += '<div class="small" style="color:var(--warn)">' + esc(t.privBad) + ": " + esc((rep.external || []).concat(rep.blocked || [], rep.errors || []).join(" · ")) + "</div>"; }
-    else { h += '<div class="small">' + esc(t.privNever) + "</div>"; }
-    return h + "</div>";
-  }
-
-  function loadPriv() { return api("GET", "/api/privacy").then(function (p) { S.priv = p; render(); }).catch(function () { /* keep */ }); }
-
   function viewAbout(t) {
     var h = '<div class="card about"><div><div class="t">Cairn</div><div class="small">' + esc(t.aboutTagline) + "</div></div>";
     h += '<div class="text">' + esc(t.aboutText) + "</div>";
@@ -287,16 +274,10 @@
       h += '<div class="comp"><span class="cn">' + esc(c.name) + '</span><span class="cv">' + esc(c.ok ? c.ver : t.notInstalled) + '</span><span class="cs">' + esc(c.ok ? fmtSize(c.size) : "") + "</span>" + (c.ok ? I.checkB : (fix || I.warnB)) + "</div>";
     });
     h += "</div>";
-    var upd = S.upd, text = t.verIs + (S.about && S.about.version || ""), ink = "var(--mute)";
-    if (S.updBusy) { text = t.checking; }
-    else if (upd && upd.error) { text = t.updFail; ink = "var(--warn)"; }
-    else if (upd && upd.available) { text = t.updAvail + upd.latest; ink = "var(--warn)"; }
-    else if (upd) { text = t.upToDate + " · " + upd.current; ink = "var(--green-ink)"; }
-    h += '<div class="row between gap12"><span style="font-size:14px;font-weight:600;color:' + ink + '">' + esc(text) + "</span>";
-    var rep = S.priv && S.priv.report, sc = !rep ? "#86868B" : (rep.ok ? "#1E8E3E" : "#A4452A");
-    h += '<div class="row" style="gap:2px"><button type="button" class="ib' + bg(S.privOpen) + '" data-a="privToggle"' + tip(t.privTitle) + ">" + I.shield(sc) + "</button>" +
-      '<button type="button" class="ib" data-a="checkUpdate"' + tip(t.checkUpd) + ">" + I.refresh + "</button></div></div>";
-    if (S.privOpen) { h += viewPrivacy(t); }
+    var upd = S.server && S.server.update;
+    if (upd && upd.available) {
+      h += '<div><div class="text" style="font-size:14px;font-weight:600;color:var(--warn)">' + esc(t.updAvail + upd.latest) + '</div><div class="small">' + esc(t.updFlash) + "</div></div>";
+    }
     var ref = S.about && S.about.referral;
     if (ref) {
       h += '<div class="ref"><a href="' + esc(ref) + '" target="_blank" rel="noopener noreferrer"' + tip(t.refNote) + ">" + esc(t.refText) + " ↗</a></div>";
@@ -400,9 +381,11 @@
     var canImport = !job.running && (connected || st.totals.waiting > 0);
     var h = '<main class="wrap"><div class="head"><div class="row gap12"><div class="bw"><h1 class="brand"' + tip(t.brand) + '>Cairn</h1><div class="sub">' + esc(t.aboutTagline) + "</div></div>";
     h += '<button type="button" class="dotbtn"' + tip(connected ? t.connected : t.disconnected) + '><span class="dot" style="background:' + (connected ? "var(--green)" : "var(--orange)") + ";box-shadow:0 0 0 4px " + (connected ? "rgba(31,157,85,.18)" : "rgba(200,109,81,.24)") + '"></span></button>';
-    h += '<span class="pill"' + tip(t.localHint) + ">" + I.lock + esc(t.local) + "</span></div>";
+    var pv = st.privacy, sc = !pv ? "#86868B" : (pv.ok ? "#1E8E3E" : "#A4452A");
+    var pt = t.localHint + ". " + t.privAuto + ": " + (!pv ? t.privNone : (pv.ok ? t.privOk + " · " + fmtDate(pv.when) : t.privBad));
+    h += '<span class="pill"' + tip(pt) + ">" + I.shield(sc, 13) + esc(t.local) + "</span></div>";
     h += '<div class="row" style="gap:2px"><div style="margin-right:6px"' + tip(t.uiLang) + ">" + segLang("ui", ui(), "s34", t, "") + "</div>";
-    h += '<button type="button" class="ib plain' + bg(S.aboutOpen) + '" data-a="about"' + tip(t.about) + ">" + I.info + "</button>";
+    h += '<button type="button" class="ib plain' + bg(S.aboutOpen) + (st.update && st.update.available ? " upd" : "") + '" data-a="about"' + tip(t.about) + ">" + I.info + "</button>";
     h += '<button type="button" class="ib plain' + bg(S.settingsOpen) + '" data-a="settings"' + tip(t.settings) + ">" + I.gear + "</button></div></div>";
     if (S.settingsOpen) { h += viewSettings(t, st); }
     if (S.aboutOpen) { h += viewAbout(t); }
@@ -461,7 +444,6 @@
       if (was && !st.job.running) {
         if (st.job.errors.length) { flash(T().error + st.job.errors[0]); } else { flash(T().done); }
         S.full = {};
-        if (S.aboutOpen) { loadPriv(); }
       }
       if (S.open && !S.hidden) { loadFull(S.open); }
       if (S.modelsOpen && (!S.models || (st.download && st.download.state === "running") || (S.models.job && S.models.job.state === "running"))) { loadModels(); }
@@ -502,11 +484,12 @@
     ui: function (v) { S.ui = v; api("POST", "/api/settings", { ui: v }).then(refresh); },
     tr: function (v) { api("POST", "/api/settings", { tr: v }).then(refresh); },
     polish: function (v) { api("POST", "/api/settings", { polish: v === "1" }).then(refresh); },
+    autocheck: function (v) { api("POST", "/api/settings", { autocheck: v === "1" }).then(refresh); },
     lvl: function (v) { api("POST", "/api/settings", { level: v }).then(refresh); },
     settings: function () { S.settingsOpen = !S.settingsOpen; S.emptyConfirm = false; },
     about: function () {
       S.aboutOpen = !S.aboutOpen;
-      if (S.aboutOpen) { api("GET", "/api/about").then(function (a) { S.about = a; render(); }); loadPriv(); }
+      if (S.aboutOpen) { api("GET", "/api/about").then(function (a) { S.about = a; render(); }); }
     },
     eye: function () {
       S.hidden = !S.hidden;
@@ -571,11 +554,6 @@
     procOne: function (v, id) { noteAction(id, "process"); },
     skipOne: function (v, id) { noteAction(id, "skip"); },
     restoreOne: function (v, id) { noteAction(id, "restore"); },
-    privToggle: function () { S.privOpen = !S.privOpen; },
-    privRun: function () {
-      S.priv = { report: null, running: true };
-      api("POST", "/api/privacy/check").then(refresh).catch(function (e) { S.priv = null; flash(T().error + (e.message === "busy" ? T().mBusy : e.message)); render(); });
-    },
     stopJob: function () { api("POST", "/api/cancel").then(refresh); },
     mAsk: function (kind, id) { S.mAsk = { kind: kind, id: id }; S.mDel = null; },
     mDel: function (kind, id) { S.mDel = { kind: kind, id: id }; S.mAsk = null; },
@@ -592,11 +570,6 @@
     mUse: function (kind, id) {
       api("POST", "/api/models/select", { kind: kind, id: id }).then(function () { return loadModels(); }).then(refresh)
         .catch(function (e) { flash(T().error + (e.message === "busy" ? T().mBusy : e.message)); });
-    },
-    checkUpdate: function () {
-      S.updBusy = true; S.upd = null; render();
-      api("POST", "/api/update").then(function (u) { S.updBusy = false; S.upd = u; if (u.available) { flash(T().updFlash); } render(); })
-        .catch(function () { S.updBusy = false; S.upd = { error: true }; render(); });
     }
   };
 
