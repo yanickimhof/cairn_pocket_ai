@@ -120,6 +120,10 @@ def run_check():
                     seen[(pid, remote)] = seen.get((pid, remote), 0) + 1
             time.sleep(SAMPLE_SECONDS)
 
+    # Connections already open before the test (a keep-alive left by an earlier model download,
+    # for instance) are reported apart: the test itself must not open any.
+    mine0, models0 = watched_pids()
+    baseline = {(pid, remote) for pid, remote in connections(mine0 | models0) if _remote_is_outside(remote)}
     watcher = threading.Thread(target=sample, daemon=True)
     watcher.start()
     try:
@@ -140,10 +144,12 @@ def run_check():
         watcher.join(timeout=3)
     mine, models = watched_pids()
     names = {pid: os.path.basename(command.split(" ")[0]) for pid, _, command in process_table()}
-    external = sorted("%s (%d) -> %s" % (names.get(pid, "?"), pid, remote) for pid, remote in seen)
+    label = lambda key: "%s (%d) -> %s" % (names.get(key[0], "?"), key[0], key[1])  # noqa: E731
+    external = sorted(label(key) for key in seen if key not in baseline)
+    leftover = sorted(label(key) for key in baseline if key in seen)
     report = {
         "when": time.strftime("%Y-%m-%dT%H:%M:%S"), "seconds": round(time.time() - started, 1),
-        "external": external, "blocked": netguard.blocked(), "model_server_seen": bool(models_seen or models),
+        "external": external, "leftover": leftover, "blocked": netguard.blocked(), "model_server_seen": bool(models_seen or models),
         "errors": errors, "ok": not external and not netguard.blocked() and not errors,
         "platform": sys.platform,
     }
