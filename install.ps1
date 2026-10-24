@@ -140,9 +140,10 @@ with open(home + "/config.json", "w") as handle:
 '@
 $ConfigFile = Join-Path ([IO.Path]::GetTempPath()) 'cairn-config.py'
 [IO.File]::WriteAllText($ConfigFile, $ConfigPy, (New-Object Text.UTF8Encoding $false))
-& $Py $ConfigFile $CairnHome $ModelDir $WhisperRepo $Llm $OllamaAddr $Ollama $Here
+& $Py $ConfigFile $CairnHome 'faster' $ModelDir $WhisperRepo $Llm $OllamaAddr $Ollama $Here
+$ConfigStatus = $LASTEXITCODE
 Remove-Item -Force $ConfigFile
-if ($LASTEXITCODE -ne 0) { Fail 'Could not write the configuration.' }
+if ($ConfigStatus -ne 0) { Fail 'Could not write the configuration.' }
 $Cmd = "@echo off`r`nchcp 65001 >nul`r`nset `"CAIRN_HOME=$CairnHome`"`r`nset `"PYTHONPATH=$Here`"`r`nset `"PATH=$CairnHome\bin;%PATH%`"`r`n`"$Py`" -m cairn %*`r`npause`r`n"
 [IO.File]::WriteAllText((Join-Path $CairnHome 'Cairn.cmd'), $Cmd, (New-Object Text.UTF8Encoding $false))
 try {
