@@ -8,7 +8,7 @@ No cloud. No account. No telemetry. Nothing leaves your machine.
 |---|---|---|
 | ![Secure mode](docs/screenshots/secure-mode.png) | ![Recordings](docs/screenshots/recordings.png) | ![Note](docs/screenshots/note.png) |
 
-> **Status: v0.1, preview.** The app runs on your computer in your browser, entirely offline. Checked end to end on macOS by automated tests; Windows checks run in CI, see the [roadmap](docs/ROADMAP.md).
+> **Status: v0.1, preview.** The app runs on your computer in your browser, entirely offline. Checked end to end on macOS and Windows by automated tests, see the [roadmap](docs/ROADMAP.md).
 
 ## Install
 

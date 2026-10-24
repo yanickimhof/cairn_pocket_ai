@@ -232,7 +232,7 @@ class AppTest(unittest.TestCase):
         status, listing = self.c.call("GET", "/api/models")
         self.assertEqual(status, 200)
         self.assertEqual([m["id"] for m in listing["llm"]], ["qwen3:4b", "qwen3:8b", "qwen3:14b"])
-        self.assertEqual([m["id"] for m in listing["speech"]], ["small", "turbo", "large"])
+        self.assertEqual([m["id"] for m in listing["speech"]], ["turbo", "large"])
         self.assertFalse(any(m["installed"] for m in listing["llm"]))
         # nothing is downloaded without an explicit confirmation
         self.assertEqual(self.c.call("POST", "/api/models/install", {"kind": "llm", "id": "qwen3:4b"})[0], 400)
