@@ -59,7 +59,7 @@ See [docs/PRIVACY.md](docs/PRIVACY.md) for how to verify it yourself.
 
 ## Disclaimer
 
-Cairn is an independent, unofficial project. It is **not affiliated with, endorsed by or sponsored by Pocket** ([heypocket.com](https://heypocket.com)). "Pocket", "Pocket AI" and heypocket.com belong to their respective owners. Cairn uses these names only to say which device it works with, includes none of their logos or assets, and reads the files the device exposes in its USB mode.
+Cairn is an independent, unofficial project. It is **not affiliated with, endorsed by or sponsored by Pocket** ([heypocket.com](https://heypocket.com)), a product of Open Vision Engineering Inc. "Pocket" and "Pocket AI" are trademarks or product names of their respective owners. Cairn uses these names only to say which device it works with, includes none of their logos or assets, and reads the files the device exposes in its USB mode.
 
 Use Cairn responsibly: make sure you have the right, and the consent where required, to record and process conversations.
 
