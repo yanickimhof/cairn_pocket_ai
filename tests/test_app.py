@@ -264,6 +264,31 @@ class AppTest(unittest.TestCase):
         self.assertFalse([m for m in self.c.call("GET", "/api/models")[1]["llm"] if m["id"] == "qwen3:4b"][0]["installed"])
 
 
+    def test_12_skip_and_process_one(self):
+        notes = self.c.call("GET", "/api/state")[1]["notes"]
+        nid = notes[0]["id"]
+        self.assertEqual(self.c.call("POST", "/api/note/%s/process" % nid)[0] in (202, 400), True)
+        self.wait_idle()
+        waiting = {"id": "w-test", "source": "w.wav", "status": "waiting", "title": "", "date": "2026-01-01T10:00:00", "audio": str(self.pocket / "none.wav")}
+        self.app.store.save(waiting)
+        self.assertEqual(self.c.call("POST", "/api/note/w-test/skip")[0], 200)
+        state = self.c.call("GET", "/api/state")[1]
+        self.assertEqual([n["status"] for n in state["notes"] if n["id"] == "w-test"], ["skipped"])
+        self.assertNotIn("w-test", [n["id"] for n in self.app.store.all() if n["status"] in ("waiting", "error")])
+        self.assertEqual(self.c.call("POST", "/api/note/w-test/restore")[0], 200)
+        self.assertEqual(self.app.store.get("w-test")["status"], "waiting")
+        self.assertEqual(self.c.call("POST", "/api/cancel")[0], 200)
+        self.app.store.delete("w-test")
+
+    def test_13_web_app_files(self):
+        status, _ = self.c.call("GET", "/manifest.webmanifest", cookie=False)
+        self.assertEqual(status, 200)
+        self.assertEqual(self.c.call("GET", "/icon-192.png", cookie=False)[0], 200)
+        self.assertEqual(self.c.call("GET", "/app.js", cookie=False)[0], 403)  # the app itself still needs the session
+        from cairn import server
+
+        self.assertEqual(server.session_key(), server.session_key())
+
     def test_11_about_components(self):
         status, data = self.c.call("GET", "/api/about")
         self.assertEqual(status, 200)
@@ -276,6 +301,28 @@ class AppTest(unittest.TestCase):
 
 
 class UnitTest(unittest.TestCase):
+    def test_background_service_files(self):
+        import plistlib
+        import stat
+
+        from cairn import __main__ as entry
+        from cairn import config, service
+
+        plist = service.agent_plist()
+        self.assertTrue(plist["KeepAlive"] and plist["RunAtLoad"])
+        self.assertEqual(plist["ProgramArguments"][-1], "--no-browser")
+        info, script = service.app_files()
+        self.assertEqual(plistlib.loads(info)["CFBundleExecutable"], "Cairn")
+        self.assertIn("service open", script)
+
+        class Stub:
+            port, token = 8765, "abc"
+
+        entry.write_url(Stub)
+        path = config.home() / "url.txt"
+        self.assertEqual(path.read_text().strip(), "http://127.0.0.1:8765/?k=abc")
+        self.assertEqual(stat.S_IMODE(path.stat().st_mode) & 0o077, 0)
+
     def test_mp3_duration(self):
         from cairn import pocket
 

@@ -18,6 +18,7 @@ class Jobs:
         self.store = store
         self.lock = threading.Lock()
         self._state = {"running": False, "kind": "", "step": "", "id": None, "done": 0, "total": 0, "pct": None, "errors": []}
+        self.cancelled = False
         self.store.reset_interrupted()
 
     def snapshot(self):
@@ -37,6 +38,7 @@ class Jobs:
             if self._state["running"]:
                 raise Busy("A job is already running.")
             self._state.update(running=True, kind=kind, step="", id=None, done=0, total=0, pct=None, errors=[])
+            self.cancelled = False
         threading.Thread(target=self._guard, args=(target,) + args, daemon=True).start()
 
     def _guard(self, target, *args):
@@ -46,6 +48,49 @@ class Jobs:
             self._fail(str(error))
         finally:
             self._set(running=False, step="", id=None, pct=None)
+
+    def cancel(self):
+        """Stop after the step in progress; a transcription is interrupted at once."""
+        with self.lock:
+            if not self._state["running"]:
+                return
+            self.cancelled = True
+        speech.abort()
+
+    def skip(self, note_id):
+        """Leave a recording out of the queue (it stays available and can be put back)."""
+        note = self.store.get(note_id)
+        if note.get("status") in ("waiting", "error"):
+            note.update(status="skipped", step="", error="")
+            self.store.save(note)
+
+    def restore(self, note_id):
+        note = self.store.get(note_id)
+        if note.get("status") == "skipped":
+            note["status"] = "waiting"
+            self.store.save(note)
+
+    def start_process(self, note_id):
+        """Process one chosen recording now."""
+        note = self.store.get(note_id)
+        if note.get("status") == "done" or not os.path.exists(note.get("audio", "")):
+            raise ValueError("not_processable")
+        self._start("import", self._one, note_id)
+
+    def _one(self, note_id):
+        self._set(total=1, done=0, id=note_id)
+        try:
+            self._process(note_id, config.load_settings())
+        except Exception as error:
+            if self.cancelled:
+                self._reset(note_id)
+            else:
+                raise error
+
+    def _reset(self, note_id):
+        note = self.store.get(note_id)
+        note.update(status="waiting", step="", error="")
+        self.store.save(note)
 
     # Import
 
@@ -66,13 +111,18 @@ class Jobs:
                 except OSError as error:
                     self._fail("%s: %s" % (path.name, error))
         pending = [n for n in self.store.all() if n.get("status") in ("waiting", "error") and os.path.exists(n.get("audio", ""))]
-        pending.sort(key=lambda n: n.get("date") or "")
+        pending.sort(key=lambda n: n.get("date") or "", reverse=True)  # newest first
         self._set(step="", done=0, total=len(pending))
         for index, note in enumerate(pending):
+            if self.cancelled:
+                break
             self._set(done=index, id=note["id"])
             try:
                 self._process(note["id"], settings)
             except Exception as error:  # keep going with the next recording
+                if self.cancelled:
+                    self._reset(note["id"])
+                    break
                 self._fail("%s: %s" % (note.get("title") or note["id"], error))
 
     def _copy_one(self, source, path, audio_dir):

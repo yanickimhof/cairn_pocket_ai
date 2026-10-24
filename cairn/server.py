@@ -20,13 +20,15 @@ from urllib.parse import parse_qs, quote, urlparse
 from . import catalog, config, jobs, llm, models, notes, pocket, render
 
 WEB = Path(__file__).parent / "web"
-STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg", "/referral-qr.svg": "referral-qr.svg"}
+STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg", "/referral-qr.svg": "referral-qr.svg",
+          "/manifest.webmanifest": "manifest.webmanifest", "/icon-192.png": "icon-192.png", "/icon-512.png": "icon-512.png"}
+PUBLIC = {"/favicon.svg", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"}  # nothing private: the browser fetches them without the session cookie
 COOKIE = "cairn_session"
 MAX_BODY = 1 << 20
 EXPORTS = {"md": ("text/markdown", ".md"), "html": ("text/html", ".html"), "text": ("text/plain", ".txt")}
 CSP = (
     "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
-    "connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    "connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 )
 
 
@@ -55,13 +57,36 @@ def _version_tuple(text):
     return tuple(int(x) for x in re.findall(r"\d+", text)[:3])
 
 
+DEFAULT_PORT = 8731
+
+
+def session_key():
+    """The session key, kept in a private file so an installed web app and its cookie survive restarts."""
+    path = config.home() / "session.key"
+    try:
+        value = path.read_text(encoding="utf-8").strip()
+        if len(value) >= 32:
+            return value
+    except OSError:
+        pass
+    value = secrets.token_urlsafe(24)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(value)
+    except OSError:
+        pass
+    return value
+
+
 class App:
     """Everything the handlers share."""
 
     def __init__(self):
         self.store = notes.Store(config.home() / "Texts")
         self.jobs = jobs.Jobs(self.store)
-        self.token = secrets.token_urlsafe(24)
+        self.token = session_key()
         self.port = 0
         self.downloads = models.Downloader()
 
@@ -310,14 +335,14 @@ def make_handler(app):
                 if host not in ("127.0.0.1:%d" % app.port, "localhost:%d" % app.port):
                     raise ApiError(403, "forbidden")
                 if key and hmac.compare_digest(key, app.token):
-                    cookie = "%s=%s; HttpOnly; SameSite=Strict; Path=/" % (COOKIE, app.token)
+                    cookie = "%s=%s; HttpOnly; SameSite=Strict; Path=/; Max-Age=31536000" % (COOKIE, app.token)
                     return self._send(303, b"", "text/plain", {"Location": "/", "Set-Cookie": cookie})
                 if not self._authorized():
                     return self._send(403, "Open Cairn from its launcher.", "text/plain")
-            elif not self._authorized():
+            elif url.path not in PUBLIC and not self._authorized():
                 raise ApiError(403, "forbidden")
             name = STATIC[url.path]
-            ctype = mimetypes.guess_type(name)[0] or "application/octet-stream"
+            ctype = "application/manifest+json" if name.endswith(".webmanifest") else mimetypes.guess_type(name)[0] or "application/octet-stream"
             return self._send(200, (WEB / name).read_bytes(), ctype)
 
         def _api(self, method, path, body, query):
@@ -331,6 +356,9 @@ def make_handler(app):
                 except jobs.Busy:
                     raise ApiError(409, "busy")
                 return self._json(202, {"ok": True})
+            if method == "POST" and path == "/api/cancel":
+                app.jobs.cancel()
+                return self._json(200, {"ok": True})
             if method == "POST" and path == "/api/settings":
                 try:
                     return self._json(200, config.save_settings(body))
@@ -413,6 +441,19 @@ def make_handler(app):
                 except jobs.Busy:
                     raise ApiError(409, "busy")
                 return self._json(202, {"ok": True})
+            if method == "POST" and action == "process":
+                app.get_note(note_id)
+                try:
+                    app.jobs.start_process(note_id)
+                except jobs.Busy:
+                    raise ApiError(409, "busy")
+                except ValueError as error:
+                    raise ApiError(400, str(error))
+                return self._json(202, {"ok": True})
+            if method == "POST" and action in ("skip", "restore"):
+                app.get_note(note_id)
+                getattr(app.jobs, action)(note_id)
+                return self._json(200, {"ok": True})
             if method == "POST" and action == "delete":
                 app.delete_note(note_id)
                 return self._json(200, {"ok": True})
@@ -421,7 +462,7 @@ def make_handler(app):
     return Handler
 
 
-def make_server(port=8765):
+def make_server(port=DEFAULT_PORT):
     """Bind to 127.0.0.1 only. Tries the next ports when the first one is taken."""
     app = App()
     last = None
