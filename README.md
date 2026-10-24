@@ -39,6 +39,8 @@ irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/main/install.p
 | USB | A USB-C port with data access (USB storage allowed) |
 | Pocket | USB mode enabled in the Pocket app |
 
+**Models.** Cairn installs models that do the job well: Whisper large-v3-turbo for transcription and Qwen3 8B for notes. If you already have Ollama, Cairn reuses it and any model it already holds (nothing is reinstalled or modified, so the download is smaller). Models too small to give reliable notes are refused by the installer. For a modest computer, use `CAIRN_LLM=qwen3:4b`.
+
 Details and Pocket setup: [docs/INSTALL.md](docs/INSTALL.md). The full list of downloads, with versions and sizes: [SECURITY.md](SECURITY.md).
 
 ## How to use it
@@ -70,7 +72,7 @@ See [docs/PRIVACY.md](docs/PRIVACY.md) for how to verify it yourself.
 
 ## Buying a Pocket
 
-Cairn is free and works with any Pocket you already own. If you are still thinking about getting one, you can buy it on the official site, [heypocket.com](https://heypocket.com). Using the maintainer's [referral link](https://referral.heypocketai.com/refer/39179caf?source=desktop_qr) is entirely optional. It is Pocket's own referral programme: the offer (currently 10% off at the time of writing) and its availability are set solely by Pocket, can change or end at any time, and the maintainer has no control over them. If you use the link, the maintainer receives a reward from Pocket's programme at no cost to you. Cairn works the same whether you use it or not.
+Cairn is free and works with any Pocket you already own. If you are still thinking about getting one, you can buy it on the official site, [heypocket.com](https://heypocket.com). Using the maintainer's [referral link](https://referral.heypocketai.com/refer/39179caf?source=desktop_copy) is entirely optional. It is Pocket's own referral programme: the offer (currently 10% off at the time of writing) and its availability are set solely by Pocket, can change or end at any time, and the maintainer has no control over them. If you use the link, the maintainer receives a reward from Pocket's programme at no cost to you. Cairn works the same whether you use it or not.
 
 ## Disclaimer
 

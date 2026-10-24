@@ -19,7 +19,7 @@ Good to know
 
 ## Options
 
-Set before the command: `CAIRN_HOME` (install folder), `CAIRN_LLM` (language model, default `qwen3:8b`), `CAIRN_REF` (branch or tag).
+Set before the command: `CAIRN_HOME` (install folder), `CAIRN_LLM` (language model, default `qwen3:8b`), `CAIRN_WHISPER_REPO` (speech model), `CAIRN_REF` (branch or tag). Models too small to be useful (Whisper tiny or base, language models under 3B) are refused. If Ollama is already installed, Cairn reuses it and the models it holds.
 
 ## Troubleshooting
 
