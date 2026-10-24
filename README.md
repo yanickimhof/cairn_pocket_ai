@@ -33,17 +33,19 @@ irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/main/install.p
 | | Minimum | Recommended |
 |---|---|---|
 | Processor | 64-bit, 4 cores. Intel Mac or Windows PC: works, but slower | Apple silicon (M1 or later), or a recent 8-core PC |
-| Memory | 8 GB, with the lighter language model (`CAIRN_LLM=qwen3:4b`) | 16 GB or more, with the default model |
-| Disk space | 15 GB free | 20 GB free (notes and audio take extra space) |
+| Memory | 8 GB | 16 GB or more (needed for the larger models) |
+| Disk space | 12 GB free | 20 GB free (notes and audio take extra space) |
 | Operating system | macOS 14 or later, Windows 10 22H2 or later | The latest version of either |
 | Graphics card | Not required | Not required |
-| Internet | During installation only, about 9 to 10 GB to download (about 3.5 GB if Ollama and the language model are already installed) | |
+| Internet | During installation only: about 5.5 GB to download on a Mac, about 7 GB on Windows. Less if Ollama and a Qwen3 model are already installed (about 2.5 GB). | |
 | USB | A USB-C port with data access (USB storage allowed) | |
 | Pocket | USB mode enabled in the Pocket app | |
 
 Processing happens on your computer, so a faster machine means faster notes. Everything works offline once installed.
 
-**Models.** Cairn installs models that do the job well: Whisper large-v3-turbo for transcription and Qwen3 8B for notes. If you already have Ollama, Cairn reuses it and any model it already holds (nothing is reinstalled or modified, so the download is smaller). Models too small to give reliable notes are refused by the installer. For a modest computer, use `CAIRN_LLM=qwen3:4b`.
+**Models.** The default install is the smallest one that gives good results: Whisper large-v3-turbo for transcription (1.6 GB) and Qwen3 4B for notes (2.5 GB). Tests on a French recording showed that smaller speech models misheard names and so produced wrong actions, which is why Cairn does not offer them. If you already have Qwen3 8B in Ollama, Cairn uses it without downloading anything, and it never modifies your existing Ollama or models.
+
+**More powerful models, on demand.** Open Cairn, then **Settings, Models**. Pick a larger model (Qwen3 8B, Qwen3 14B, Whisper large-v3), confirm the download, and wait for the progress to finish. Then press **Use**. Nothing is downloaded without your click.
 
 Details and Pocket setup: [docs/INSTALL.md](docs/INSTALL.md). The full list of downloads, with versions and sizes: [SECURITY.md](SECURITY.md).
 
@@ -53,6 +55,7 @@ Details and Pocket setup: [docs/INSTALL.md](docs/INSTALL.md). The full list of d
 2. Start Cairn: double-click `Cairn.command` in your Cairn folder (Start menu shortcut or `Cairn.cmd` on Windows), or run `~/Cairn/bin/cairn`. Your browser opens a page served only by your own computer (127.0.0.1), protected by a one-time session key.
 3. Plug in your Pocket (USB mode) and click **Import**. Cairn copies and verifies every recording, transcribes it, then cleans and summarizes it.
 4. Read, rename, copy or export each note (Markdown, HTML). Exports are saved in `~/Cairn/Exports`.
+5. Want sharper summaries? Add a larger model from **Settings, Models**.
 
 Secure mode hides the list of notes until you reveal it.
 

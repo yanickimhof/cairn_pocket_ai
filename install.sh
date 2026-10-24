@@ -4,7 +4,7 @@
 #
 #   curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/main/install.sh | bash
 #
-# Optional variables: CAIRN_HOME (default ~/Cairn), CAIRN_LLM (default qwen3:8b),
+# Optional variables: CAIRN_HOME (default ~/Cairn), CAIRN_LLM (default qwen3:4b),
 # CAIRN_WHISPER_REPO (speech model), CAIRN_REF (branch or tag to install).
 set -euo pipefail
 umask 077
@@ -12,7 +12,7 @@ umask 077
 REPO="yanickimhof/cairn_pocket_ai"
 REF="${CAIRN_REF:-main}"
 CAIRN_HOME="${CAIRN_HOME:-$HOME/Cairn}"
-LLM="${CAIRN_LLM:-qwen3:8b}"
+LLM="${CAIRN_LLM:-qwen3:4b}"
 OLLAMA_ADDR="127.0.0.1:11434"
 SERVER_PID=""
 
@@ -80,6 +80,7 @@ say "Creating the isolated Python environment"
 PY="$CAIRN_HOME/.venv/bin/python"
 say "Installing the speech engine (versions and hashes pinned)"
 "$UV" pip install --python "$PY" --require-hashes -r "$HERE/requirements/$REQ"
+rm -rf "$CAIRN_HOME/.cache/uv"   # download cache, not needed once installed (saves about 0.9 GB)
 if [ "$ENGINE" = "mlx" ]; then
   # The speech engine reads audio through ffmpeg: use the build shipped in a pinned package.
   FFMPEG="$("$PY" -c 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())')"
@@ -116,6 +117,11 @@ if ! curl -fs "http://$OLLAMA_ADDR/api/version" >/dev/null 2>&1; then
     sleep 1
   done
   curl -fs "http://$OLLAMA_ADDR/api/version" >/dev/null 2>&1 || die "The model server did not start. See $CAIRN_HOME/ollama.log"
+fi
+# Already have a better Qwen3 in Ollama? Use it instead of downloading another model.
+if [ -z "${CAIRN_LLM:-}" ] && "$OLLAMA" list 2>/dev/null | awk '{print $1}' | grep -qx 'qwen3:8b'; then
+  LLM="qwen3:8b"
+  say "Found $LLM in your Ollama: using it, nothing to download"
 fi
 say "Downloading the language model: $LLM"
 "$OLLAMA" pull "$LLM"

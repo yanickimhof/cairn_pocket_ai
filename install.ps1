@@ -3,7 +3,7 @@
 #
 #   irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/main/install.ps1 | iex
 #
-# Optional variables: CAIRN_HOME (default %USERPROFILE%\Cairn), CAIRN_LLM (default qwen3:8b),
+# Optional variables: CAIRN_HOME (default %USERPROFILE%\Cairn), CAIRN_LLM (default qwen3:4b),
 # CAIRN_WHISPER_REPO (speech model), CAIRN_REF (branch or tag to install).
 #Requires -Version 5.1
 $ErrorActionPreference = 'Stop'
@@ -18,7 +18,7 @@ function Opt($name, $default) { $v = [Environment]::GetEnvironmentVariable($name
 $Repo = 'yanickimhof/cairn_pocket_ai'
 $Ref = Opt 'CAIRN_REF' 'main'
 $CairnHome = Opt 'CAIRN_HOME' (Join-Path $env:USERPROFILE 'Cairn')
-$Llm = Opt 'CAIRN_LLM' 'qwen3:8b'
+$Llm = Opt 'CAIRN_LLM' 'qwen3:4b'
 $OllamaAddr = '127.0.0.1:11434'
 $WhisperRepo = Opt 'CAIRN_WHISPER_REPO' 'deepdml/faster-whisper-large-v3-turbo-ct2'
 if ($env:CAIRN_ALLOW_TEST_MODELS -ne '1') {
@@ -68,6 +68,7 @@ $Py = Join-Path $CairnHome '.venv\Scripts\python.exe'
 Say 'Installing the speech engine (versions and hashes pinned)'
 & $Uv pip install --python $Py --require-hashes -r $Req
 if ($LASTEXITCODE -ne 0) { Fail 'Speech engine installation failed.' }
+Remove-Item -Recurse -Force (Join-Path $CairnHome '.cache') -ErrorAction SilentlyContinue   # download cache, not needed once installed
 
 # 4. Local model server (Ollama)
 function Find-Ollama {
@@ -102,6 +103,10 @@ if (-not (Server-Up)) {
   $Started = Start-Process -FilePath $Ollama -ArgumentList 'serve' -WindowStyle Hidden -PassThru
   for ($i = 0; $i -lt 60 -and -not (Server-Up); $i++) { Start-Sleep -Seconds 1 }
   if (-not (Server-Up)) { Fail 'The model server did not start.' }
+}
+if (-not $env:CAIRN_LLM) {
+  $have = (& $Ollama list 2>$null) -split "`n" | ForEach-Object { ($_ -split '\s+')[0] }
+  if ($have -contains 'qwen3:8b') { $Llm = 'qwen3:8b'; Say "Found $Llm in your Ollama: using it, nothing to download" }
 }
 Say "Downloading the language model: $Llm"
 & $Ollama pull $Llm
