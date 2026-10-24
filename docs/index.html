@@ -17,7 +17,7 @@ pre{margin:0 0 16px;background:var(--code);border-radius:12px;padding:14px 16px;
 button{min-height:44px;padding:0 20px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:600 15px inherit;cursor:pointer}
 .alt{margin-top:24px;font-size:14px;color:var(--mute)}
 a{color:var(--accent)}
-</style>
+.spec{margin-top:16px}table{width:100%;border-collapse:collapse;font-size:14px}td{padding:8px 0;border-top:1px solid var(--line)}td:last-child{text-align:right;color:var(--mute);white-space:nowrap}.min{font-size:14px;margin:0 0 12px;color:var(--ink)}</style>
 </head>
 <body>
 <main>
@@ -29,7 +29,7 @@ a{color:var(--accent)}
 <button id="copy" type="button">Copy</button>
 <div class="alt" id="alt"></div>
 </div>
-<p class="alt" style="margin-top:24px">The command downloads and sets up everything in your own folder, with no administrator rights. <a href="https://github.com/yanickimhof/cairn_pocket_ai/blob/main/SECURITY.md">Read before you run</a> · <a href="https://github.com/yanickimhof/cairn_pocket_ai">Source</a></p>
+<div class="card spec"><div class="label">What it installs</div><p class="min" id="min"></p><table id="spec"></table></div><p class="alt" style="margin-top:24px">The command downloads and sets up everything in your own folder, with no administrator rights. <a href="https://github.com/yanickimhof/cairn_pocket_ai/blob/main/SECURITY.md">Read before you run</a> · <a href="https://github.com/yanickimhof/cairn_pocket_ai">Source</a></p>
 </main>
 <script>
 var base = "https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/main/";
@@ -39,7 +39,22 @@ var cmds = {
 };
 var ua = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || navigator.userAgent || "";
 var key = /win/i.test(ua) ? "ps" : "sh";
+var specs = {
+  sh: { min: "Minimum: macOS 14 or later, Apple silicon recommended. About 9 GB of disk.", rows: [["Whisper large-v3-turbo (speech)", "1.6 GB"], ["Qwen3 8B (language model)", "5.2 GB"], ["Ollama (model server)", "0.2 GB"], ["Python 3.11 and packages", "1 GB"]] },
+  ps: { min: "Minimum: Windows 10 22H2 or later. About 12 GB of disk (estimate).", rows: [["Whisper large-v3-turbo (speech)", "1.6 GB"], ["Qwen3 8B (language model)", "5.2 GB"], ["Ollama (model server)", "1.7 GB download, about 4 GB installed"], ["Python 3.11 and packages", "About 1 GB"]] }
+};
+function showSpec(k) {
+  document.getElementById("min").textContent = specs[k].min;
+  var t = document.getElementById("spec");
+  t.textContent = "";
+  specs[k].rows.forEach(function (r) {
+    var tr = document.createElement("tr");
+    r.forEach(function (c) { var td = document.createElement("td"); td.textContent = c; tr.appendChild(td); });
+    t.appendChild(tr);
+  });
+}
 function show(k) {
+  showSpec(k);
   document.getElementById("label").textContent = cmds[k].label;
   document.getElementById("cmd").textContent = cmds[k].text;
   var other = k === "ps" ? "sh" : "ps";

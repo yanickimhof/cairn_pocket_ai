@@ -6,21 +6,24 @@ Use GitHub's private vulnerability reporting (Security tab, "Report a vulnerabil
 
 ## What the installer downloads
 
-| What | From | Protection |
-|---|---|---|
-| Cairn files | GitHub | HTTPS only (TLS 1.2 or later); you can pin a tag with `CAIRN_REF` |
-| Python manager (uv) | astral.sh | Official installer, kept inside the Cairn folder, your shell profile is not modified |
-| Python packages | PyPI | Versions and SHA-256 hashes pinned in `requirements/`, installed with `--require-hashes` |
-| Local model server (Ollama) | ollama.com | Code signature checked before use, installed for your user only |
-| Language model | Ollama registry | Layers verified by digest |
-| Speech model | Hugging Face | Downloaded once, then used offline (`HF_HUB_OFFLINE=1`) |
+| Component | Version | Size | From | Protection |
+|---|---|---|---|---|
+| Cairn files | Latest `main`, or the tag in `CAIRN_REF` | Under 1 MB | GitHub | HTTPS only (TLS 1.2 or later) |
+| Python manager (uv) | Latest | About 30 MB | astral.sh | Official installer, kept inside the Cairn folder, your shell profile is not modified |
+| Python | 3.11 | About 90 MB | uv | Kept inside the Cairn folder |
+| Python packages | Pinned in `requirements/` | About 1 GB | PyPI | Versions and SHA-256 hashes pinned, installed with `--require-hashes` |
+| Local model server (Ollama) | Latest | 0.2 to 1.7 GB, depending on your system | ollama.com | Code signature checked before use, installed for your user only |
+| Language model | Qwen3 8B (`CAIRN_LLM`, default `qwen3:8b`), 5.2 GB. Qwen3 4B: 2.5 GB | 5.2 GB | Ollama registry | Layers verified by digest |
+| Speech model | Whisper large-v3-turbo | 1.6 GB | Hugging Face | Downloaded once, then used offline (`HF_HUB_OFFLINE=1`) |
+
+About 9 GB in total. The install page shows the exact minimum version and the sizes for your system.
 
 ## Safeguards
 
 - No `sudo`, no administrator rights, no change to system settings.
 - Everything lives in one folder with owner-only permissions. Delete it to uninstall.
-- The model server listens on `127.0.0.1` only. The self test refuses any other address.
-- No telemetry, no email, no outgoing connection in everyday use.
+- The model server listens on `127.0.0.1` only (your own computer). The self test refuses any other address.
+- No telemetry and no outgoing connection in everyday use.
 - Continuous checks on every change: shell and Python static analysis, secrets scan, and a full install test on both families of systems.
 
 ## Read before you run
