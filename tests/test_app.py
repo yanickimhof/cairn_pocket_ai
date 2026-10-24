@@ -310,6 +310,24 @@ class AppTest(unittest.TestCase):
 
 
 class UnitTest(unittest.TestCase):
+    def test_update_check_sees_prereleases(self):
+        import io
+        from unittest import mock
+
+        from cairn import config, server
+
+        def fake(payload):
+            return mock.patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(payload).encode()))
+
+        app = server.App.__new__(server.App)
+        with fake([{"tag_name": "v9.0.0", "prerelease": True, "draft": False}, {"tag_name": "v99.0.0", "draft": True}]):
+            result = app.check_update()
+        self.assertEqual((result["latest"], result["available"]), ("v9.0.0", True))
+        with fake([{"tag_name": "v" + config.VERSION}]):
+            self.assertFalse(app.check_update()["available"])
+        with fake([]):
+            self.assertIsNone(app.check_update()["latest"])
+
     def test_network_guard_blocks_outside_connections(self):
         import subprocess
 
