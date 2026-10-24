@@ -1,8 +1,12 @@
 """Local language model (Ollama on 127.0.0.1): clean, title and summarize."""
 
 import json
+import os
+import shutil
 import urllib.error
 import urllib.request
+
+from pathlib import Path
 
 from . import config
 
@@ -36,6 +40,23 @@ def _get(path, timeout=5):
     # Loopback only, plain http, fixed scheme: the address is validated in _host().
     with urllib.request.urlopen("http://%s%s" % (_host(), path), timeout=timeout) as response:  # nosec B310
         return json.load(response)
+
+
+def find_ollama(cfg=None):
+    """Path of the Ollama program (configured, on the PATH, or in a usual place), or None."""
+    cfg = cfg or config.install_config()
+    home = config.home()
+    candidates = [
+        cfg.get("ollama_bin"), shutil.which("ollama"),
+        home / "bin" / "ollama" / "ollama.exe",
+        home / "bin" / "Ollama.app" / "Contents" / "Resources" / "ollama",
+        "/Applications/Ollama.app/Contents/Resources/ollama",
+        Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Ollama" / "ollama.exe",
+    ]
+    for candidate in candidates:
+        if candidate and Path(candidate).is_file():
+            return str(candidate)
+    return None
 
 
 def available():
@@ -80,7 +101,7 @@ def _ctx(text):
     return 8192 if len(text.split()) < 3500 else 16384
 
 
-def clean(lines, lang):
+def clean(lines, lang, progress=None):
     """Rewrite raw recognized speech into readable text, chunk by chunk."""
     chunks, current, count = [], [], 0
     for line in lines:
@@ -98,7 +119,12 @@ def clean(lines, lang):
         "do not summarize, do not remove information. Translate passages in another language into %s. "
         "Keep the [mm:ss] markers at the start of paragraphs. Reply with the corrected text only." % (NAMES[lang], NAMES[lang])
     )
-    return "\n\n".join(chat(system, "\n".join(chunk)) for chunk in chunks)
+    out = []
+    for index, chunk in enumerate(chunks):
+        if progress:
+            progress(int(100 * index / len(chunks)))
+        out.append(chat(system, "\n".join(chunk)))
+    return "\n\n".join(out)
 
 
 def _schema(level):

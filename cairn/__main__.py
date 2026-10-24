@@ -13,21 +13,10 @@ import time
 import webbrowser
 from pathlib import Path
 
-from . import config, llm, server
+from . import config, llm, server, speech
 
 
-def find_ollama(cfg):
-    candidates = [cfg.get("ollama_bin"), shutil.which("ollama")]
-    home = config.home()
-    candidates += [
-        home / "bin" / "Ollama.app" / "Contents" / "Resources" / "ollama",
-        "/Applications/Ollama.app/Contents/Resources/ollama",
-        Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Ollama" / "ollama.exe",
-    ]
-    for candidate in candidates:
-        if candidate and Path(candidate).is_file():
-            return str(candidate)
-    return None
+find_ollama = llm.find_ollama
 
 
 def start_model_server():
@@ -73,6 +62,7 @@ def main(argv=None):
         pass
     finally:
         httpd.server_close()
+        speech.shutdown()
         if started:
             started.terminate()
     return 0

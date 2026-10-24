@@ -3,11 +3,13 @@
 
   var D = {
     fr: {
-      brand: "Cairn · Pocket AI souverain", components: "Composants requis", checkUpd: "Rechercher une mise à jour",
+      brand: "Cairn · Pocket AI souverain", components: "Composants", checkUpd: "Rechercher une mise à jour",
       upToDate: "À jour", updAvail: "Mise à jour disponible : ", updFail: "Vérification impossible", updFlash: "Relance la commande d’installation",
       about: "À propos", aboutTagline: "Pocket AI souverain",
-      aboutText: "Importe les enregistrements de ton Pocket, puis les transcrit et les résume sur ton ordinateur. Aucun cloud, aucun courriel : rien ne sort.",
+      aboutText: "Transcrit et résume tes enregistrements Pocket sur ton ordinateur. Aucun cloud : rien ne sort.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · Licence MIT · Non affilié à Pocket.", uiLang: "Langue de l’interface",
+      polish: "Réécrire le transcript", polishHint: "Plus lisible, mais nettement plus lent", off: "Non", on: "Oui",
+      processedIn: "traité en", notInstalled: "Non installé", getIt: "Installer", refText: "Offrir un Pocket : 10 % de réduction", refQr: "QR code", refNote: "Lien de parrainage facultatif. L’offre dépend uniquement de Pocket et peut changer.",
       models: "Modèles", modelsHint: "Choisir ou ajouter des modèles", modelsSpeech: "Transcription", modelsLlm: "Résumés",
       mUse: "Utiliser", mInUse: "Utilisé", mInstall: "Installer", mTier: { light: "Léger", standard: "Standard", high: "Élevé" },
       mRam: "{n} Go de mémoire conseillés", mConfirm: "Télécharger {name} ({size}) ? Une connexion internet est utilisée pour ce seul téléchargement.",
@@ -37,11 +39,13 @@
       months: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."], error: "Erreur : "
     },
     en: {
-      brand: "Cairn · Sovereign Pocket AI", components: "Required components", checkUpd: "Check for updates",
+      brand: "Cairn · Sovereign Pocket AI", components: "Components", checkUpd: "Check for updates",
       upToDate: "Up to date", updAvail: "Update available: ", updFail: "Check failed", updFlash: "Run the install command again",
       about: "About", aboutTagline: "Sovereign Pocket AI",
-      aboutText: "Imports your Pocket recordings, then transcribes and summarizes them on your computer. No cloud, no email: nothing leaves.",
+      aboutText: "Transcribes and summarizes your Pocket recordings on your computer. No cloud: nothing leaves it.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · MIT license · Not affiliated with Pocket.", uiLang: "Interface language",
+      polish: "Polish the transcript", polishHint: "More readable, but much slower", off: "Off", on: "On",
+      processedIn: "processed in", notInstalled: "Not installed", getIt: "Install", refText: "Get a Pocket: 10 % off", refQr: "QR code", refNote: "Optional referral link. The offer is set by Pocket alone and may change.",
       models: "Models", modelsHint: "Choose or add models", modelsSpeech: "Transcription", modelsLlm: "Summaries",
       mUse: "Use", mInUse: "In use", mInstall: "Install", mTier: { light: "Light", standard: "Standard", high: "High" },
       mRam: "{n} GB of memory advised", mConfirm: "Download {name} ({size})? An internet connection is used for this download only.",
@@ -181,8 +185,8 @@
 
   function modelRow(kind, m, t, job) {
     var running = job && job.state === "running" && job.kind === kind && job.id === m.id;
-    var h = '<div class="mrow"><div class="minfo"><div class="mname">' + esc(m.label) + ' <span class="small">· ' + esc(t.mTier[m.tier]) + " · " + gb(m.bytes) + "</span></div>";
-    h += '<div class="small">' + esc(t.mRam.replace("{n}", m.ram)) + "</div></div>";
+    var h = '<div class="mrow"><div class="minfo"><div class="mname">' + esc(m.label) + "</div>";
+    h += '<div class="small">' + esc(t.mTier[m.tier] + " · " + gb(m.bytes) + " · " + t.mRam.replace("{n}", m.ram)) + "</div></div>";
     if (running) { h += '<span class="small">' + esc(t.mDownloading.replace("{pct}", job.pct)) + "</span>"; }
     else if (m.selected) { h += '<span class="mtag">' + esc(t.mInUse) + "</span>"; }
     else if (m.installed) { h += '<button type="button" class="mbtn" data-a="mUse" data-v="' + kind + '" data-id="' + esc(m.id) + '">' + esc(t.mUse) + "</button>"; }
@@ -210,6 +214,10 @@
     var h = '<div class="card panel">';
     h += '<div class="setrow"' + tip(t.transcriptLangHint) + ">" + I.doc + segLang("tr", tr(), "s38", t, t.transcriptLangHint) + "</div>";
     h += '<div class="hr"></div><div class="setrow"' + tip(t.detail) + ">" + I.lines + seg3("lvl", level(), "s38", t) + "</div>";
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.polishHint) + '><span class="text" style="font-size:14px">' + esc(t.polish) + '</span><div class="seg s38">' +
+      [["0", t.off, false], ["1", t.on, true]].map(function (o) {
+        return '<button type="button" data-a="polish" data-v="' + o[0] + '" class="' + bg(!!st.settings.polish === o[2]).trim() + '">' + esc(o[1]) + "</button>";
+      }).join("") + "</div></div>";
     h += '<div class="hr"></div><div class="setrow"' + tip(t.folderHint) + ">" + I.folder;
     h += '<div class="row gap8" style="min-width:0"><span class="text" style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(shortPath(st.settings.audio_dir)) + "</span>";
     h += '<button type="button" class="ib" data-a="folder"' + tip(t.folderChange) + ">" + I.pencil + "</button></div></div>";
@@ -232,12 +240,19 @@
     return h + "</div>";
   }
 
+  function fmtSize(bytes) {
+    if (!bytes) { return "-"; }
+    if (bytes < 1e6) { return "< 1 MB"; }
+    return bytes < 1e9 ? Math.round(bytes / 1e6) + " MB" : (bytes / 1e9).toFixed(1) + " GB";
+  }
+
   function viewAbout(t) {
     var h = '<div class="card about"><div><div class="t">Cairn</div><div class="small">' + esc(t.aboutTagline) + "</div></div>";
     h += '<div class="text">' + esc(t.aboutText) + "</div>";
     h += '<div style="display:flex;flex-direction:column;gap:8px"><div class="text" style="font-size:14px;font-weight:600">' + esc(t.components) + "</div>";
     ((S.about && S.about.components) || []).forEach(function (c) {
-      h += '<div class="comp"><span>' + esc(c.name) + "</span><span>" + esc(c.ver) + (c.ok ? I.checkB : I.warnB) + "</span></div>";
+      var fix = !c.ok && c.fix ? '<button type="button" class="mbtn" data-a="fixModel">' + esc(t.getIt) + "</button>" : "";
+      h += '<div class="comp"><span class="cn">' + esc(c.name) + '</span><span class="cv">' + esc(c.ok ? c.ver : t.notInstalled) + '</span><span class="cs">' + esc(c.ok ? fmtSize(c.size) : "") + "</span>" + (c.ok ? I.checkB : (fix || I.warnB)) + "</div>";
     });
     h += "</div>";
     var upd = S.upd, text = t.upToDate, ink = "var(--mute)";
@@ -245,11 +260,20 @@
     else if (upd && upd.available) { text = t.updAvail + upd.latest; ink = "var(--orange)"; }
     h += '<div class="row between gap12"><span style="font-size:14px;font-weight:600;color:' + ink + '">' + esc(text) + "</span>";
     h += '<button type="button" class="ib" data-a="checkUpdate"' + tip(t.checkUpd) + ">" + I.refresh + "</button></div>";
+    var ref = S.about && S.about.referral;
+    if (ref) {
+      h += '<div class="ref"><a href="' + esc(ref) + '" target="_blank" rel="noopener noreferrer"' + tip(t.refNote) + ">" + esc(t.refText) + " ↗</a>" +
+        '<button type="button" class="reflink" data-a="refQr"' + tip(t.refQr) + ">" + esc(t.refQr) + "</button></div>";
+      if (S.refQr) { h += '<div class="qr"><img src="/referral-qr.svg" width="112" height="112" alt="' + esc(t.refQr) + '"><div class="small">' + esc(t.refNote) + "</div></div>"; }
+    }
     h += '<div class="hr"></div><div class="legal">' + esc(t.aboutLegal.replace("{v}", (S.server && S.server.version) || "")) + "</div></div>";
     return h;
   }
 
-  function stepText(job, t) { return (job && job.step && t.steps[job.step]) || ""; }
+  function stepText(job, t) {
+    var base = (job && job.step && t.steps[job.step]) || "";
+    return base && job.pct != null ? base + " · " + job.pct + " %" : base;
+  }
 
   function statusIcon(n, job) {
     if (n.status === "done") { return I.done; }
@@ -291,6 +315,11 @@
       if (s.key_points && s.key_points.length) {
         h += "<div><b>" + esc(t.points) + "</b><ul>" + s.key_points.map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ul></div>";
       }
+      var info = [];
+      if (full.models && full.models.speech) { info.push(full.models.speech); }
+      if (full.models && full.models.llm) { info.push(full.models.llm); }
+      if (full.elapsed) { info.push(t.processedIn + " " + fmtDur(full.elapsed)); }
+      if (info.length) { h += '<div class="small" style="margin-top:10px">' + esc(info.join(" · ")) + "</div>"; }
       h += "</div>";
     }
     return h + "</div>";
@@ -304,9 +333,10 @@
       var main = done ? n.title : fmtDate(n.date) || n.id;
       var sub = done ? [fmtDate(n.date), fmtDur(n.duration)].filter(Boolean).join(" · ") : (running ? stepText(st.job, t) : fmtDur(n.duration));
       var open = S.open === n.id;
+      var bar = running && st.job.pct != null ? '<span class="pbar"><span style="width:' + st.job.pct + '%"></span></span>' : "";
       var q = done && n.quality != null ? '<span class="q" style="color:' + (n.quality < 85 ? "var(--orange)" : "var(--mute)") + '"' + tip(t.qualityHint) + ">" + n.quality + " %</span>" : "";
       return '<div class="item"><button type="button" class="rowbtn" data-a="row" data-id="' + esc(n.id) + '" aria-expanded="' + open + '"' + tip(t.rowHint) + '><span class="st">' + statusIcon(n, st.job) +
-        '</span><span class="mid"><span class="main">' + esc(main) + '</span><span class="sub"' + tip(t.dateDur) + ">" + esc(sub) + '</span></span><span style="min-width:54px;display:inline-flex;justify-content:flex-end">' + q + "</span></button>" +
+        '</span><span class="mid"><span class="main">' + esc(main) + '</span><span class="sub"' + tip(t.dateDur) + ">" + esc(sub) + "</span>" + bar + '</span><span style="min-width:54px;display:inline-flex;justify-content:flex-end">' + q + "</span></button>" +
         (open && (done || n.status === "error") ? viewDetail(n, t) : "") + "</div>";
     }).join("") + "</div>";
   }
@@ -315,7 +345,7 @@
     var st = S.server;
     if (!st) { return ""; }
     var t = T(), job = st.job, ring = 0;
-    if (job.running && job.total) { ring = Math.min(1, (job.done + 0.5) / job.total); }
+    if (job.running && job.total) { ring = Math.min(1, (job.done + (job.pct != null ? job.pct / 100 : 0.5)) / job.total); }
     else if (st.totals.notes) { ring = st.totals.done / st.totals.notes; }
     var connected = st.pocket.connected;
     var canImport = !job.running && (connected || st.totals.waiting > 0);
@@ -415,6 +445,7 @@
   var A = {
     ui: function (v) { S.ui = v; api("POST", "/api/settings", { ui: v }).then(refresh); },
     tr: function (v) { api("POST", "/api/settings", { tr: v }).then(refresh); },
+    polish: function (v) { api("POST", "/api/settings", { polish: v === "1" }).then(refresh); },
     lvl: function (v) { api("POST", "/api/settings", { level: v }).then(refresh); },
     settings: function () { S.settingsOpen = !S.settingsOpen; S.emptyConfirm = false; },
     about: function () {
@@ -480,6 +511,8 @@
       S.modelsOpen = !S.modelsOpen; S.mAsk = null;
       if (S.modelsOpen) { loadModels(); }
     },
+    refQr: function () { S.refQr = !S.refQr; },
+    fixModel: function () { S.aboutOpen = false; S.settingsOpen = true; S.modelsOpen = true; loadModels(); },
     mAsk: function (kind, id) { S.mAsk = { kind: kind, id: id }; },
     mGo: function () {
       var a = S.mAsk; S.mAsk = null;
@@ -511,6 +544,11 @@
     if (ev.key === "Enter" && ev.target.id === "folderInput") { A.folderSave(); }
   });
 
-  refresh();
-  setInterval(refresh, 2500);
+  function loop() {
+    refresh().then(function () {
+      var busy = S.server && (S.server.job.running || (S.server.download && S.server.download.state === "running"));
+      setTimeout(loop, busy ? 1000 : 2500);
+    });
+  }
+  loop();
 })();

@@ -17,7 +17,7 @@ class Jobs:
     def __init__(self, store):
         self.store = store
         self.lock = threading.Lock()
-        self._state = {"running": False, "kind": "", "step": "", "id": None, "done": 0, "total": 0, "errors": []}
+        self._state = {"running": False, "kind": "", "step": "", "id": None, "done": 0, "total": 0, "pct": None, "errors": []}
         self.store.reset_interrupted()
 
     def snapshot(self):
@@ -36,7 +36,7 @@ class Jobs:
         with self.lock:
             if self._state["running"]:
                 raise Busy("A job is already running.")
-            self._state.update(running=True, kind=kind, step="", id=None, done=0, total=0, errors=[])
+            self._state.update(running=True, kind=kind, step="", id=None, done=0, total=0, pct=None, errors=[])
         threading.Thread(target=self._guard, args=(target,) + args, daemon=True).start()
 
     def _guard(self, target, *args):
@@ -45,7 +45,7 @@ class Jobs:
         except Exception as error:  # a job must never leave the state stuck
             self._fail(str(error))
         finally:
-            self._set(running=False, step="", id=None)
+            self._set(running=False, step="", id=None, pct=None)
 
     # Import
 
@@ -107,22 +107,35 @@ class Jobs:
         def step(name):
             note["status"], note["step"] = name, name
             self.store.save(note)
-            self._set(step=name)
+            self._set(step=name, pct=0 if name in ("transcribing", "cleaning") else None)
 
+        def pct(value):
+            self._set(pct=value)
+
+        started = time.time()
         try:
             step("transcribing")
-            result = speech.transcribe(note["audio"])
+            result = speech.transcribe(note["audio"], progress=pct)
             quality, doubtful = speech.assess(result["segments"])
             note.update(
                 segments=result["segments"], quality=quality, doubtful=doubtful, passages=len(doubtful),
                 duration=result["duration"] or note.get("duration"), lang=lang, heard=result.get("language"), error="",
             )
             self.store.save(note)
-            step("cleaning")
-            note["clean"] = llm.clean(speech.raw_lines(result["segments"]), lang) if len(note["segments"]) else ""
+            if settings.get("polish"):
+                step("cleaning")
+            lines = speech.raw_lines(result["segments"])
+            if settings.get("polish") and lines:
+                note["clean"] = llm.clean(lines, lang, progress=pct)
+            else:  # fast path: the recognized text is already punctuated, skip the slow rewriting pass
+                note["clean"] = "\n\n".join(lines)
             step("summarizing")
             self._summarize(note, level, lang)
-            note.update(status="done", step="", level=level, processed=time.strftime("%Y-%m-%dT%H:%M:%S"))
+            cfg = config.install_config()
+            note.update(
+                status="done", step="", level=level, processed=time.strftime("%Y-%m-%dT%H:%M:%S"),
+                elapsed=int(time.time() - started), models={"speech": speech.model_name(), "llm": cfg["llm"]},
+            )
             self.store.save(note)
         except Exception as error:
             note.update(status="error", step="", error=str(error))
@@ -151,7 +164,8 @@ class Jobs:
         lang = settings["tr"] or note.get("lang") or "en"
         try:
             if not note.get("clean") and note.get("segments"):
-                note["clean"] = llm.clean(speech.raw_lines(note["segments"]), lang)
+                lines = speech.raw_lines(note["segments"])
+                note["clean"] = llm.clean(lines, lang) if settings.get("polish") else "\n\n".join(lines)
             self._summarize(note, level, lang)
             note.update(status="done", level=level, error="", step="")
             self.store.save(note)
