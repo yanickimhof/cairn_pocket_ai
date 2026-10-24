@@ -1,0 +1,23 @@
+Cairn uses the following third-party components. They are not included in this
+repository: they are installed separately and remain under their own licenses.
+
+- OpenAI Whisper and the whisper-large-v3-turbo model: MIT License
+- mlx-whisper and MLX (Apple, ml-explore): MIT License
+- faster-whisper and CTranslate2: MIT License
+- Ollama: MIT License
+- Qwen3 (Alibaba Cloud): Apache License 2.0
+- uv (Astral): MIT or Apache 2.0, at your option
+- Llama (Meta), optional alternative: Llama Community License. It requires the
+  "Built with Llama" attribution when redistributing and sets conditions of use.
+
+Check the licenses in force at the time you install.
+
+Trademarks
+
+Cairn is an independent project. It is not affiliated with, endorsed by or sponsored by
+Pocket, OpenAI, Apple, Microsoft, Ollama, Alibaba Cloud, Meta, Hugging Face or Astral.
+
+"Pocket", "Pocket AI" and heypocket.com are the property of their
+respective owners. All other names, products and logos are trademarks of their respective
+owners. They are used here only to identify compatibility, and no logo or asset of these
+companies is included in this repository.
