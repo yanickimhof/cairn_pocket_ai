@@ -22,7 +22,7 @@ Cairn is built on one rule: **your recordings never leave your computer.**
 |---|---|
 | Installation (once) | Downloads of the engines and models (see SECURITY.md) |
 | Everyday use | None |
-| When you ask for it | Download of an optional model (Ollama registry or Hugging Face), after your explicit confirmation in the app. Update check: one request to GitHub. Referral link in **About**: nothing is sent by Cairn; the link opens Pocket's website in your browser only if you click it, and the QR code is a local image. |
+| When you ask for it | Download of an optional model (Ollama registry or Hugging Face), after your explicit confirmation in the app. Update check: one request to GitHub. Referral link in **About**: nothing is sent by Cairn; the link opens Pocket's website in your browser only if you click it. |
 
 Runtime is configured with `HF_HUB_OFFLINE=1` and `DO_NOT_TRACK=1`.
 

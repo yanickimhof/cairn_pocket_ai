@@ -27,7 +27,7 @@ svg{flex-shrink:0}
 .setrow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px}
 .hr{height:1px;background:var(--line)}
 .about{padding:24px 24px 22px;display:flex;flex-direction:column;gap:14px}
-.about .t{font-size:22px;font-weight:600;letter-spacing:-.02em;color:var(--blue)}
+.about .t{font-size:22px;font-weight:700;letter-spacing:-.02em;color:var(--blue)}
 .small{font-size:14px;color:var(--mute)}.text{font-size:15px;color:var(--ink2);line-height:1.5}
 .legal{font-size:13px;color:var(--mute);line-height:1.5}
 .comp{display:grid;grid-template-columns:minmax(0,1fr) auto 64px 20px;align-items:center;gap:8px;font-size:14px;color:var(--ink2)}
@@ -79,12 +79,10 @@ svg{flex-shrink:0}
 .mtag{font-size:13px;font-weight:600;color:#1B7F3B}
 .pbar{display:block;height:3px;border-radius:2px;background:var(--soft);margin-top:6px;overflow:hidden}.pbar>span{display:block;height:100%;background:var(--blue);transition:width .6s ease}
 .minfo{flex:1;min-width:0}.mtag,.mbtn{flex-shrink:0;white-space:nowrap}
-.ref{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px}.ref a{color:var(--mute);text-decoration:none}.ref a:hover{color:var(--blue);text-decoration:underline}
-.reflink{border:0;background:transparent;color:var(--mute);font-size:13px;cursor:pointer;padding:4px 0;font-family:inherit}.reflink:hover{color:var(--blue)}
-.qr{display:flex;align-items:center;gap:14px}.qr img{border-radius:10px;border:1px solid var(--line);padding:6px;background:#fff}
+.ref{display:flex;flex-direction:column;gap:3px;font-size:13px}.ref a{color:var(--orange-ink);font-weight:600;text-decoration:none}.ref a:hover{text-decoration:underline}
 .mrow .ib{width:36px;height:36px}
 .foot{margin:28px 0 8px;text-align:center;font-size:13px;color:var(--mute);letter-spacing:.01em}.foot b{color:var(--blue);font-weight:700}
-h1.brand{margin:0;font-weight:inherit}
-:root{--warn:#A4452A}
+h1.brand{margin:0;font-weight:700}.bw{display:flex;flex-direction:column;line-height:1.2}.bw .sub{font-size:12px;color:var(--mute)}
+:root{--warn:#A4452A;--orange-ink:#B4541A}
 .comp .cn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .priv{display:flex;flex-direction:column;gap:6px}:root{--green-ink:#17743F}

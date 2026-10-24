@@ -6,10 +6,10 @@
       brand: "Cairn · Pocket AI souverain", components: "Composants", checkUpd: "Rechercher une mise à jour",
       upToDate: "À jour", checking: "Vérification…", verIs: "Version ", updAvail: "Mise à jour disponible : ", updFail: "Vérification impossible", updFlash: "Relance la commande d’installation",
       about: "À propos", aboutTagline: "Pocket AI souverain",
-      aboutText: "Transcrit et résume tes enregistrements Pocket sur ton ordinateur. Aucun cloud : rien ne sort.",
+      aboutText: "Importe, transcris et résume tes enregistrements Pocket, entièrement sur cet ordinateur. Aucun compte, aucun cloud, aucune télémétrie.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · Licence MIT · Non affilié à Pocket.", uiLang: "Langue de l’interface",
       polish: "Réécrire le transcript", polishHint: "Plus lisible, mais nettement plus lent", off: "Non", on: "Oui",
-      processedIn: "traité en", notInstalled: "Non installé", getIt: "Installer", refText: "Offrir un Pocket : 10 % de réduction", refQr: "QR code", refNote: "Lien de parrainage facultatif. L’offre dépend uniquement de Pocket et peut changer.",
+      processedIn: "traité en", notInstalled: "Non installé", getIt: "Installer", refText: "Offrir un Pocket : 10 % de réduction", refNote: "Lien de parrainage facultatif. L’offre dépend uniquement de Pocket et peut changer.",
       models: "Modèles", modelsHint: "Choisir ou ajouter des modèles", modelsSpeech: "Transcription", modelsLlm: "Résumés",
       tagline: "Votre Pocket. Votre ordinateur. Vos données.", mUse: "Utiliser", mRemove: "Supprimer ce modèle", mRemoveConfirm: "Supprimer {name} de cet ordinateur ? Vous pourrez le télécharger à nouveau.", mInUse: "Utilisé", mInstall: "Installer", mTier: { light: "Léger", standard: "Standard", high: "Élevé" },
       mRam: "{n} Go de mémoire conseillés", mConfirm: "Télécharger {name} ({size}) ? Une connexion internet est utilisée pour ce seul téléchargement.",
@@ -44,10 +44,10 @@
       brand: "Cairn · Sovereign Pocket AI", components: "Components", checkUpd: "Check for updates",
       upToDate: "Up to date", checking: "Checking…", verIs: "Version ", updAvail: "Update available: ", updFail: "Check failed", updFlash: "Run the install command again",
       about: "About", aboutTagline: "Sovereign Pocket AI",
-      aboutText: "Transcribes and summarizes your Pocket recordings on your computer. No cloud: nothing leaves it.",
+      aboutText: "Import, transcribe and summarize your Pocket recordings, entirely on this computer. No account, no cloud, no telemetry.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · MIT license · Not affiliated with Pocket.", uiLang: "Interface language",
       polish: "Polish the transcript", polishHint: "More readable, but much slower", off: "Off", on: "On",
-      processedIn: "processed in", notInstalled: "Not installed", getIt: "Install", refText: "Get a Pocket: 10 % off", refQr: "QR code", refNote: "Optional referral link. The offer is set by Pocket alone and may change.",
+      processedIn: "processed in", notInstalled: "Not installed", getIt: "Install", refText: "Get a Pocket: 10 % off", refNote: "Optional referral link. The offer is set by Pocket alone and may change.",
       models: "Models", modelsHint: "Choose or add models", modelsSpeech: "Transcription", modelsLlm: "Summaries",
       tagline: "Your Pocket. Your computer. Your data.", mUse: "Use", mRemove: "Remove this model", mRemoveConfirm: "Remove {name} from this computer? You can download it again later.", mInUse: "In use", mInstall: "Install", mTier: { light: "Light", standard: "Standard", high: "High" },
       mRam: "{n} GB of memory advised", mConfirm: "Download {name} ({size})? An internet connection is used for this download only.",
@@ -296,9 +296,8 @@
     h += viewPrivacy(t);
     var ref = S.about && S.about.referral;
     if (ref) {
-      h += '<div class="ref"><a href="' + esc(ref) + '" target="_blank" rel="noopener noreferrer"' + tip(t.refNote) + ">" + esc(t.refText) + " ↗</a>" +
-        '<button type="button" class="reflink" data-a="refQr"' + tip(t.refQr) + ">" + esc(t.refQr) + "</button></div>";
-      if (S.refQr) { h += '<div class="qr"><img src="/referral-qr.svg" width="112" height="112" alt="' + esc(t.refQr) + '"><div class="small">' + esc(t.refNote) + "</div></div>"; }
+      h += '<div class="ref"><a href="' + esc(ref) + '" target="_blank" rel="noopener noreferrer">' + esc(t.refText) + " ↗</a>" +
+        '<div class="small">' + esc(t.refNote) + "</div></div>";
     }
     h += '<div class="hr"></div><div class="legal">' + esc(t.aboutLegal.replace("{v}", (S.server && S.server.version) || "")) + "</div></div>";
     return h;
@@ -397,7 +396,7 @@
     else if (st.totals.notes) { ring = st.totals.done / st.totals.notes; }
     var connected = st.pocket.connected;
     var canImport = !job.running && (connected || st.totals.waiting > 0);
-    var h = '<main class="wrap"><div class="head"><div class="row gap12"><h1 class="brand"' + tip(t.brand) + ">Cairn</h1>";
+    var h = '<main class="wrap"><div class="head"><div class="row gap12"><div class="bw"><h1 class="brand"' + tip(t.brand) + '>Cairn</h1><div class="sub">' + esc(t.aboutTagline) + "</div></div>";
     h += '<button type="button" class="dotbtn"' + tip(connected ? t.connected : t.disconnected) + '><span class="dot" style="background:' + (connected ? "var(--green)" : "var(--orange)") + ";box-shadow:0 0 0 4px " + (connected ? "rgba(31,157,85,.18)" : "rgba(200,109,81,.24)") + '"></span></button>';
     h += '<span class="pill"' + tip(t.localHint) + ">" + I.lock + esc(t.local) + "</span></div>";
     h += '<div class="row" style="gap:2px"><div style="margin-right:6px"' + tip(t.uiLang) + ">" + segLang("ui", ui(), "s34", t, "") + "</div>";
@@ -566,7 +565,6 @@
       S.modelsOpen = !S.modelsOpen; S.mAsk = null;
       if (S.modelsOpen) { loadModels(); }
     },
-    refQr: function () { S.refQr = !S.refQr; },
     fixModel: function () { S.aboutOpen = false; S.settingsOpen = true; S.modelsOpen = true; loadModels(); },
     procOne: function (v, id) { noteAction(id, "process"); },
     skipOne: function (v, id) { noteAction(id, "skip"); },

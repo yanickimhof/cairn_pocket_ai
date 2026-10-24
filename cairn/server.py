@@ -20,7 +20,7 @@ from urllib.parse import parse_qs, quote, urlparse
 from . import catalog, config, jobs, llm, models, netguard, notes, pocket, privacy, render
 
 WEB = Path(__file__).parent / "web"
-STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg", "/referral-qr.svg": "referral-qr.svg",
+STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
           "/manifest.webmanifest": "manifest.webmanifest", "/icon-192.png": "icon-192.png", "/icon-512.png": "icon-512.png"}
 PUBLIC = {"/favicon.svg", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"}  # nothing private: the browser fetches them without the session cookie
 COOKIE = "cairn_session"

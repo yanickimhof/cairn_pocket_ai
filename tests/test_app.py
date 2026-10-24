@@ -305,8 +305,7 @@ class AppTest(unittest.TestCase):
         self.assertEqual(names, sorted(names, key=str.lower))
         self.assertTrue(all({"name", "ver", "size", "ok"} <= set(c) for c in data["components"]))
         self.assertTrue(data["referral"].startswith("https://referral.heypocketai.com/"))
-        status, svg = self.c.call("GET", "/referral-qr.svg")
-        self.assertEqual(status, 200)
+        self.assertEqual(self.c.call("GET", "/referral-qr.svg")[0], 404)
 
 
 class UnitTest(unittest.TestCase):
