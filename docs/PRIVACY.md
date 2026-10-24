@@ -11,10 +11,9 @@ Cairn is built on one rule: **your recordings never leave your computer.**
 ## What Cairn never does
 
 - No cloud service, no account, no sign-in.
-- No email sending. There is no mail server setting anywhere.
 - No telemetry, analytics or crash reports.
 - No call to a hosted AI service.
-- No listening on the network: the local model server is bound to `127.0.0.1` and cannot be reached from other devices.
+- No listening on the network: the local model server is bound to `127.0.0.1`. This address means "this computer only" (also called localhost), so no other device can reach it.
 
 ## Network use
 
