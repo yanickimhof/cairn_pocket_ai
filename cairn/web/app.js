@@ -92,6 +92,7 @@
     trash: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4271B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="M6 7l1 13h10l1-13"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>',
     x: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>',
     checkW: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"></path></svg>',
+    shield: function (c) { return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 2.9 8.2 7 9.5 4.1-1.3 7-5 7-9.5V6l-7-3Z"></path><path d="m9 12 2 2 4-4"></path></svg>'; },
     checkB: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3368A0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"></path></svg>',
     warnB: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C86D51" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4 3 20h18z"></path><path d="M12 10v4"></path><path d="M12 17h.01"></path></svg>',
     refresh: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg>',
@@ -292,12 +293,13 @@
     else if (upd && upd.available) { text = t.updAvail + upd.latest; ink = "var(--warn)"; }
     else if (upd) { text = t.upToDate + " · " + upd.current; ink = "var(--green-ink)"; }
     h += '<div class="row between gap12"><span style="font-size:14px;font-weight:600;color:' + ink + '">' + esc(text) + "</span>";
-    h += '<button type="button" class="ib" data-a="checkUpdate"' + tip(t.checkUpd) + ">" + I.refresh + "</button></div>";
-    h += viewPrivacy(t);
+    var rep = S.priv && S.priv.report, sc = !rep ? "#86868B" : (rep.ok ? "#1E8E3E" : "#A4452A");
+    h += '<div class="row" style="gap:2px"><button type="button" class="ib' + bg(S.privOpen) + '" data-a="privToggle"' + tip(t.privTitle) + ">" + I.shield(sc) + "</button>" +
+      '<button type="button" class="ib" data-a="checkUpdate"' + tip(t.checkUpd) + ">" + I.refresh + "</button></div></div>";
+    if (S.privOpen) { h += viewPrivacy(t); }
     var ref = S.about && S.about.referral;
     if (ref) {
-      h += '<div class="ref"><a href="' + esc(ref) + '" target="_blank" rel="noopener noreferrer">' + esc(t.refText) + " ↗</a>" +
-        '<div class="small">' + esc(t.refNote) + "</div></div>";
+      h += '<div class="ref"><a href="' + esc(ref) + '" target="_blank" rel="noopener noreferrer"' + tip(t.refNote) + ">" + esc(t.refText) + " ↗</a></div>";
     }
     h += '<div class="hr"></div><div class="legal">' + esc(t.aboutLegal.replace("{v}", (S.server && S.server.version) || "")) + "</div></div>";
     return h;
@@ -569,6 +571,7 @@
     procOne: function (v, id) { noteAction(id, "process"); },
     skipOne: function (v, id) { noteAction(id, "skip"); },
     restoreOne: function (v, id) { noteAction(id, "restore"); },
+    privToggle: function () { S.privOpen = !S.privOpen; },
     privRun: function () {
       S.priv = { report: null, running: true };
       api("POST", "/api/privacy/check").then(refresh).catch(function (e) { S.priv = null; flash(T().error + (e.message === "busy" ? T().mBusy : e.message)); render(); });

@@ -36,7 +36,7 @@ Cairn gives you export (Markdown, HTML) and copy with formatting. What you do wi
 2. List open connections during processing: `lsof -i -n -P | grep -i -E "ollama|python"`. You should see only `127.0.0.1`.
 3. Use a firewall to block all outgoing connections for Cairn and its models.
 
-Cairn also checks it for you: open About, then Privacy check. It runs a small local test and lists every connection that leaves this computer (expected: none). The model server (Ollama) is a third party program: it is observed by the check but not blocked by Cairn, so a firewall remains the absolute guarantee.
+Cairn also checks it for you: open About, then click the shield icon. It runs a small local test and lists every connection that leaves this computer (expected: none). The model server (Ollama) is a third party program: it is observed by the check but not blocked by Cairn, so a firewall remains the absolute guarantee.
 
 ## Where your data lives
 
