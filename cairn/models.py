@@ -157,3 +157,28 @@ def select(kind, model_id):
     if entry is None or not speech_installed(entry):
         raise ValueError("not_installed")
     return config.save_settings({"speech": model_id})
+
+
+def remove(kind, model_id):
+    """Uninstall a model that is installed and not in use, to free disk space."""
+    if kind == "llm":
+        if model_id not in catalog.LLM_IDS or model_id not in {m.get("name") for m in llm.models()}:
+            raise ValueError("not_installed")
+        if model_id == config.install_config()["llm"]:
+            raise ValueError("in_use")
+        try:
+            llm.delete_model(model_id)
+        except (OSError, ValueError, llm.LLMError):
+            raise ValueError("remove_failed")
+        return {"ok": True}
+    entry = next((m for m in speech_entries() if m["id"] == model_id), None)
+    if entry is None or not speech_installed(entry):
+        raise ValueError("not_installed")
+    if model_id == selected_speech():
+        raise ValueError("in_use")
+    path = Path(speech_path(entry)).resolve()
+    root = (config.home() / "models").resolve()
+    if root not in path.parents:  # only ever delete inside Cairn's own models folder
+        raise ValueError("remove_failed")
+    shutil.rmtree(path, ignore_errors=True)
+    return {"ok": True}

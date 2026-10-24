@@ -350,6 +350,15 @@ def make_handler(app):
                 except ValueError as error:
                     raise ApiError(400, str(error))
                 return self._json(202, {"ok": True})
+            if method == "POST" and path == "/api/models/remove":
+                if body.get("confirm") is not True:
+                    raise ApiError(400, "confirm_required")
+                if app.jobs.snapshot().get("running"):
+                    raise ApiError(409, "busy")
+                try:
+                    return self._json(200, models.remove(body.get("kind"), body.get("id")))
+                except ValueError as error:
+                    raise ApiError(400, str(error))
             if method == "POST" and path == "/api/models/select":
                 if app.jobs.snapshot().get("running"):
                     raise ApiError(409, "busy")
