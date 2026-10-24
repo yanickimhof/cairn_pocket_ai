@@ -2,21 +2,21 @@
 
 ## v0.1 (preview): done
 
-- Terminal installer, one command, detects the system and sets up the engines
-
+- One-command installer for macOS and Windows, with a self test
 - Pocket detection (green dot connected, orange dot not detected)
 - Resumable import with byte-for-byte verification
-- Local transcription, with a reliability score per recording
-- Cleaning, generated title, TL;DR, actions, key points
-- Automatic summary templates (meeting, call, presentation, idea, other)
+- Local transcription with a reliability score per recording
+- Cleaning, title, TL;DR, actions, key points
+- Automatic templates (meeting, call, presentation, idea, other)
 - Short, standard and detailed levels, rerun on one recording
 - Rename, copy, export (Markdown, HTML)
-- Light default install, larger models added on demand from the app
+- Light default install, larger models on demand, removable from the app
+- Process one recording, skip or restore, stop, newest first
 - Secure mode (list hidden by default), FR/EN interface
 - Empty the Pocket only after verification, with double confirmation
-- List of required components and a manual update check (opt-in, a single request to GitHub)
-- Network guard and built-in privacy check (nothing leaves this computer)
-- Background mode and installable web app (macOS), process, skip or stop recordings, remove models
+- Component list and manual update check (opt-in, one request to GitHub)
+- Network guard and built-in privacy check
+- Background mode and installable web app (macOS)
 
 ## Later
 
