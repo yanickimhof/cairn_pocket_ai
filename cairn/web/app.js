@@ -269,8 +269,8 @@
     });
     h += "</div>";
     var upd = S.upd, text = t.upToDate, ink = "var(--mute)";
-    if (upd && upd.error) { text = t.updFail; ink = "var(--orange)"; }
-    else if (upd && upd.available) { text = t.updAvail + upd.latest; ink = "var(--orange)"; }
+    if (upd && upd.error) { text = t.updFail; ink = "var(--warn)"; }
+    else if (upd && upd.available) { text = t.updAvail + upd.latest; ink = "var(--warn)"; }
     h += '<div class="row between gap12"><span style="font-size:14px;font-weight:600;color:' + ink + '">' + esc(text) + "</span>";
     h += '<button type="button" class="ib" data-a="checkUpdate"' + tip(t.checkUpd) + ">" + I.refresh + "</button></div>";
     var ref = S.about && S.about.referral;
@@ -301,7 +301,7 @@
     if (S.edit === n.id) {
       h += '<div class="name"><input id="nameInput" type="text" value="' + esc(S.draft) + '" aria-label="' + esc(t.rename) + '"><button type="button" class="ib blue" data-a="saveName"' + tip(t.saveName) + ">" + I.checkW + "</button></div>";
     }
-    var passInk = n.quality != null && n.quality < 85 ? "var(--orange)" : "var(--mute)";
+    var passInk = n.quality != null && n.quality < 85 ? "var(--warn)" : "var(--mute)";
     h += '<div class="bar"><div class="row gap8">' + seg3("rr", S.rr, "s36", t) +
       '<button type="button" class="ib blue" data-a="rerun"' + tip(t.rerunHint) + ">" + I.refreshW + "</button></div>";
     h += '<div class="row" style="gap:4px">';
@@ -360,7 +360,7 @@
       var sub = done ? [fmtDate(n.date), fmtDur(n.duration)].filter(Boolean).join(" · ") : (running ? stepText(st.job, t) : (n.status === "skipped" ? t.skipped + " · " : "") + fmtDur(n.duration));
       var open = S.open === n.id;
       var bar = running && st.job.pct != null ? '<span class="pbar"><span style="width:' + st.job.pct + '%"></span></span>' : "";
-      var q = done && n.quality != null ? '<span class="q" style="color:' + (n.quality < 85 ? "var(--orange)" : "var(--mute)") + '"' + tip(t.qualityHint) + ">" + n.quality + " %</span>" : "";
+      var q = done && n.quality != null ? '<span class="q" style="color:' + (n.quality < 85 ? "var(--warn)" : "var(--mute)") + '"' + tip(t.qualityHint) + ">" + n.quality + " %</span>" : "";
       return '<div class="item"><button type="button" class="rowbtn" data-a="row" data-id="' + esc(n.id) + '" aria-expanded="' + open + '"' + tip(t.rowHint) + '><span class="st">' + statusIcon(n, st.job) +
         '</span><span class="mid"><span class="main">' + esc(main) + '</span><span class="sub"' + tip(t.dateDur) + ">" + esc(sub) + "</span>" + bar + '</span><span style="min-width:54px;display:inline-flex;justify-content:flex-end">' + q + "</span></button>" +
         (open && (done || n.status === "error") ? viewDetail(n, t) : "") +
@@ -376,7 +376,7 @@
     else if (st.totals.notes) { ring = st.totals.done / st.totals.notes; }
     var connected = st.pocket.connected;
     var canImport = !job.running && (connected || st.totals.waiting > 0);
-    var h = '<div class="wrap"><div class="head"><div class="row gap12"><div class="brand"' + tip(t.brand) + ">Cairn</div>";
+    var h = '<main class="wrap"><div class="head"><div class="row gap12"><h1 class="brand"' + tip(t.brand) + ">Cairn</h1>";
     h += '<button type="button" class="dotbtn"' + tip(connected ? t.connected : t.disconnected) + '><span class="dot" style="background:' + (connected ? "var(--green)" : "var(--orange)") + ";box-shadow:0 0 0 4px " + (connected ? "rgba(31,157,85,.18)" : "rgba(200,109,81,.24)") + '"></span></button>';
     h += '<span class="pill"' + tip(t.localHint) + ">" + I.lock + esc(t.local) + "</span></div>";
     h += '<div class="row" style="gap:2px"><div style="margin-right:6px"' + tip(t.uiLang) + ">" + segLang("ui", ui(), "s34", t, "") + "</div>";
@@ -395,7 +395,7 @@
     h += "</div>";
     if (!S.hidden) { h += viewList(t, st); }
     h += '<footer class="foot"><b>Cairn</b> · ' + esc(t.tagline) + "</footer>";
-    return h + "</div>";
+    return h + "</main>";
   }
 
   function render() {
