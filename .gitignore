@@ -1,0 +1,13 @@
+.env
+*.env
+.cairn/
+data/
+*.mp3
+*.m4a
+*.whisper.json
+*.brut.md
+*.nettoye.md
+*.resume.md
+.venv*/
+__pycache__/
+.DS_Store
