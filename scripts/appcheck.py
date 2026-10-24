@@ -164,6 +164,8 @@ def main():
         print("Privacy check:", json.dumps(report), flush=True)
         if report.get("external") or report.get("blocked"):
             fail("outgoing connections detected: %s %s" % (report.get("external"), report.get("blocked")))
+        if report.get("leftover"):
+            print("Note: connections already open before the test (earlier download):", report["leftover"], flush=True)
         if report.get("errors"):
             fail("the privacy check could not exercise the engines: %s" % report["errors"])
         if not report.get("model_server_seen"):

@@ -34,7 +34,7 @@
       deleteConfirm: "Supprimer audio et textes ? Si le Pocket est vidé, plus aucune copie.",
       copied: "Copié", rerunning: "Résumé relancé : ", renamed: "Nom enregistré", deleted: "Supprimé", pocketEmptied: "Pocket vidé",
       ready: "Prêt", waiting: "En attente", failed: "Échec : relancer le résumé", done: "Terminé", modelDown: "Moteur local arrêté : relance Cairn",
-      privTitle: "Contrôle de confidentialité", privRun: "Lancer le contrôle", privOk: "Aucune connexion vers l’extérieur", privBad: "Connexions détectées", privWait: "Contrôle en cours…", privNever: "Observe les connexions de Cairn et de ses moteurs pendant un test local.", privWhen: "le",
+      privTitle: "Contrôle de confidentialité", privRun: "Lancer le contrôle", privOk: "Aucune connexion vers l’extérieur", privBad: "Connexions détectées", privWait: "Contrôle en cours…", privNever: "Observe les connexions de Cairn et de ses moteurs pendant un test local.", privWhen: "le", privLeft: "Connexion déjà ouverte avant le test (téléchargement antérieur)",
       processNow: "Traiter maintenant", skipIt: "Ignorer", skipped: "Ignoré", putBack: "Remettre dans la file", stopJob: "Arrêter",
       steps: { copying: "Copie depuis le Pocket", transcribing: "Transcription", cleaning: "Nettoyage du texte", summarizing: "Rédaction de la note", privacy: "Vérification de la confidentialité" },
       none: "Aucun enregistrement.", tldr: "En bref", actions: "Actions", points: "Points clés", noSpeech: "Aucune parole détectée.",
@@ -72,7 +72,7 @@
       deleteConfirm: "Delete audio and texts? If the Pocket is emptied, no copy remains.",
       copied: "Copied", rerunning: "Summary rerun: ", renamed: "Name saved", deleted: "Deleted", pocketEmptied: "Pocket emptied",
       ready: "Ready", waiting: "Waiting", failed: "Failed: rerun the summary", done: "Done", modelDown: "Local engine stopped: restart Cairn",
-      privTitle: "Privacy check", privRun: "Run the check", privOk: "No connection to the outside", privBad: "Connections detected", privWait: "Checking…", privNever: "Watches the connections of Cairn and its engines during a local test.", privWhen: "on",
+      privTitle: "Privacy check", privRun: "Run the check", privOk: "No connection to the outside", privBad: "Connections detected", privWait: "Checking…", privNever: "Watches the connections of Cairn and its engines during a local test.", privWhen: "on", privLeft: "Connection already open before the test (earlier download)",
       processNow: "Process now", skipIt: "Skip", skipped: "Skipped", putBack: "Put back in the queue", stopJob: "Stop",
       steps: { copying: "Copying from the Pocket", transcribing: "Transcribing", cleaning: "Cleaning the text", summarizing: "Writing the note", privacy: "Checking privacy" },
       none: "No recordings.", tldr: "TL;DR", actions: "Actions", points: "Key points", noSpeech: "No speech detected.",
@@ -266,7 +266,10 @@
     var h = '<div class="priv"><div class="row between gap12"><span style="font-size:14px;font-weight:600">' + esc(t.privTitle) + "</span>" +
       '<button type="button" class="mbtn" data-a="privRun"' + (running || (S.server && S.server.job.running) ? " disabled" : "") + ">" + esc(t.privRun) + "</button></div>";
     if (running) { h += '<div class="small">' + esc(t.privWait) + "</div>"; }
-    else if (rep && rep.ok) { h += '<div class="small" style="color:var(--green-ink)">✓ ' + esc(t.privOk) + " · " + esc(t.privWhen + " " + fmtDate(rep.when)) + "</div>"; }
+    else if (rep && rep.ok) {
+      h += '<div class="small" style="color:var(--green-ink)">✓ ' + esc(t.privOk) + " · " + esc(t.privWhen + " " + fmtDate(rep.when)) + "</div>";
+      if (rep.leftover && rep.leftover.length) { h += '<div class="small">' + esc(t.privLeft + ": " + rep.leftover.join(" · ")) + "</div>"; }
+    }
     else if (rep) { h += '<div class="small" style="color:var(--warn)">' + esc(t.privBad) + ": " + esc((rep.external || []).concat(rep.blocked || [], rep.errors || []).join(" · ")) + "</div>"; }
     else { h += '<div class="small">' + esc(t.privNever) + "</div>"; }
     return h + "</div>";
