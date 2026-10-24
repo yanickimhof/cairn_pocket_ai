@@ -8,6 +8,10 @@
       about: "À propos", aboutTagline: "Pocket AI souverain",
       aboutText: "Importe les enregistrements de ton Pocket, puis les transcrit et les résume sur ton ordinateur. Aucun cloud, aucun courriel : rien ne sort.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · Licence MIT · Non affilié à Pocket.", uiLang: "Langue de l’interface",
+      models: "Modèles", modelsHint: "Choisir ou ajouter des modèles", modelsSpeech: "Transcription", modelsLlm: "Résumés",
+      mUse: "Utiliser", mInUse: "Utilisé", mInstall: "Installer", mTier: { light: "Léger", standard: "Standard", high: "Élevé" },
+      mRam: "{n} Go de mémoire conseillés", mConfirm: "Télécharger {name} ({size}) ? Une connexion internet est utilisée pour ce seul téléchargement.",
+      mDownloading: "Téléchargement {pct} %", mFailed: "Échec du téléchargement : ", mDone: "Modèle installé", mDown: "Moteur local arrêté", mBusy: "Un traitement est en cours",
       settings: "Réglages", transcriptLang: "Langue du transcript", transcriptLangHint: "Langue des résumés",
       detail: "Niveau de détail par défaut", short: "Court", mid: "Normal", full: "Complet",
       shortHint: "Court : TL;DR et actions", midHint: "Normal : + contexte et points clés", fullHint: "Complet : + détail par sujet",
@@ -38,6 +42,10 @@
       about: "About", aboutTagline: "Sovereign Pocket AI",
       aboutText: "Imports your Pocket recordings, then transcribes and summarizes them on your computer. No cloud, no email: nothing leaves.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · MIT license · Not affiliated with Pocket.", uiLang: "Interface language",
+      models: "Models", modelsHint: "Choose or add models", modelsSpeech: "Transcription", modelsLlm: "Summaries",
+      mUse: "Use", mInUse: "In use", mInstall: "Install", mTier: { light: "Light", standard: "Standard", high: "High" },
+      mRam: "{n} GB of memory advised", mConfirm: "Download {name} ({size})? An internet connection is used for this download only.",
+      mDownloading: "Downloading {pct}%", mFailed: "Download failed: ", mDone: "Model installed", mDown: "Local engine stopped", mBusy: "A job is running",
       settings: "Settings", transcriptLang: "Transcript language", transcriptLangHint: "Summary language",
       detail: "Default level of detail", short: "Short", mid: "Standard", full: "Detailed",
       shortHint: "Short: TL;DR and actions", midHint: "Standard: + context, key points", fullHint: "Detailed: + detail per topic",
@@ -169,6 +177,35 @@
       (yes ? '<button type="button" class="ib red" data-a="' + yes + '"' + tip(t.confirmLabel) + ">" + I.checkW + "</button>" : "") + "</div></div>";
   }
 
+  function gb(bytes) { return (bytes / 1e9).toFixed(1) + " GB"; }
+
+  function modelRow(kind, m, t, job) {
+    var running = job && job.state === "running" && job.kind === kind && job.id === m.id;
+    var h = '<div class="mrow"><div class="minfo"><div class="mname">' + esc(m.label) + ' <span class="small">· ' + esc(t.mTier[m.tier]) + " · " + gb(m.bytes) + "</span></div>";
+    h += '<div class="small">' + esc(t.mRam.replace("{n}", m.ram)) + "</div></div>";
+    if (running) { h += '<span class="small">' + esc(t.mDownloading.replace("{pct}", job.pct)) + "</span>"; }
+    else if (m.selected) { h += '<span class="mtag">' + esc(t.mInUse) + "</span>"; }
+    else if (m.installed) { h += '<button type="button" class="mbtn" data-a="mUse" data-v="' + kind + '" data-id="' + esc(m.id) + '">' + esc(t.mUse) + "</button>"; }
+    else { h += '<button type="button" class="mbtn" data-a="mAsk" data-v="' + kind + '" data-id="' + esc(m.id) + '"' + (job && job.state === "running" ? " disabled" : "") + ">" + esc(t.mInstall) + "</button>"; }
+    return h + "</div>";
+  }
+
+  function viewModels(t) {
+    var M = S.models;
+    if (!M) { return ""; }
+    var h = '<div class="hr"></div><div class="mlist"><div class="mgroup">' + esc(t.modelsSpeech) + "</div>";
+    M.speech.forEach(function (m) { h += modelRow("speech", m, t, M.job); });
+    h += '<div class="mgroup">' + esc(t.modelsLlm) + "</div>";
+    M.llm.forEach(function (m) { h += modelRow("llm", m, t, M.job); });
+    if (S.mAsk) {
+      var list = S.mAsk.kind === "llm" ? M.llm : M.speech;
+      var m = list.filter(function (x) { return x.id === S.mAsk.id; })[0];
+      if (m) { h += confirmBox(t.mConfirm.replace("{name}", m.label).replace("{size}", gb(m.bytes)), "mGo", t); }
+    }
+    if (M.job && M.job.state === "error") { h += '<div class="small" style="color:#C0392B">' + esc(t.mFailed + M.job.error) + "</div>"; }
+    return h + "</div>";
+  }
+
   function viewSettings(t, st) {
     var h = '<div class="card panel">';
     h += '<div class="setrow"' + tip(t.transcriptLangHint) + ">" + I.doc + segLang("tr", tr(), "s38", t, t.transcriptLangHint) + "</div>";
@@ -180,6 +217,8 @@
       h += '<div class="name" style="margin:0 0 14px"><input id="folderInput" type="text" value="' + esc(S.folderDraft) + '" placeholder="' + esc(t.folderType) + '" aria-label="' + esc(t.folderType) + '">' +
         '<button type="button" class="ib blue" data-a="folderSave"' + tip(t.saveName) + ">" + I.checkW + "</button></div>";
     }
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.modelsHint) + "><span class=\"text\" style=\"font-size:14px\">" + esc(t.models) + '</span><button type="button" class="mbtn" data-a="models">' + esc(S.modelsOpen ? "−" : "+") + "</button></div>";
+    if (S.modelsOpen) { h += viewModels(t); }
     h += '<div class="hr"></div><div class="setrow"' + tip(t.emptyHint) + ">" + I.mic + '<button type="button" class="ib" data-a="askEmpty"' + tip(t.emptyPocket) + ">" + I.trash + "</button></div>";
     if (S.emptyConfirm) {
       var v = S.verify, text, yes = null;
@@ -320,6 +359,15 @@
     }
   }
 
+  function loadModels() {
+    return api("GET", "/api/models").then(function (m) {
+      var was = S.models && S.models.job && S.models.job.state === "running";
+      S.models = m;
+      if (was && m.job && m.job.state === "done") { flash(T().mDone); }
+      render();
+    }).catch(function () { /* keep what is shown */ });
+  }
+
   function refresh() {
     return api("GET", "/api/state?list=" + (S.hidden ? "0" : "1")).then(function (st) {
       var was = S.wasRunning;
@@ -330,6 +378,7 @@
         S.full = {};
       }
       if (S.open && !S.hidden) { loadFull(S.open); }
+      if (S.modelsOpen && (!S.models || (st.download && st.download.state === "running") || (S.models.job && S.models.job.state === "running"))) { loadModels(); }
       render();
     }).catch(function () { /* the server is gone or busy: keep what is shown */ });
   }
@@ -409,7 +458,7 @@
       var id = S.open;
       api("POST", "/api/note/" + encodeURIComponent(id) + "/delete").then(function () { S.open = null; S.delConfirm = false; flash(T().deleted); refresh(); });
     },
-    cancel: function () { S.delConfirm = false; S.emptyConfirm = false; },
+    cancel: function () { S.delConfirm = false; S.emptyConfirm = false; S.mAsk = null; },
     askEmpty: function () {
       S.emptyConfirm = true; S.verify = null;
       api("GET", "/api/pocket/verify").then(function (v) { S.verify = v; render(); }).catch(function () { S.verify = { total: 0, verified: 0 }; render(); });
@@ -426,6 +475,20 @@
     folderSave: function () {
       api("POST", "/api/settings", { audio_dir: S.folderDraft }).then(function () { S.folderEdit = false; flash(T().folderSaved); refresh(); })
         .catch(function (e) { flash(T().error + e.message); });
+    },
+    models: function () {
+      S.modelsOpen = !S.modelsOpen; S.mAsk = null;
+      if (S.modelsOpen) { loadModels(); }
+    },
+    mAsk: function (kind, id) { S.mAsk = { kind: kind, id: id }; },
+    mGo: function () {
+      var a = S.mAsk; S.mAsk = null;
+      api("POST", "/api/models/install", { kind: a.kind, id: a.id, confirm: true }).then(loadModels)
+        .catch(function (e) { flash(T().error + (e.message === "busy" ? T().mBusy : e.message)); });
+    },
+    mUse: function (kind, id) {
+      api("POST", "/api/models/select", { kind: kind, id: id }).then(function () { return loadModels(); }).then(refresh)
+        .catch(function (e) { flash(T().error + (e.message === "busy" ? T().mBusy : e.message)); });
     },
     checkUpdate: function () {
       api("POST", "/api/update").then(function (u) { S.upd = u; if (u.available) { flash(T().updFlash); } render(); })

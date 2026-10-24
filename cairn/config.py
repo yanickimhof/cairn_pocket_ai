@@ -7,13 +7,16 @@ import tempfile
 import threading
 from pathlib import Path
 
+from . import catalog
+
 VERSION = "0.1.0"
 REPO = "yanickimhof/cairn_pocket_ai"
 AUDIO_EXT = (".mp3", ".wav", ".m4a", ".opus", ".ogg", ".flac")
 LOOPBACK = re.compile(r"127\.0\.0\.1:\d{2,5}")
+DEFAULT_LLM = "qwen3:8b"
 LEVELS = ("short", "mid", "full")
 LANGS = ("fr", "en")
-DEFAULT_SETTINGS = {"ui": None, "tr": None, "level": "mid", "audio_dir": None}
+DEFAULT_SETTINGS = {"ui": None, "tr": None, "level": "mid", "audio_dir": None, "llm": None, "speech": None}
 
 _lock = threading.RLock()
 
@@ -61,9 +64,20 @@ def install_config():
     for key, var in names.items():
         if os.environ.get(var):
             cfg[key] = os.environ[var]
-    cfg.setdefault("llm", "qwen3:8b")
+    cfg.setdefault("llm", DEFAULT_LLM)
     cfg.setdefault("ollama_host", "127.0.0.1:11434")
-    cfg.setdefault("whisper_model", str(home() / "models" / "whisper"))
+    cfg.setdefault("whisper_dir", str(home() / "models" / "whisper"))
+    # the model chosen in the app, unless the environment forces one
+    chosen = read_json(home() / "settings.json")
+    if chosen.get("llm") and not os.environ.get("CAIRN_LLM"):
+        cfg["llm"] = chosen["llm"]
+    if os.environ.get("CAIRN_WHISPER_MODEL"):
+        cfg["whisper_dir"] = cfg["whisper_model"] = os.environ["CAIRN_WHISPER_MODEL"]
+    else:
+        cfg["whisper_dir"] = cfg.get("whisper_model") or cfg["whisper_dir"]
+        speech_id = chosen.get("speech")
+        marked = home() / "models" / str(speech_id) / ".cairn-complete"
+        cfg["whisper_model"] = str(marked.parent) if speech_id and marked.exists() else cfg["whisper_dir"]
     return cfg
 
 
@@ -88,6 +102,10 @@ def save_settings(patch):
                 current["tr"] = value
             elif key == "level" and value in LEVELS:
                 current["level"] = value
+            elif key == "llm" and value in catalog.LLM_IDS:
+                current["llm"] = value
+            elif key == "speech" and value in catalog.SPEECH_IDS:
+                current["speech"] = value
             elif key == "audio_dir" and isinstance(value, str) and value.strip():
                 folder = Path(value.strip()).expanduser()
                 if not folder.is_absolute():

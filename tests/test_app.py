@@ -29,6 +29,7 @@ SUMMARY = {
 
 class StubModel(BaseHTTPRequestHandler):
     calls = []
+    pulled = []
 
     def log_message(self, *args):
         pass
@@ -42,10 +43,19 @@ class StubModel(BaseHTTPRequestHandler):
         self.wfile.write(raw)
 
     def do_GET(self):
-        self._send({"version": "0"} if self.path == "/api/version" else {"models": [{"name": "stub:1b", "size": 1500000000}]})
+        names = ["stub:1b"] + StubModel.pulled
+        self._send({"version": "0"} if self.path == "/api/version" else {"models": [{"name": n, "size": 1500000000} for n in names]})
 
     def do_POST(self):
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        if self.path == "/api/pull":
+            StubModel.pulled.append(body["model"])
+            raw = b'{"status":"pulling","total":100,"completed":40}\n{"status":"success","total":100,"completed":100}\n'
+            self.send_response(200)
+            self.send_header("Content-Length", str(len(raw)))
+            self.end_headers()
+            self.wfile.write(raw)
+            return
         StubModel.calls.append(body)
         content = json.dumps(SUMMARY) if "format" in body else "[00:00] Hello team. We move the launch to March."
         self._send({"message": {"content": content}})
@@ -216,6 +226,31 @@ class AppTest(unittest.TestCase):
         self.assertEqual(self.c.call("POST", "/api/note/%s/delete" % note_id)[0], 200)
         self.assertFalse(audio.exists())
         self.assertEqual(self.c.call("GET", "/api/note/" + note_id)[0], 404)
+
+
+    def test_10_models_on_demand(self):
+        status, listing = self.c.call("GET", "/api/models")
+        self.assertEqual(status, 200)
+        self.assertEqual([m["id"] for m in listing["llm"]], ["qwen3:4b", "qwen3:8b", "qwen3:14b"])
+        self.assertEqual([m["id"] for m in listing["speech"]], ["small", "turbo", "large"])
+        self.assertFalse(any(m["installed"] for m in listing["llm"]))
+        # nothing is downloaded without an explicit confirmation
+        self.assertEqual(self.c.call("POST", "/api/models/install", {"kind": "llm", "id": "qwen3:4b"})[0], 400)
+        self.assertEqual(self.c.call("POST", "/api/models/install", {"kind": "llm", "id": "tiny:0.6b", "confirm": True})[0], 400)
+        self.assertEqual(self.c.call("POST", "/api/models/select", {"kind": "llm", "id": "qwen3:4b"})[0], 400)
+        self.assertEqual(self.c.call("POST", "/api/models/select", {"kind": "speech", "id": "large"})[0], 400)
+        self.assertEqual(self.c.call("POST", "/api/models/install", {"kind": "llm", "id": "qwen3:4b", "confirm": True})[0], 202)
+        for _ in range(50):
+            job = self.c.call("GET", "/api/models")[1]["job"]
+            if job["state"] != "running":
+                break
+            time.sleep(0.1)
+        self.assertEqual(job["state"], "done")
+        self.assertTrue([m for m in self.c.call("GET", "/api/models")[1]["llm"] if m["id"] == "qwen3:4b"][0]["installed"])
+        status, settings = self.c.call("POST", "/api/models/select", {"kind": "llm", "id": "qwen3:4b"})
+        self.assertEqual((status, settings["llm"]), (200, "qwen3:4b"))
+        self.assertEqual(self.c.call("POST", "/api/settings", {"llm": "anything:1b"})[0], 400)
+        self.assertEqual(self.c.call("POST", "/api/models/install", {"kind": "llm", "id": "qwen3:4b"}, cookie=False)[0], 403)
 
 
 class UnitTest(unittest.TestCase):

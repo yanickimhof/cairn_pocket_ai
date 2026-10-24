@@ -75,18 +75,22 @@ function Find-Ollama {
   if ($c) { return $c.Source }
   $p = Join-Path $env:LOCALAPPDATA 'Programs\Ollama\ollama.exe'
   if (Test-Path $p) { return $p }
+  $p = Join-Path $CairnHome 'bin\ollama\ollama.exe'
+  if (Test-Path $p) { return $p }
   return $null
 }
 $Ollama = Find-Ollama
 if (-not $Ollama) {
-  Say 'Downloading Ollama (official installer, installs in your user folder)'
-  $Setup = Join-Path ([IO.Path]::GetTempPath()) 'OllamaSetup.exe'
-  Invoke-WebRequest -UseBasicParsing -Uri 'https://ollama.com/download/OllamaSetup.exe' -OutFile $Setup
-  $sig = Get-AuthenticodeSignature $Setup
-  if ($sig.Status -ne 'Valid') { Fail 'The Ollama installer signature is invalid, installation stopped.' }
-  Start-Process -FilePath $Setup -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait
-  Remove-Item -Force $Setup
-  $Ollama = Find-Ollama
+  Say 'Downloading Ollama (official build, kept in your Cairn folder)'
+  $Zip = Join-Path ([IO.Path]::GetTempPath()) 'ollama-windows-amd64.zip'
+  Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/ollama/ollama/releases/latest/download/ollama-windows-amd64.zip' -OutFile $Zip
+  $OllamaDir = Join-Path $CairnHome 'bin\ollama'
+  if (Test-Path $OllamaDir) { Remove-Item -Recurse -Force $OllamaDir }
+  Expand-Archive -Path $Zip -DestinationPath $OllamaDir -Force
+  Remove-Item -Force $Zip
+  $sig = Get-AuthenticodeSignature (Join-Path $OllamaDir 'ollama.exe')
+  if ($sig.Status -ne 'Valid') { Fail 'The Ollama signature is invalid, installation stopped.' }
+  $Ollama = Join-Path $OllamaDir 'ollama.exe'
 }
 if (-not $Ollama) { Fail 'Ollama could not be set up.' }
 
