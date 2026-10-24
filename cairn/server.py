@@ -191,17 +191,18 @@ class App:
 
     def check_update(self):
         """The only outgoing request Cairn can make, and only when the user asks for it."""
-        url = "https://api.github.com/repos/%s/releases/latest" % config.REPO
+        # /releases/latest ignores pre-releases (404), so list releases and take the newest published one.
+        url = "https://api.github.com/repos/%s/releases?per_page=5" % config.REPO
         request = urllib.request.Request(url, headers={"User-Agent": "Cairn", "Accept": "application/vnd.github+json"})
         try:
             with netguard.allow("update check"), urllib.request.urlopen(request, timeout=10) as response:  # nosec B310 (fixed https URL)
-                latest = json.load(response).get("tag_name", "")
-        except urllib.error.HTTPError as error:
-            if error.code == 404:  # no release published yet
-                return {"current": config.VERSION, "latest": None, "available": False}
-            raise ApiError(502, "update_check_failed")
+                releases = json.load(response)
         except (urllib.error.URLError, OSError, ValueError):
             raise ApiError(502, "update_check_failed")
+        tags = [r.get("tag_name", "") for r in releases if isinstance(r, dict) and not r.get("draft") and r.get("tag_name")]
+        if not tags:
+            return {"current": config.VERSION, "latest": None, "available": False}
+        latest = max(tags, key=_version_tuple)
         return {"current": config.VERSION, "latest": latest, "available": _version_tuple(latest) > _version_tuple(config.VERSION)}
 
     def pick_folder(self):

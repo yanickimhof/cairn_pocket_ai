@@ -4,7 +4,7 @@
   var D = {
     fr: {
       brand: "Cairn · Pocket AI souverain", components: "Composants", checkUpd: "Rechercher une mise à jour",
-      upToDate: "À jour", updAvail: "Mise à jour disponible : ", updFail: "Vérification impossible", updFlash: "Relance la commande d’installation",
+      upToDate: "À jour", checking: "Vérification…", verIs: "Version ", updAvail: "Mise à jour disponible : ", updFail: "Vérification impossible", updFlash: "Relance la commande d’installation",
       about: "À propos", aboutTagline: "Pocket AI souverain",
       aboutText: "Transcrit et résume tes enregistrements Pocket sur ton ordinateur. Aucun cloud : rien ne sort.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · Licence MIT · Non affilié à Pocket.", uiLang: "Langue de l’interface",
@@ -42,7 +42,7 @@
     },
     en: {
       brand: "Cairn · Sovereign Pocket AI", components: "Components", checkUpd: "Check for updates",
-      upToDate: "Up to date", updAvail: "Update available: ", updFail: "Check failed", updFlash: "Run the install command again",
+      upToDate: "Up to date", checking: "Checking…", verIs: "Version ", updAvail: "Update available: ", updFail: "Check failed", updFlash: "Run the install command again",
       about: "About", aboutTagline: "Sovereign Pocket AI",
       aboutText: "Transcribes and summarizes your Pocket recordings on your computer. No cloud: nothing leaves it.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · MIT license · Not affiliated with Pocket.", uiLang: "Interface language",
@@ -286,9 +286,11 @@
       h += '<div class="comp"><span class="cn">' + esc(c.name) + '</span><span class="cv">' + esc(c.ok ? c.ver : t.notInstalled) + '</span><span class="cs">' + esc(c.ok ? fmtSize(c.size) : "") + "</span>" + (c.ok ? I.checkB : (fix || I.warnB)) + "</div>";
     });
     h += "</div>";
-    var upd = S.upd, text = t.upToDate, ink = "var(--mute)";
-    if (upd && upd.error) { text = t.updFail; ink = "var(--warn)"; }
+    var upd = S.upd, text = t.verIs + (S.about && S.about.version || ""), ink = "var(--mute)";
+    if (S.updBusy) { text = t.checking; }
+    else if (upd && upd.error) { text = t.updFail; ink = "var(--warn)"; }
     else if (upd && upd.available) { text = t.updAvail + upd.latest; ink = "var(--warn)"; }
+    else if (upd) { text = t.upToDate + " · " + upd.current; ink = "var(--green-ink)"; }
     h += '<div class="row between gap12"><span style="font-size:14px;font-weight:600;color:' + ink + '">' + esc(text) + "</span>";
     h += '<button type="button" class="ib" data-a="checkUpdate"' + tip(t.checkUpd) + ">" + I.refresh + "</button></div>";
     h += viewPrivacy(t);
@@ -591,8 +593,9 @@
         .catch(function (e) { flash(T().error + (e.message === "busy" ? T().mBusy : e.message)); });
     },
     checkUpdate: function () {
-      api("POST", "/api/update").then(function (u) { S.upd = u; if (u.available) { flash(T().updFlash); } render(); })
-        .catch(function () { S.upd = { error: true }; render(); });
+      S.updBusy = true; S.upd = null; render();
+      api("POST", "/api/update").then(function (u) { S.updBusy = false; S.upd = u; if (u.available) { flash(T().updFlash); } render(); })
+        .catch(function () { S.updBusy = false; S.upd = { error: true }; render(); });
     }
   };
 
