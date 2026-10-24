@@ -43,6 +43,7 @@ if ([string]::IsNullOrEmpty($Here) -or -not (Test-Path (Join-Path $Here 'require
 }
 $Req = Join-Path $Here 'requirements\faster-windows.txt'
 if (-not (Test-Path $Req)) { Fail 'Missing requirements\faster-windows.txt in the downloaded files.' }
+if (-not (Test-Path (Join-Path $Here 'cairn'))) { Fail 'Missing the cairn application folder in the downloaded files.' }
 
 # 3. Python tooling, kept inside the Cairn folder
 $env:UV_PYTHON_INSTALL_DIR = Join-Path $CairnHome 'python'
@@ -116,12 +117,39 @@ $Lines = @(
 )
 Set-Content -Path (Join-Path $CairnHome 'env.ps1') -Value $Lines -Encoding UTF8
 
-# 7. Self test: one short audio file and one question, all local
+# 7. The application: configuration and launchers
+$ConfigPy = @'
+import json, sys
+home, engine, model, repo, llm, host, ollama, app = sys.argv[1:9]
+config = {"engine": engine, "whisper_model": model, "whisper_repo": repo, "llm": llm, "ollama_host": host, "ollama_bin": ollama, "app_dir": app}
+with open(home + "/config.json", "w") as handle:
+    json.dump(config, handle, indent=2)
+'@
+$ConfigFile = Join-Path ([IO.Path]::GetTempPath()) 'cairn-config.py'
+[IO.File]::WriteAllText($ConfigFile, $ConfigPy, (New-Object Text.UTF8Encoding $false))
+& $Py $ConfigFile $CairnHome $ModelDir $WhisperRepo $Llm $OllamaAddr $Ollama $Here
+Remove-Item -Force $ConfigFile
+if ($LASTEXITCODE -ne 0) { Fail 'Could not write the configuration.' }
+$Cmd = "@echo off`r`nchcp 65001 >nul`r`nset `"CAIRN_HOME=$CairnHome`"`r`nset `"PYTHONPATH=$Here`"`r`nset `"PATH=$CairnHome\bin;%PATH%`"`r`n`"$Py`" -m cairn %*`r`npause`r`n"
+[IO.File]::WriteAllText((Join-Path $CairnHome 'Cairn.cmd'), $Cmd, (New-Object Text.UTF8Encoding $false))
+try {
+  $Link = Join-Path ([Environment]::GetFolderPath('Programs')) 'Cairn.lnk'
+  $Shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($Link)
+  $Shortcut.TargetPath = Join-Path $CairnHome 'Cairn.cmd'
+  $Shortcut.WorkingDirectory = $CairnHome
+  $Shortcut.Save()
+} catch { Write-Host 'Start menu shortcut not created.' }
+
+# 8. Self test: one short audio file and one question, all local
 Say 'Running the self test'
 $env:CAIRN_HOME = $CairnHome; $env:CAIRN_ENGINE = 'faster'; $env:CAIRN_WHISPER_MODEL = $ModelDir
 $env:CAIRN_LLM = $Llm; $env:HF_HUB_OFFLINE = '1'; $env:DO_NOT_TRACK = '1'
 & $Py (Join-Path $Here 'scripts\selftest.py')
 if ($LASTEXITCODE -ne 0) { Fail 'The self test failed.' }
+$env:PYTHONPATH = $Here
+& $Py -c 'import cairn.server'
+if ($LASTEXITCODE -ne 0) { Fail 'The application could not be loaded.' }
 if ($Started) { Stop-Process -Id $Started.Id -ErrorAction SilentlyContinue }
 
-Say "Done. Cairn is ready in $CairnHome"
+Say 'Done. Cairn is ready.'
+Write-Host "`nStart Cairn: open Cairn from the Start menu, or double-click Cairn.cmd in $CairnHome"
