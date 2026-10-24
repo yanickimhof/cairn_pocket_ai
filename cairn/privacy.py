@@ -81,8 +81,8 @@ def connections(pids):
             parts = line.split()
             if len(parts) >= 5 and parts[0] in ("TCP", "UDP") and parts[-1].isdigit() and int(parts[-1]) in pids:
                 state = parts[3] if parts[0] == "TCP" else ""
-                if parts[0] == "TCP" and state not in ("ESTABLISHED", "SYN_SENT", "CLOSE_WAIT", "FIN_WAIT_1", "FIN_WAIT_2", "TIME_WAIT"):
-                    continue
+                if parts[0] == "TCP" and state not in ("ESTABLISHED", "SYN_SENT"):
+                    continue  # closing connections are left over from earlier work (a model download, say)
                 found.append((int(parts[-1]), parts[2]))
         return found
     if not pids:
@@ -91,7 +91,7 @@ def connections(pids):
     for line in out.splitlines()[1:]:
         parts = line.split()
         match = re.search(r"->(\S+)", line)
-        if len(parts) > 1 and parts[1].isdigit() and match:
+        if len(parts) > 1 and parts[1].isdigit() and match and ("ESTABLISHED" in line or "SYN_SENT" in line):
             found.append((int(parts[1]), match.group(1)))
     return found
 
@@ -139,7 +139,8 @@ def run_check():
         stop.set()
         watcher.join(timeout=3)
     mine, models = watched_pids()
-    external = sorted("%d -> %s" % key for key in seen)
+    names = {pid: os.path.basename(command.split(" ")[0]) for pid, _, command in process_table()}
+    external = sorted("%s (%d) -> %s" % (names.get(pid, "?"), pid, remote) for pid, remote in seen)
     report = {
         "when": time.strftime("%Y-%m-%dT%H:%M:%S"), "seconds": round(time.time() - started, 1),
         "external": external, "blocked": netguard.blocked(), "model_server_seen": bool(models_seen or models),
