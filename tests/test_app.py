@@ -289,6 +289,15 @@ class AppTest(unittest.TestCase):
 
         self.assertEqual(server.session_key(), server.session_key())
 
+    def test_14_privacy_check(self):
+        self.assertEqual(self.c.call("POST", "/api/privacy/check")[0], 202)
+        self.wait_idle()
+        status, data = self.c.call("GET", "/api/privacy")
+        self.assertEqual(status, 200)
+        report = data["report"]
+        self.assertEqual(report["external"], [])
+        self.assertTrue(report["ok"], report)
+
     def test_11_about_components(self):
         status, data = self.c.call("GET", "/api/about")
         self.assertEqual(status, 200)
@@ -301,6 +310,21 @@ class AppTest(unittest.TestCase):
 
 
 class UnitTest(unittest.TestCase):
+    def test_network_guard_blocks_outside_connections(self):
+        import subprocess
+
+        code = (
+            "import socket, sys; sys.path.insert(0, %r)\n"
+            "from cairn import netguard\nnetguard.install()\n"
+            "for host in ('1.1.1.1', 'example.com'):\n"
+            "    try:\n        socket.create_connection((host, 80), timeout=1)\n    except netguard.NetworkBlocked:\n        print('blocked')\n"
+            "with netguard.allow('test'):\n"
+            "    try:\n        socket.create_connection(('192.0.2.1', 80), timeout=0.2)\n    except netguard.NetworkBlocked:\n        print('WRONG')\n    except OSError:\n        print('allowed')\n"
+            "print(len(netguard.blocked()))\n"
+        ) % str(Path(__file__).resolve().parent.parent)
+        out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=30, check=False).stdout.split()
+        self.assertEqual(out, ["blocked", "blocked", "allowed", "2"])
+
     def test_background_service_files(self):
         import plistlib
         import stat

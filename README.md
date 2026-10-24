@@ -84,7 +84,7 @@ Secure mode hides the list of notes until you reveal it.
 ## Why sovereign
 
 - Audio, transcripts and summaries stay on your computer.
-- No outgoing connection once installed.
+- No outgoing connection once installed. Cairn enforces it (any connection to an outside address is refused inside the app and the speech engine) and can prove it: About, Privacy check watches the network connections of Cairn, its speech engine and the model server during a local test, and the automated tests run the same check on macOS and Windows.
 - Open models you can swap.
 - The model server answers only on your own computer. Its address, `127.0.0.1`, is the computer talking to itself ("localhost"): no other device on your network can reach it.
 - Each note shows a reliability score and flags passages worth checking.

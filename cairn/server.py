@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
-from . import catalog, config, jobs, llm, models, notes, pocket, render
+from . import catalog, config, jobs, llm, models, netguard, notes, pocket, privacy, render
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg", "/referral-qr.svg": "referral-qr.svg",
@@ -194,7 +194,7 @@ class App:
         url = "https://api.github.com/repos/%s/releases/latest" % config.REPO
         request = urllib.request.Request(url, headers={"User-Agent": "Cairn", "Accept": "application/vnd.github+json"})
         try:
-            with urllib.request.urlopen(request, timeout=10) as response:  # nosec B310 (fixed https URL)
+            with netguard.allow("update check"), urllib.request.urlopen(request, timeout=10) as response:  # nosec B310 (fixed https URL)
                 latest = json.load(response).get("tag_name", "")
         except urllib.error.HTTPError as error:
             if error.code == 404:  # no release published yet
@@ -356,6 +356,14 @@ def make_handler(app):
                 except jobs.Busy:
                     raise ApiError(409, "busy")
                 return self._json(202, {"ok": True})
+            if method == "POST" and path == "/api/privacy/check":
+                try:
+                    app.jobs.start_privacy()
+                except jobs.Busy:
+                    raise ApiError(409, "busy")
+                return self._json(202, {"ok": True})
+            if method == "GET" and path == "/api/privacy":
+                return self._json(200, {"report": privacy.last_report(), "running": app.jobs.snapshot().get("kind") == "privacy" and app.jobs.snapshot().get("running"), "guard": netguard.blocked()})
             if method == "POST" and path == "/api/cancel":
                 app.jobs.cancel()
                 return self._json(200, {"ok": True})

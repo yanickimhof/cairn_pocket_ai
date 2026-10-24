@@ -24,7 +24,7 @@ About 5.5 GB in total on a clean Mac and about 7 GB on Windows (estimate). If Ol
 - Everything lives in one folder with owner-only permissions. Delete it to uninstall.
 - The model server listens on `127.0.0.1` only (your own computer). The self test refuses any other address.
 - The web interface is served on `127.0.0.1` only, behind a one-time session key (HttpOnly, SameSite strict cookie), a Host check, a custom header on every change and a strict content security policy.
-- No telemetry and no outgoing connection in everyday use. The only optional request is the update check you trigger yourself.
+- No telemetry and no outgoing connection in everyday use. The only optional request is the update check you trigger yourself. A network guard refuses any other outside connection in the app and in the speech engine, and the Privacy check (About) observes the connections of Cairn, the speech engine and the model server.
 - Continuous checks on every change: shell and Python static analysis, secrets scan, and a full install test on both families of systems.
 
 ## Read before you run
