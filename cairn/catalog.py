@@ -10,16 +10,14 @@ LLM = [
 
 SPEECH = {
     "mlx": [
-        {"id": "small", "label": "Whisper small", "repo": "mlx-community/whisper-small-mlx", "bytes": int(0.48 * GB), "ram": 8, "tier": "light"},
         {"id": "turbo", "label": "Whisper large-v3-turbo", "repo": "mlx-community/whisper-large-v3-turbo", "bytes": int(1.61 * GB), "ram": 8, "tier": "standard"},
         {"id": "large", "label": "Whisper large-v3", "repo": "mlx-community/whisper-large-v3-mlx", "bytes": int(3.08 * GB), "ram": 16, "tier": "high"},
     ],
     "faster": [
-        {"id": "small", "label": "Whisper small", "repo": "Systran/faster-whisper-small", "bytes": int(0.49 * GB), "ram": 8, "tier": "light"},
         {"id": "turbo", "label": "Whisper large-v3-turbo", "repo": "deepdml/faster-whisper-large-v3-turbo-ct2", "bytes": int(1.62 * GB), "ram": 8, "tier": "standard"},
         {"id": "large", "label": "Whisper large-v3", "repo": "Systran/faster-whisper-large-v3", "bytes": int(3.09 * GB), "ram": 16, "tier": "high"},
     ],
 }
 
 LLM_IDS = tuple(m["id"] for m in LLM)
-SPEECH_IDS = ("small", "turbo", "large")
+SPEECH_IDS = ("turbo", "large")
