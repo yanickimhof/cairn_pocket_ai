@@ -17,10 +17,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
-from . import config, jobs, llm, models, notes, pocket, render
+from . import catalog, config, jobs, llm, models, notes, pocket, render
 
 WEB = Path(__file__).parent / "web"
-STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg"}
+STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg", "/referral-qr.svg": "referral-qr.svg"}
 COOKIE = "cairn_session"
 MAX_BODY = 1 << 20
 EXPORTS = {"md": ("text/markdown", ".md"), "html": ("text/html", ".html"), "text": ("text/plain", ".txt")}
@@ -118,28 +118,51 @@ class App:
         return data
 
     def about(self):
+        """Installed components, alphabetical, each with its version and size."""
         cfg = config.install_config()
         found = {m.get("name", ""): m.get("size", 0) for m in llm.models()}
         llm_name = cfg["llm"]
         llm_size = found.get(llm_name) or found.get(llm_name + ":latest") or 0
+        llm_entry = next((m for m in catalog.LLM if m["id"] == llm_name), None)
         model_dir = Path(cfg["whisper_model"])
+        speech = next((m for m in models.speech_entries() if m["id"] == models.selected_speech()), None)
         comps = [
-            {"name": "Whisper " + re.sub(r"^(faster-)?whisper-|-ct2$", "", (cfg.get("whisper_repo") or model_dir.name).split("/")[-1]),
-             "ver": _gb(_size(model_dir)) if model_dir.is_dir() else "-", "ok": model_dir.is_dir()},
-            {"name": "%s · Ollama" % llm_name, "ver": _gb(llm_size) if llm_size else "-", "ok": bool(llm_size)},
+            {"name": "Cairn", "ver": config.VERSION, "size": _size(Path(__file__).parent), "ok": True},
+            {"name": "Qwen3", "ver": (llm_entry or {}).get("label", llm_name).replace("Qwen3 ", "") or llm_name,
+             "size": llm_size, "ok": bool(llm_size), "fix": "llm"},
+            {"name": "Whisper", "ver": (speech or {}).get("label", "").replace("Whisper ", "") or re.sub(
+                r"^(faster-)?whisper-|-ct2$|-mlx$", "", (cfg.get("whisper_repo") or model_dir.name).split("/")[-1]),
+             "size": _size(model_dir) if model_dir.is_dir() else 0, "ok": model_dir.is_dir(), "fix": "speech"},
         ]
         ffmpeg = shutil.which("ffmpeg", path=str(config.home() / "bin") + os.pathsep + os.environ.get("PATH", ""))
-        if cfg.get("engine") == "mlx":
+        if ffmpeg:
             version = "-"
-            if ffmpeg:
-                try:
-                    out = subprocess.run([ffmpeg, "-version"], capture_output=True, text=True, timeout=10, check=False).stdout
-                    version = (re.search(r"version (\S+)", out) or [None, "-"])[1]
-                except (OSError, subprocess.SubprocessError):
-                    pass
-            comps.append({"name": "ffmpeg", "ver": version, "ok": bool(ffmpeg)})
-        comps.append({"name": "Python", "ver": platform.python_version(), "ok": True})
-        return {"version": config.VERSION, "components": comps}
+            try:
+                out = subprocess.run([ffmpeg, "-version"], capture_output=True, text=True, timeout=10, check=False).stdout
+                version = (re.search(r"version (\S+)", out) or [None, "-"])[1]
+            except (OSError, subprocess.SubprocessError):
+                pass
+            comps.append({"name": "ffmpeg", "ver": re.sub(r"[-_].*$", "", version), "size": os.path.getsize(os.path.realpath(ffmpeg)), "ok": True})
+        elif cfg.get("engine") == "mlx":
+            comps.append({"name": "ffmpeg", "ver": "", "size": 0, "ok": False})
+        ollama = llm.find_ollama(cfg)
+        if ollama:
+            version = "-"
+            try:
+                out = subprocess.run([ollama, "--version"], capture_output=True, text=True, timeout=10, check=False)
+                version = (re.search(r"(\d+\.\d+(?:\.\d+)?)", out.stdout + out.stderr) or [None, "-"])[1]
+            except (OSError, subprocess.SubprocessError):
+                pass
+            real = Path(os.path.realpath(ollama))
+            folder = next((p for p in real.parents if p.name in ("Ollama.app", "ollama")), None)
+            comps.append({"name": "Ollama", "ver": version, "size": _size(folder) if folder else real.stat().st_size, "ok": True})
+        else:
+            comps.append({"name": "Ollama", "ver": "", "size": 0, "ok": False})
+        base = Path(sys.base_prefix)
+        owned = config.home() in base.parents or base == config.home()
+        comps.append({"name": "Python", "ver": platform.python_version(), "size": _size(base) if owned or base.is_dir() else 0, "ok": True})
+        comps.sort(key=lambda c: c["name"].lower())
+        return {"version": config.VERSION, "components": comps, "referral": config.REFERRAL_URL}
 
     def check_update(self):
         """The only outgoing request Cairn can make, and only when the user asks for it."""

@@ -7,7 +7,7 @@ LABELS = {
         "tldr": "En bref", "actions": "Actions", "context": "Contexte", "key_points": "Points clés",
         "decisions": "Décisions", "topics": "Détail par sujet", "doubtful": "Passages à vérifier",
         "transcript": "Transcription", "reliability": "Fiabilité estimée",
-        "footer": "Note produite par Cairn. Rien n'a quitté cet ordinateur.",
+        "footer": "Note produite par Cairn · Pocket AI souverain. Rien n'a quitté cet ordinateur.", "words": "mots", "processed": "traité en", "models": "Modèles",
         "empty": "Aucune parole détectée dans cet enregistrement.",
         "templates": {"meeting": "Réunion", "call": "Appel", "presentation": "Présentation", "idea": "Idée", "other": "Note"},
     },
@@ -15,7 +15,7 @@ LABELS = {
         "tldr": "TL;DR", "actions": "Actions", "context": "Context", "key_points": "Key points",
         "decisions": "Decisions", "topics": "Detail by topic", "doubtful": "Passages to check",
         "transcript": "Transcript", "reliability": "Estimated reliability",
-        "footer": "Note produced by Cairn. Nothing left this computer.",
+        "footer": "Produced by Cairn · Sovereign Pocket AI. Nothing left this computer.", "words": "words", "processed": "processed in", "models": "Models",
         "empty": "No speech detected in this recording.",
         "templates": {"meeting": "Meeting", "call": "Call", "presentation": "Presentation", "idea": "Idea", "other": "Note"},
     },
@@ -78,7 +78,8 @@ def to_markdown(note, transcript=True):
         out += ["## " + lab["doubtful"], ""] + ["- [%s] %s" % (stamp(p["start"]), p["text"]) for p in note["doubtful"]] + [""]
     if transcript and note.get("clean"):
         out += ["## " + lab["transcript"], "", note["clean"], ""]
-    out += ["---", "", lab["footer"], ""]
+    info = _footer_info(note, lab)
+    out += ["---", "", lab["footer"] + ((" " + info + ".") if info else ""), ""]
     return "\n".join(out)
 
 
@@ -98,48 +99,132 @@ def to_text(note):
     return "\n".join(out).strip() + "\n"
 
 
-_CSS = (
-    "body{margin:0;background:#FBFBFD;color:#1D1D1F;font:16px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}"
-    "main{max-width:680px;margin:0 auto;padding:40px 24px 64px}h1{font-size:28px;letter-spacing:-.02em;margin:0 0 4px}"
-    "h2{font-size:15px;color:#3368A0;margin:28px 0 8px;text-transform:uppercase;letter-spacing:.04em}h3{font-size:16px;margin:16px 0 4px}"
-    ".meta{color:#6E6E73;font-size:14px}ul{padding-left:20px;margin:0}li{margin:4px 0}"
-    "footer{margin-top:40px;padding-top:16px;border-top:1px solid #E5E5EA;color:#6E6E73;font-size:13px}"
-    "details{margin-top:8px}summary{cursor:pointer;color:#3368A0;font-weight:600}.tr{white-space:pre-wrap}"
+def _footer_info(note, lab):
+    parts = []
+    models = note.get("models") or {}
+    names = [m for m in (models.get("speech"), models.get("llm")) if m]
+    if names:
+        parts.append(" · ".join(names))
+    if note.get("elapsed"):
+        parts.append("%s %s" % (lab["processed"], stamp(note["elapsed"])))
+    return " · ".join(parts)
+
+
+_PAGE_CSS = (
+    ":root{--bg:#F3F4F7;--card:#FFFFFF;--ink:#1D1D1F;--mute:#6E6E73;--line:#E5E5EA;--accent:#3368A0;--soft:#EEF3F9}"
+    "@media(prefers-color-scheme:dark){:root{--bg:#111214;--card:#1B1C1F;--ink:#F2F2F4;--mute:#9A9AA2;--line:#2C2D31;--accent:#7FB0E6;--soft:#1F2833}}"
+    "body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}"
+    "main{max-width:720px;margin:0 auto;padding:32px 16px 56px}"
+    ".card{background:var(--card);border-radius:20px;padding:36px 36px 28px;box-shadow:0 1px 2px rgba(0,0,0,.05),0 12px 40px rgba(0,0,0,.07)}"
+    "details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-marker{display:none}"
+    "details[open]>summary .chev{transform:rotate(90deg)}.chev{display:inline-block;transition:transform .15s}"
+    "@media(max-width:560px){.card{padding:24px 20px}}"
+    "@media print{body{background:#fff}.card{box-shadow:none;padding:0}details{display:block}}"
+)
+
+_LIGHT = {"ink": "#1D1D1F", "mute": "#6E6E73", "line": "#E5E5EA", "accent": "#3368A0", "soft": "#EEF3F9"}
+_LOGO = (
+    '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-5px">'
+    '<rect x="8" y="3" width="8" height="4.5" rx="2.2" fill="#9FBBDB"/><rect x="5.5" y="9" width="13" height="5" rx="2.5" fill="#5B8BC0"/>'
+    '<rect x="3" y="15.5" width="18" height="5.5" rx="2.7" fill="#3368A0"/></svg>'
 )
 
 
-def _ul(items):
-    return "<ul>" + "".join("<li>%s</li>" % html.escape(x) for x in items) + "</ul>"
+def _quality_color(value):
+    return "#1B7F3B" if value >= 85 else "#B26A00" if value >= 70 else "#C0392B"
 
 
 def to_html(note, transcript=True, fragment=False):
-    """Self-contained HTML, no external resource. fragment=True gives the body only (for rich copy)."""
+    """HTML version of a note. fragment=True gives inline-styled markup without the page, safe to paste in an email."""
     lab, s = labels(note), note.get("summary") or {}
     e = html.escape
-    body = ["<h1>%s</h1>" % e(note.get("title") or note["id"]), '<div class="meta">%s</div>' % e(_meta(note, lab))]
+
+    def c(name):
+        return "var(--%s)" % name if not fragment else _LIGHT[name]
+
+    h2 = "font-size:13px;font-weight:700;color:%s;margin:28px 0 8px;text-transform:uppercase;letter-spacing:.06em" % c("accent")
+    body = []
+    if not fragment:
+        body.append(
+            '<div style="font-size:13px;font-weight:600;color:%s;letter-spacing:.02em;margin-bottom:18px">%s Cairn <span style="color:%s;font-weight:400">· Sovereign Pocket AI</span></div>'
+            % (c("accent"), _LOGO, c("mute"))
+        )
+    body.append('<h1 style="font-size:28px;line-height:1.2;letter-spacing:-.02em;margin:0 0 12px">%s</h1>' % e(note.get("title") or note["id"]))
+    chips = []
+    if note.get("date"):
+        chips.append(e(note["date"].replace("T", " ")[:16]))
+    if note.get("duration"):
+        chips.append(e(stamp(note["duration"])))
+    if s.get("template") in lab["templates"]:
+        chips.append(e(lab["templates"][s["template"]]))
+    if chips:
+        body.append(
+            '<div style="display:flex;flex-wrap:wrap;gap:6px 8px;margin-bottom:4px">%s%s</div>'
+            % (
+                "".join('<span style="font-size:13px;color:%s;background:%s;border-radius:999px;padding:3px 12px">%s</span>' % (c("mute"), c("soft"), t) for t in chips),
+                (
+                    '<span style="font-size:13px;font-weight:600;color:%s;background:%s;border-radius:999px;padding:3px 12px">%s %d %%</span>'
+                    % (_quality_color(note["quality"]), c("soft"), e(lab["reliability"]), note["quality"])
+                    if note.get("quality") is not None
+                    else ""
+                ),
+            )
+        )
     if s.get("empty"):
         body.append("<p>%s</p>" % e(lab["empty"]))
     if s.get("tldr"):
-        body.append("<h2>%s</h2><p>%s</p>" % (e(lab["tldr"]), e(s["tldr"])))
+        body.append(
+            '<div style="margin:22px 0 0;padding:14px 18px;background:%s;border-left:4px solid %s;border-radius:10px">'
+            '<div style="font-size:12px;font-weight:700;color:%s;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">%s</div>%s</div>'
+            % (c("soft"), c("accent"), c("accent"), e(lab["tldr"]), e(s["tldr"]))
+        )
     if s.get("actions"):
-        body.append("<h2>%s</h2>%s" % (e(lab["actions"]), _ul([_action_line(a) for a in s["actions"]])))
+        rows = []
+        for a in s["actions"]:
+            meta = " ".join(
+                '<span style="font-size:12px;color:%s;background:%s;border-radius:999px;padding:1px 9px;white-space:nowrap">%s</span>' % (c("mute"), c("soft"), e(x))
+                for x in (a.get("who"), a.get("when")) if x
+            )
+            rows.append(
+                '<li style="margin:8px 0;list-style:none;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">'
+                '<span style="color:%s">&#9744;</span><span style="flex:1;min-width:200px">%s</span>%s</li>' % (c("accent"), e(a.get("what", "")), meta)
+            )
+        body.append('<h2 style="%s">%s</h2><ul style="padding:0;margin:0">%s</ul>' % (h2, e(lab["actions"]), "".join(rows)))
     if s.get("context"):
-        body.append("<h2>%s</h2><p>%s</p>" % (e(lab["context"]), e(s["context"])))
+        body.append('<h2 style="%s">%s</h2><p style="margin:0">%s</p>' % (h2, e(lab["context"]), e(s["context"])))
     for key in ("key_points", "decisions"):
         if s.get(key):
-            body.append("<h2>%s</h2>%s" % (e(lab[key]), _ul(s[key])))
+            items = "".join('<li style="margin:5px 0">%s</li>' % e(x) for x in s[key])
+            body.append('<h2 style="%s">%s</h2><ul style="padding-left:20px;margin:0">%s</ul>' % (h2, e(lab[key]), items))
     if s.get("topics"):
-        body.append("<h2>%s</h2>" % e(lab["topics"]))
-        body += ["<h3>%s</h3><p>%s</p>" % (e(t.get("name", "")), e(t.get("summary", ""))) for t in s["topics"]]
-    if note.get("doubtful"):
-        body.append("<h2>%s</h2>%s" % (e(lab["doubtful"]), _ul(["[%s] %s" % (stamp(p["start"]), p["text"]) for p in note["doubtful"]])))
+        body.append('<h2 style="%s">%s</h2>' % (h2, e(lab["topics"])))
+        body += [
+            '<h3 style="font-size:16px;margin:14px 0 2px">%s</h3><p style="margin:0">%s</p>' % (e(t.get("name", "")), e(t.get("summary", "")))
+            for t in s["topics"]
+        ]
+    if note.get("doubtful") and not fragment:
+        items = "".join('<li style="margin:5px 0">[%s] %s</li>' % (stamp(p["start"]), e(p["text"])) for p in note["doubtful"])
+        body.append('<h2 style="%s">%s</h2><ul style="padding-left:20px;margin:0">%s</ul>' % (h2, e(lab["doubtful"]), items))
     if transcript and note.get("clean"):
-        body.append('<h2>%s</h2><div class="tr">%s</div>' % (e(lab["transcript"]), e(note["clean"])))
-    body.append("<footer>%s</footer>" % e(lab["footer"]))
+        words = len(note["clean"].split())
+        text = '<div style="white-space:pre-wrap;margin-top:12px;color:%s">%s</div>' % (c("ink"), e(note["clean"]))
+        if fragment:
+            body.append('<h2 style="%s">%s</h2>%s' % (h2, e(lab["transcript"]), text))
+        else:
+            body.append(
+                '<details style="margin-top:28px;border-top:1px solid %s;padding-top:16px"><summary style="font-size:13px;font-weight:700;color:%s;text-transform:uppercase;letter-spacing:.06em">'
+                '<span class="chev">&#9656;</span> %s <span style="font-weight:400;color:%s;text-transform:none;letter-spacing:0">· %d %s</span></summary>%s</details>'
+                % (c("line"), c("accent"), e(lab["transcript"]), c("mute"), words, e(lab["words"]), text)
+            )
+    info = _footer_info(note, lab)
+    body.append(
+        '<div style="margin-top:36px;padding-top:16px;border-top:1px solid %s;color:%s;font-size:13px">%s%s%s</div>'
+        % (c("line"), c("mute"), "" if fragment else _LOGO + " ", e(lab["footer"]), ('<div style="margin-top:4px">%s</div>' % e(info)) if info else "")
+    )
     inner = "\n".join(body)
     if fragment:
-        return inner
+        return '<div style="font:16px/1.6 -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif;color:#1D1D1F;max-width:680px">%s</div>' % inner
     return (
         '<!doctype html><html lang="%s"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-        "<title>%s</title><style>%s</style></head><body><main>%s</main></body></html>"
-    ) % (note.get("lang") or "en", e(note.get("title") or note["id"]), _CSS, inner)
+        "<title>%s</title><style>%s</style></head><body><main><div class=\"card\">%s</div></main></body></html>"
+    ) % (note.get("lang") or "en", e(note.get("title") or note["id"]), _PAGE_CSS, inner)

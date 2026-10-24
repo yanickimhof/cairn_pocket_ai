@@ -6,9 +6,17 @@ No cloud. No account. No telemetry. Nothing leaves your machine.
 
 | Secure by default | Your recordings | Your notes |
 |---|---|---|
-| ![Secure mode](docs/screenshots/secure-mode.png) | ![Recordings](docs/screenshots/recordings.png) | ![Note](docs/screenshots/note.png) |
+| ![Secure mode](docs/screenshots/secure-mode.png) | ![Recordings, with live progress](docs/screenshots/recordings.png) | ![Note](docs/screenshots/note.png) |
 
-> **Status: v0.1, preview.** The app runs on your computer in your browser, entirely offline. Checked end to end on macOS and Windows by automated tests, see the [roadmap](docs/ROADMAP.md).
+| Settings | Models on demand | Components |
+|---|---|---|
+| ![Settings](docs/screenshots/settings.png) | ![Models](docs/screenshots/models.png) | ![About](docs/screenshots/about.png) |
+
+| Export to HTML (transcript folded) | Copy for an email |
+|---|---|
+| ![HTML export](docs/screenshots/html-export.png) | ![Email](docs/screenshots/email.png) |
+
+> **Status: v0.1, preview.** The app runs on your computer in your browser, entirely offline. Checked end to end on macOS by automated tests; Windows checks run in CI, see the [roadmap](docs/ROADMAP.md).
 
 ## Install
 
@@ -44,6 +52,8 @@ irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/main/install.p
 Processing happens on your computer, so a faster machine means faster notes. Everything works offline once installed.
 
 **Models.** The default install is the smallest one that gives good results: Whisper large-v3-turbo for transcription (1.6 GB) and Qwen3 4B for notes (2.5 GB). Tests on a French recording showed that smaller speech models misheard names and so produced wrong actions, which is why Cairn does not offer them. If you already have Qwen3 8B in Ollama, Cairn uses it without downloading anything, and it never modifies your existing Ollama or models.
+
+**Speed.** Transcription keeps the speech model loaded between recordings, and frees it after five idle minutes. The optional setting **Polish the transcript** (Settings) rewrites the raw transcript for readability with the language model; it is off by default because it is by far the slowest step. Summaries do not depend on it.
 
 **More powerful models, on demand.** Open Cairn, then **Settings, Models**. Pick a larger model (Qwen3 8B, Qwen3 14B, Whisper large-v3), confirm the download, and wait for the progress to finish. Then press **Use**. Nothing is downloaded without your click.
 

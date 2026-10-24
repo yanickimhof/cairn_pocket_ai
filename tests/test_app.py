@@ -110,7 +110,7 @@ class AppTest(unittest.TestCase):
         )
         from cairn import server, speech
 
-        def fake(path):
+        def fake(path, progress=None):
             segs = [
                 {"start": 0.0, "end": 3.0, "text": "Hello team.", "logprob": -0.1, "no_speech": 0.0, "compression": 1.2},
                 {"start": 3.0, "end": 6.0, "text": "We move the launch to March.", "logprob": -1.1, "no_speech": 0.0, "compression": 1.2},
@@ -253,6 +253,17 @@ class AppTest(unittest.TestCase):
         self.assertEqual(self.c.call("POST", "/api/models/install", {"kind": "llm", "id": "qwen3:4b"}, cookie=False)[0], 403)
 
 
+    def test_11_about_components(self):
+        status, data = self.c.call("GET", "/api/about")
+        self.assertEqual(status, 200)
+        names = [c["name"] for c in data["components"]]
+        self.assertEqual(names, sorted(names, key=str.lower))
+        self.assertTrue(all({"name", "ver", "size", "ok"} <= set(c) for c in data["components"]))
+        self.assertTrue(data["referral"].startswith("https://referral.heypocketai.com/"))
+        status, svg = self.c.call("GET", "/referral-qr.svg")
+        self.assertEqual(status, 200)
+
+
 class UnitTest(unittest.TestCase):
     def test_mp3_duration(self):
         from cairn import pocket
@@ -271,6 +282,22 @@ class UnitTest(unittest.TestCase):
         out = render.to_html(note)
         self.assertNotIn("<script>alert", out)
         self.assertIn("&lt;b&gt;", out)
+
+
+    def test_html_export_design(self):
+        from cairn import render
+
+        note = {"id": "x", "title": "T", "lang": "en", "clean": "word " * 30, "quality": 90, "elapsed": 12,
+                "models": {"speech": "Whisper large-v3-turbo", "llm": "Qwen3 4B"}, "summary": {"template": "meeting", "tldr": "Short."}}
+        page = render.to_html(note)
+        self.assertIn("<details", page)
+        self.assertIn("Sovereign Pocket AI", page)
+        self.assertIn("Qwen3 4B", page)
+        mail = render.to_html(note, transcript=False, fragment=True)
+        self.assertNotIn("<details", mail)
+        self.assertNotIn("<svg", mail)
+        self.assertIn("Sovereign Pocket AI", mail)
+
 
 
 if __name__ == "__main__":

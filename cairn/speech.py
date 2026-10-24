@@ -6,15 +6,110 @@ import os
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 
 from . import config
 
 DOUBTFUL_LOGPROB = -0.8
 DOUBTFUL_COMPRESSION = 2.4
 
+IDLE_SECONDS = 300
+_LOCK = threading.Lock()
+_WORKER = {"proc": None, "key": None, "timer": None, "lines": None}
 
-def transcribe(audio_path):
-    """Run the speech engine on one file. Returns {language, segments, duration}."""
+
+def _stop_worker():
+    proc = _WORKER["proc"]
+    _WORKER["proc"] = None
+    if _WORKER["timer"]:
+        _WORKER["timer"].cancel()
+        _WORKER["timer"] = None
+    if proc and proc.poll() is None:
+        try:
+            proc.stdin.close()
+        except OSError:
+            pass
+        try:
+            proc.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+
+
+def _idle_stop():
+    with _LOCK:
+        _stop_worker()  # frees the model memory after a quiet period
+
+
+def _worker(engine, model_dir):
+    """The long-lived speech process; the model stays loaded between recordings."""
+    key = (engine, model_dir)
+    proc = _WORKER["proc"]
+    if proc and proc.poll() is None and _WORKER["key"] == key:
+        return proc
+    _stop_worker()
+    env = dict(os.environ, HF_HUB_OFFLINE="1", DO_NOT_TRACK="1", PYTHONIOENCODING="utf-8")
+    env["PATH"] = str(config.home() / "bin") + os.pathsep + env.get("PATH", "")
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    proc = subprocess.Popen(  # nosec B603
+        [sys.executable, "-m", "cairn.speech_worker", "--serve", engine, model_dir],
+        env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        text=True, encoding="utf-8", bufsize=1, creationflags=flags,
+    )
+    _WORKER.update(proc=proc, key=key, lines=[])
+    return proc
+
+
+def _run(engine, model_dir, audio, output, mark, progress):
+    proc = _worker(engine, model_dir)
+    if _WORKER["timer"]:
+        _WORKER["timer"].cancel()
+    replies, chatter = [], []
+
+    def read():
+        for line in proc.stdout:
+            if line.startswith("@@CAIRN "):
+                replies.append(line[8:].strip())
+                return
+            chatter.append(line)
+
+    reader = threading.Thread(target=read, daemon=True)
+    reader.start()
+    try:
+        proc.stdin.write(json.dumps({"audio": audio, "output": output, "progress": mark}) + "\n")
+        proc.stdin.flush()
+    except OSError:
+        pass
+    while reader.is_alive():
+        if progress:
+            try:
+                with open(mark, encoding="utf-8") as handle:
+                    progress(int(100 * float(handle.read())))
+            except (OSError, ValueError):
+                pass
+        reader.join(timeout=0.4)
+    if not replies or replies[0] != "ok" or not os.path.exists(output):
+        reason = replies[0] if replies else " ".join("".join(chatter).strip().splitlines()[-3:])
+        _stop_worker()
+        raise RuntimeError("Transcription failed. " + reason)
+    with open(output, encoding="utf-8") as handle:
+        data = json.load(handle)
+    _WORKER["timer"] = threading.Timer(IDLE_SECONDS, _idle_stop)
+    _WORKER["timer"].daemon = True
+    _WORKER["timer"].start()
+    return data
+
+
+def shutdown():
+    with _LOCK:
+        _stop_worker()
+
+
+def transcribe(audio_path, progress=None):
+    """Run the speech engine on one file. Returns {language, segments, duration}.
+
+    progress, if given, is called with a number from 0 to 100 while the engine works.
+    """
     cfg = config.install_config()
     engine, model_dir = cfg.get("engine"), cfg.get("whisper_model")
     if engine not in ("mlx", "faster"):
@@ -23,19 +118,9 @@ def transcribe(audio_path):
         raise RuntimeError("Speech model not found. Run the installer again.")
     with tempfile.TemporaryDirectory() as tmp:
         output = os.path.join(tmp, "out.json")
-        env = dict(os.environ, HF_HUB_OFFLINE="1", DO_NOT_TRACK="1", PYTHONIOENCODING="utf-8")
-        home_bin = str(config.home() / "bin")
-        env["PATH"] = home_bin + os.pathsep + env.get("PATH", "")
-        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-        done = subprocess.run(
-            [sys.executable, "-m", "cairn.speech_worker", engine, model_dir, str(audio_path), output],
-            env=env, capture_output=True, text=True, creationflags=flags, check=False,
-        )
-        if done.returncode != 0 or not os.path.exists(output):
-            tail = (done.stderr or done.stdout or "").strip().splitlines()[-3:]
-            raise RuntimeError("Transcription failed. " + " ".join(tail))
-        with open(output, encoding="utf-8") as handle:
-            data = json.load(handle)
+        mark = os.path.join(tmp, "progress")
+        with _LOCK:
+            data = _run(engine, model_dir, str(audio_path), output, mark, progress)
     segments = [s for s in data.get("segments", []) if s.get("text")]
     data["segments"] = segments
     data["duration"] = max((s["end"] for s in segments), default=0.0)
@@ -65,3 +150,14 @@ def assess(segments):
 
 def raw_lines(segments):
     return ["[%02d:%02d] %s" % (int(s["start"]) // 60, int(s["start"]) % 60, s["text"]) for s in segments]
+
+
+def model_name():
+    """A readable name for the speech model in use, for the note's footer."""
+    from . import models
+
+    chosen = models.selected_speech()
+    for entry in models.speech_entries():
+        if entry["id"] == chosen:
+            return entry["label"]
+    return "Whisper"

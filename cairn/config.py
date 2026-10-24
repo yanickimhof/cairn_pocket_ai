@@ -11,12 +11,13 @@ from . import catalog
 
 VERSION = "0.1.0"
 REPO = "yanickimhof/cairn_pocket_ai"
+REFERRAL_URL = "https://referral.heypocketai.com/refer/39179caf?source=desktop_qr"
 AUDIO_EXT = (".mp3", ".wav", ".m4a", ".opus", ".ogg", ".flac")
 LOOPBACK = re.compile(r"127\.0\.0\.1:\d{2,5}")
 DEFAULT_LLM = "qwen3:4b"
 LEVELS = ("short", "mid", "full")
 LANGS = ("fr", "en")
-DEFAULT_SETTINGS = {"ui": None, "tr": None, "level": "mid", "audio_dir": None, "llm": None, "speech": None}
+DEFAULT_SETTINGS = {"ui": None, "tr": None, "level": "mid", "audio_dir": None, "llm": None, "speech": None, "polish": False}
 
 _lock = threading.RLock()
 
@@ -102,6 +103,8 @@ def save_settings(patch):
                 current["tr"] = value
             elif key == "level" and value in LEVELS:
                 current["level"] = value
+            elif key == "polish" and isinstance(value, bool):
+                current["polish"] = value
             elif key == "llm" and value in catalog.LLM_IDS:
                 current["llm"] = value
             elif key == "speech" and value in catalog.SPEECH_IDS:
