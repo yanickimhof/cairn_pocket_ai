@@ -42,3 +42,7 @@ The PowerShell installer, `install.ps1`, can be read and run the same way.
 ## Limits
 
 Cairn trusts its upstream components (uv, Ollama, the models and their publishers). Review their security notices for your own risk assessment. Protect your data folder with full disk encryption.
+
+## Known dependency advisories
+
+An audit (pip-audit) of the locked, hash-pinned dependencies on 2026-10-25 reported advisories on the Apple silicon build only: mlx 0.29.3, torch 2.11.0 and setuptools 81.0.0 (build time). Fixed versions could not yet be locked together with mlx-whisper. Exposure is low: Cairn only loads the models of its own catalog and never opens model files supplied by a user. The lock files will be refreshed as soon as compatible versions are available. The Windows and Intel Mac builds had no known advisories.
