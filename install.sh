@@ -76,7 +76,7 @@ fi
 [ -x "$UV" ] || die "uv could not be installed."
 
 say "Creating the isolated Python environment"
-"$UV" venv --python 3.11 "$CAIRN_HOME/.venv"
+UV_VENV_CLEAR=1 "$UV" venv --python 3.11 "$CAIRN_HOME/.venv"
 PY="$CAIRN_HOME/.venv/bin/python"
 say "Installing the speech engine (versions and hashes pinned)"
 "$UV" pip install --python "$PY" --require-hashes -r "$HERE/requirements/$REQ"

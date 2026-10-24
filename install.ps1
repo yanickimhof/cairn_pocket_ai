@@ -62,6 +62,7 @@ if ($uvCmd) { $Uv = $uvCmd.Source } else {
 if (-not (Test-Path $Uv)) { Fail 'uv could not be installed.' }
 
 Say 'Creating the isolated Python environment'
+$env:UV_VENV_CLEAR = '1'
 & $Uv venv --python 3.11 (Join-Path $CairnHome '.venv')
 if ($LASTEXITCODE -ne 0) { Fail 'Python environment creation failed.' }
 $Py = Join-Path $CairnHome '.venv\Scripts\python.exe'
