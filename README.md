@@ -54,7 +54,7 @@ In the Pocket mobile app, open the device settings, then:
 
 1. Turn **on** USB Mode (Pocket Web Sync). It is off by default, and the USB-C port then only charges.
 2. Turn **off** every automatic or cloud sync option (auto-sync, Wi-Fi or online sync, cloud backup and the like). Otherwise the Pocket sends recordings to Pocket's online service on its own, and the phone app then removes them from the drive, so Cairn never sees them. Option names vary between app versions.
-3. Connect the Pocket with a USB-C **data** cable. A drive named `Pocket` appears, and the dot in Cairn turns green. Close the Pocket desktop app if you use it, so that only one program reads the device.
+3. Connect the Pocket with a USB-C **data** cable. A drive named `Pocket` appears, and the dot in Cairn turns green. If no drive appears, see [troubleshooting](docs/INSTALL.md#troubleshooting): Cairn can only read a Pocket that the computer already shows as an external drive. Close the Pocket desktop app if you use it, so that only one program reads the device.
 
 You need neither the Pocket desktop app nor a Pocket account on the computer.
 
