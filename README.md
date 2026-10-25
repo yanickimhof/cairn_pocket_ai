@@ -20,7 +20,7 @@ No cloud, no account, no telemetry. Nothing leaves your machine.
 |---|---|
 | ![HTML export](docs/screenshots/html-export.png) | ![Email](docs/screenshots/email.png) |
 
-> **Status: v0.1, preview.** Runs in your browser, offline. Tested end to end on macOS; Windows is checked in CI. See the [roadmap](docs/ROADMAP.md).
+> **Status: v0.1.0, first stable release.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [roadmap](docs/ROADMAP.md).
 
 ## Install
 
@@ -57,6 +57,8 @@ In the Pocket mobile app, open the device settings, then:
 3. Connect the Pocket with a USB-C **data** cable. A drive named `Pocket` appears, and the dot in Cairn turns green. If no drive appears, see [troubleshooting](docs/INSTALL.md#troubleshooting): Cairn can only read a Pocket that the computer already shows as an external drive. Close the Pocket desktop app if you use it, so that only one program reads the device.
 
 You need neither the Pocket desktop app nor a Pocket account on the computer.
+
+> **Battery (macOS):** when it can read the Pocket over Bluetooth, Cairn shows a small battery next to the Local badge (read only, no pairing). The Pocket accepts one Bluetooth connection at a time, so nothing shows while the Pocket app on your phone is connected to it: closing the app is not enough: switch the phone to airplane mode (or turn its Bluetooth off), and the battery appears.
 
 ## Use it
 

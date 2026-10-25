@@ -6,6 +6,7 @@ One rule: **your recordings never leave your computer.**
 
 - Reads the audio files from your Pocket over USB and copies them to a folder you choose. It deletes on the Pocket only what you ask it to delete.
 - Transcribes, titles and summarizes them on your computer, with models that run offline.
+- On macOS, shows the Pocket battery when it can be read: about every two minutes Cairn looks for a nearby Pocket and reads the battery level it publishes over Bluetooth. It is read only: Cairn sends no command, pairs with nothing, changes nothing on the Pocket, and keeps no history. Bluetooth is a local radio link, not an internet connection. macOS asks for Bluetooth access the first time; if you refuse, nothing is shown and nothing else changes.
 - Stores everything in that folder: audio, transcripts, summaries, exports.
 
 ## What Cairn never does
