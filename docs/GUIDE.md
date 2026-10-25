@@ -5,6 +5,7 @@
 - **Import:** as soon as the Pocket is connected, Cairn copies and verifies the new recordings and lists them as waiting. Nothing is transcribed until you decide. This can be turned off in Settings (**Import on connect**, on by default).
 - **Process:** the badge on the central button counts the recordings waiting. Press the button to process them all, newest first, or tap one recording to process it first. Settings, **Process automatically** (off by default), does it without your click; **Stop** then pauses it until new recordings arrive or you start a job yourself.
 - **Skip:** leave a recording out of the queue; it can be put back.
+- **Progress:** the central ring and the status line show the step (transcribing, then writing the note) with a percentage. On a long recording the note is written in several parts, so the percentage moves in steps and is smoothed in between.
 - **Stop:** interrupts the current job.
 
 ## One note, one set of choices
