@@ -259,6 +259,15 @@ class App:
                 continue  # read-only or busy: tried again at the next connection
         return erased
 
+    @staticmethod
+    def _drop_empty_day(folder):
+        """Remove the dated folder that held a deleted recording once it is empty (rmdir never removes content)."""
+        try:
+            if folder.parent == Path(config.load_settings()["audio_dir"]):
+                folder.rmdir()
+        except (OSError, KeyError):
+            pass
+
     def delete_note(self, note_id):
         """Delete a recording everywhere: audio, transcript and summary on this computer, and the file on the
         Pocket (at its next connection if it is not connected now). Returns whether the Pocket file is gone."""
@@ -272,6 +281,7 @@ class App:
                 Path(audio).unlink()
             except OSError:
                 pass
+            self._drop_empty_day(Path(audio).parent)
         self.store.delete(note_id)
         snapshot = self.jobs.snapshot()
         if snapshot.get("running") and snapshot.get("id") == note_id:

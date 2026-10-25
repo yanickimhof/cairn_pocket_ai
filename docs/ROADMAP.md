@@ -13,7 +13,7 @@
 - Light default install, larger models on demand, removable from the app
 - Process one recording, skip or restore, stop, newest first
 - Secure mode (list hidden by default), FR/EN interface
-- One delete everywhere: Pocket (at its next connection if needed) and this computer, irreversible
+- One delete on the Pocket (at its next connection if needed) and this computer, irreversible
 - Automatic copy of new recordings when the Pocket is connected (on by default, no processing), and an optional automatic processing of the queue (off by default)
 - Component list and daily update check (one request to GitHub, can be turned off)
 - Network guard and automatic daily privacy check
