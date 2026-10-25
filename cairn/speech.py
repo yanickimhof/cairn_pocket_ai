@@ -3,6 +3,7 @@
 import json
 import math
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -59,7 +60,7 @@ def _worker(engine, model_dir):
     return proc
 
 
-def _run(engine, model_dir, audio, output, mark, progress):
+def _run(engine, model_dir, audio, output, mark, progress, language=None):
     proc = _worker(engine, model_dir)
     if _WORKER["timer"]:
         _WORKER["timer"].cancel()
@@ -75,7 +76,7 @@ def _run(engine, model_dir, audio, output, mark, progress):
     reader = threading.Thread(target=read, daemon=True)
     reader.start()
     try:
-        proc.stdin.write(json.dumps({"audio": audio, "output": output, "progress": mark}) + "\n")
+        proc.stdin.write(json.dumps({"audio": audio, "output": output, "progress": mark, "language": language}) + "\n")
         proc.stdin.flush()
     except OSError:
         pass
@@ -111,10 +112,11 @@ def shutdown():
         _stop_worker()
 
 
-def transcribe(audio_path, progress=None):
+def transcribe(audio_path, progress=None, language=None):
     """Run the speech engine on one file. Returns {language, segments, duration}.
 
     progress, if given, is called with a number from 0 to 100 while the engine works.
+    language ("fr", "en") forces the language of the recording; None lets the engine detect it, once, from the start.
     """
     cfg = config.install_config()
     engine, model_dir = cfg.get("engine"), cfg.get("whisper_model")
@@ -126,7 +128,7 @@ def transcribe(audio_path, progress=None):
         output = os.path.join(tmp, "out.json")
         mark = os.path.join(tmp, "progress")
         with _LOCK:
-            data = _run(engine, model_dir, str(audio_path), output, mark, progress)
+            data = _run(engine, model_dir, str(audio_path), output, mark, progress, language)
     segments = [s for s in data.get("segments", []) if s.get("text")]
     data["segments"] = segments
     data["duration"] = max((s["end"] for s in segments), default=0.0)
@@ -167,3 +169,32 @@ def model_name():
         if entry["id"] == chosen:
             return entry["label"]
     return "Whisper"
+
+
+_FR = frozenset("le la les des une est que qui dans pour pas nous vous je il elle ce cette sur avec du au aux mais ou donc très ça et être avoir fait c est j ai qu".split())
+_EN = frozenset("the and is are that this with for you we it of to in have not be was they what there but will would about so just like can do i my your".split())
+_WORDS = re.compile(r"[a-zà-ÿ]+")
+MIX_SHARE = 0.15  # the other language holds at least this share of the recognised speech
+MIX_MIN_SEGMENTS = 3
+
+
+def language_mix(segments):
+    """Which of French and English the segments are written in: ({"fr": share, "en": share}, mixed).
+
+    The engine detects one language for the whole file, so a passage in the other language comes out
+    garbled or translated. Counting everyday words per segment shows when a recording holds two languages.
+    Nothing is reported for a recording too short, or in a language this check does not know."""
+    weight, count = {"fr": 0.0, "en": 0.0}, {"fr": 0, "en": 0}
+    for s in segments or []:
+        words = _WORDS.findall(str(s.get("text", "")).lower())
+        fr, en = sum(w in _FR for w in words), sum(w in _EN for w in words)
+        kind = "fr" if fr >= 2 and fr > 1.5 * en else "en" if en >= 2 and en > 1.5 * fr else None
+        if kind:
+            weight[kind] += max(float(s.get("end", 0)) - float(s.get("start", 0)), 0.01)
+            count[kind] += 1
+    total = weight["fr"] + weight["en"]
+    if total < 30:
+        return {}, False
+    shares = {k: round(weight[k] / total, 2) for k in weight}
+    minor = min(weight, key=weight.get)
+    return shares, shares[minor] >= MIX_SHARE and count[minor] >= MIX_MIN_SEGMENTS

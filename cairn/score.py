@@ -10,6 +10,8 @@ import re
 import unicodedata
 
 MIN_ANCHORS = 3
+MIN_TERMS = 8
+VERSION = 2  # bumped when the method changes: older notes that could not be scored are tried again
 _SPOKEN = {
     "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
     "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18,
@@ -83,17 +85,46 @@ def _index(text):
     return words, digits, stems
 
 
-def fidelity(summary, transcript):
-    """Share (0 to 100) of the note's numbers and names found in the transcript, or None when the
-    note carries too few details to tell."""
-    items = anchors(summary)
-    if len(items) < MIN_ANCHORS or not transcript:
-        return None
+def terms(summary):
+    """Distinctive words of the note (seven letters or more), for notes that hold few numbers and names."""
+    found, seen = [], set()
+    for piece in _pieces(summary or {}):
+        for raw in _TOKEN.findall(piece):
+            word = _norm(raw)
+            if len(word) >= 7 and word.isalpha() and word not in seen:
+                seen.add(word)
+                found.append(word)
+    return found
+
+
+def fidelity_detail(summary, transcript, words_ok=True):
+    """(score, basis): the share (0 to 100) of the note's checkable details found in the transcript.
+    basis is "facts" (numbers and names) or, when the note has too few of them, "terms" (its distinctive
+    words, only when the note and the recording share a language). Without a score the basis says why:
+    "language" (the note is in another language than the recording) or "few" (too little to check)."""
+    if not transcript:
+        return None, "few"
+    items, basis = anchors(summary), "facts"
+    if len(items) < MIN_ANCHORS:
+        if not words_ok:
+            return None, "language"
+        listed = terms(summary)
+        if len(listed) < MIN_TERMS:
+            return None, "few"
+        items, basis = [("t", w) for w in listed], "terms"
     words, digits, stems = _index(transcript)
+    prefixes = {w[:6] for w in words if len(w) >= 7}
     hit = 0
     for kind, value in items:
         if kind == "n":
             hit += value in digits or any(value in d for d in digits if len(d) > len(value))
+        elif kind == "t":
+            hit += value in words or value[:6] in prefixes
         else:
             hit += value in words or (len(value) >= 6 and value[:5] in stems)
-    return round(100 * hit / len(items))
+    return round(100 * hit / len(items)), basis
+
+
+def fidelity(summary, transcript, words_ok=True):
+    """Share (0 to 100) of the note's checkable details found in the transcript, or None."""
+    return fidelity_detail(summary, transcript, words_ok)[0]

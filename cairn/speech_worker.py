@@ -32,7 +32,7 @@ _MODELS = {}
 _REPORT = {"fn": lambda value: None}
 
 
-def run(engine, model_dir, audio, progress_path=None):
+def run(engine, model_dir, audio, progress_path=None, language=None):
     report = _writer(progress_path)
     _REPORT["fn"] = report
     if engine == "mlx":
@@ -62,7 +62,7 @@ def run(engine, model_dir, audio, progress_path=None):
         except Exception:  # the progress bar is optional
             verbose = None
         result = mlx_whisper.transcribe(
-            audio, path_or_hf_repo=model_dir, condition_on_previous_text=False, verbose=verbose
+            audio, path_or_hf_repo=model_dir, condition_on_previous_text=False, verbose=verbose, language=language
         )
         segments = [
             {
@@ -82,7 +82,7 @@ def run(engine, model_dir, audio, progress_path=None):
         model = _MODELS.get(model_dir)
         if model is None:
             model = _MODELS[model_dir] = WhisperModel(model_dir, device="cpu", compute_type="int8")
-        found, info = model.transcribe(audio, condition_on_previous_text=False, vad_filter=True)
+        found, info = model.transcribe(audio, condition_on_previous_text=False, vad_filter=True, language=language)
         segments = []
         for s in found:
             segments.append(
@@ -108,7 +108,7 @@ def serve(engine, model_dir):
             continue
         try:
             job = json.loads(line)
-            data = run(engine, model_dir, job["audio"], job.get("progress"))
+            data = run(engine, model_dir, job["audio"], job.get("progress"), job.get("language"))
             with open(job["output"], "w", encoding="utf-8") as handle:
                 json.dump(data, handle, ensure_ascii=False)
             reply = "ok"
