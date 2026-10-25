@@ -24,7 +24,7 @@ trap cleanup EXIT
 # 1. Detect the system and pick the speech engine
 OS="$(uname -s)"
 ARCH="$(uname -m)"
-[ "$OS" = "Darwin" ] || die "This installer is for macOS. On Windows, use the PowerShell command from docs/INSTALL.md."
+[ "$OS" = "Darwin" ] || die "This installer is for macOS. On Windows, use the PowerShell command from the README (https://github.com/yanickimhof/cairn_pocket_ai)."
 if [ "$ARCH" = "arm64" ]; then
   ENGINE="mlx"
   REQ="mlx-macos-arm64.txt"
