@@ -8,7 +8,7 @@ Set before the command: `CAIRN_HOME` (install folder), `CAIRN_LLM` (language mod
 
 ## Update
 
-Cairn looks for a new version once a day (switch in **Settings, Check for updates**) and puts a dot on the info icon when one exists. To update, run the install command again: it replaces the engine and keeps your notes, settings and models.
+Cairn looks for a new version once a day (switch in **Settings, Check for updates**) and puts a dot on the info icon when one exists. To update, run the install command again: it replaces the engine and keeps your notes, settings and models. The version it replaces stays in `~/Cairn/src.previous`, in case you need to go back.
 
 ## Troubleshooting
 

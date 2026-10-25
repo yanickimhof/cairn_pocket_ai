@@ -1,7 +1,7 @@
 # Cairn installer for PowerShell.
 # Detects the system, then installs everything in your own folder: no administrator rights.
 #
-#   irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.1.0/install.ps1 | iex
 #
 # Optional variables: CAIRN_HOME (default %USERPROFILE%\Cairn), CAIRN_LLM (default qwen3:4b),
 # CAIRN_WHISPER_REPO (speech model), CAIRN_REF (branch or tag to install).
@@ -16,11 +16,14 @@ function Fail($m) { throw "Error: $m" }
 function Opt($name, $default) { $v = [Environment]::GetEnvironmentVariable($name); if ([string]::IsNullOrEmpty($v)) { $default } else { $v } }
 
 $Repo = 'yanickimhof/cairn_pocket_ai'
-$Ref = Opt 'CAIRN_REF' 'main'
+$Ref = Opt 'CAIRN_REF' 'v0.1.0'   # a fixed release, never a moving branch
+$UvVersion = '0.11.32'
 $CairnHome = Opt 'CAIRN_HOME' (Join-Path $env:USERPROFILE 'Cairn')
 $Llm = Opt 'CAIRN_LLM' 'qwen3:4b'
 $OllamaAddr = '127.0.0.1:11434'
 $WhisperRepo = Opt 'CAIRN_WHISPER_REPO' 'deepdml/faster-whisper-large-v3-turbo-ct2'
+$WhisperRev = ''   # the default model is fetched at a fixed revision; a model you choose is fetched as it is
+if ($WhisperRepo -eq 'deepdml/faster-whisper-large-v3-turbo-ct2') { $WhisperRev = '4df90f75321148c3a29a9e2351b7ddf8f5b115a8' }
 if ($env:CAIRN_ALLOW_TEST_MODELS -ne '1') {
   if ($WhisperRepo -match '(?i)whisper-(tiny|base)') { throw "The speech model $WhisperRepo is too small to give reliable notes. Use the default or a small/medium/large model." }
   if ($Llm -match '(?i):(0\.\d+|1|1\.\d+|2)b') { throw "The language model $Llm is too small to give useful summaries. Use qwen3:4b or larger." }
@@ -41,7 +44,9 @@ if ([string]::IsNullOrEmpty($Here) -or -not (Test-Path (Join-Path $Here 'require
   New-Item -ItemType Directory -Path $Tmp | Out-Null
   Invoke-WebRequest -UseBasicParsing -Uri "https://codeload.github.com/$Repo/zip/$Ref" -OutFile (Join-Path $Tmp 'src.zip')
   Expand-Archive -Path (Join-Path $Tmp 'src.zip') -DestinationPath $Tmp
-  if (Test-Path $Here) { Remove-Item -Recurse -Force $Here }
+  $Previous = Join-Path $CairnHome 'src.previous'
+  if (Test-Path $Previous) { Remove-Item -Recurse -Force $Previous }
+  if (Test-Path $Here) { Move-Item -Path $Here -Destination $Previous }   # the version being replaced, kept for a way back
   Move-Item -Path (Get-ChildItem -Directory $Tmp | Select-Object -First 1).FullName -Destination $Here
   Remove-Item -Recurse -Force $Tmp
 }
@@ -56,7 +61,7 @@ $uvCmd = Get-Command uv -ErrorAction SilentlyContinue
 if ($uvCmd) { $Uv = $uvCmd.Source } else {
   Say "Installing uv (Python manager) in $CairnHome\bin"
   $env:UV_UNMANAGED_INSTALL = Join-Path $CairnHome 'bin'
-  Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression
+  Invoke-RestMethod "https://astral.sh/uv/$UvVersion/install.ps1" | Invoke-Expression
   $Uv = Join-Path $CairnHome 'bin\uv.exe'
 }
 if (-not (Test-Path $Uv)) { Fail 'uv could not be installed.' }
@@ -91,7 +96,7 @@ if (-not $Ollama) {
   Expand-Archive -Path $Zip -DestinationPath $OllamaDir -Force
   Remove-Item -Force $Zip
   $sig = Get-AuthenticodeSignature (Join-Path $OllamaDir 'ollama.exe')
-  if ($sig.Status -ne 'Valid') { Fail 'The Ollama signature is invalid, installation stopped.' }
+  if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Ollama') { Fail 'The Ollama signature is invalid or not from Ollama, installation stopped.' }
   $Ollama = Join-Path $OllamaDir 'ollama.exe'
 }
 if (-not $Ollama) { Fail 'Ollama could not be set up.' }
@@ -116,7 +121,7 @@ if ($LASTEXITCODE -ne 0) { Fail 'Language model download failed.' }
 # 5. Speech model
 Say "Downloading the speech model: $WhisperRepo"
 $ModelDir = Join-Path $CairnHome 'models\whisper'
-& $Py -c "import sys; from huggingface_hub import snapshot_download as d; d(sys.argv[1], local_dir=sys.argv[2])" $WhisperRepo $ModelDir
+& $Py -c "import sys; from huggingface_hub import snapshot_download as d; d(sys.argv[1], revision=sys.argv[3] or None, local_dir=sys.argv[2])" $WhisperRepo $ModelDir $WhisperRev
 if ($LASTEXITCODE -ne 0) { Fail 'Speech model download failed.' }
 
 # 6. Settings: everything stays local

@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
-from . import catalog, config, jobs, llm, models, netguard, notes, pocket, privacy, render, score
+from . import catalog, config, jobs, llm, models, netguard, notes, pocket, privacy, render, score, speech
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -105,7 +105,7 @@ class App:
                 return {"connected": False, "count": 0, "new": 0}
             files = pocket.list_recordings(folder)
             skip = self.store.ignored()
-            known = {n.get("source") for n in self.store.all()}
+            known = {n.get("source") for n in self.store.slim()}
             fresh = [f for f in files if (rel := f.relative_to(folder).as_posix()) not in skip and rel not in known]
             return {"connected": True, "count": len(files), "new": len(fresh)}
         except OSError:
@@ -113,7 +113,7 @@ class App:
 
     def waiting_count(self):
         """Recordings copied and waiting to be processed (a failed one is not retried by itself)."""
-        return sum(1 for n in self.store.all() if n.get("status") == "waiting" and os.path.exists(n.get("audio", "")))
+        return sum(1 for n in self.store.slim() if n.get("status") == "waiting" and os.path.exists(n.get("audio", "")))
 
     def verify_pocket(self):
         folder = pocket.find_pocket()
@@ -148,7 +148,7 @@ class App:
 
     def state(self, with_list):
         rows = self.store.light() if with_list else []
-        everything = self.store.all()
+        everything = self.store.slim()
         data = {
             "version": config.VERSION,
             "pocket": self.pocket_state(),
@@ -301,6 +301,9 @@ class App:
             except OSError:
                 pass
         self.store.delete(note_id)
+        snapshot = self.jobs.snapshot()
+        if snapshot.get("running") and snapshot.get("id") == note_id:
+            speech.abort()  # it was being transcribed: stop at once, nothing of it is kept
         self.purge_pocket()
         return not rel or rel not in self.store.ignored()
 
@@ -308,6 +311,7 @@ class App:
 def make_handler(app):
     class Handler(BaseHTTPRequestHandler):
         server_version = "Cairn"
+        timeout = 60  # a client that stops sending frees its thread
 
         def log_message(self, *args):  # no access log
             pass
@@ -342,7 +346,12 @@ def make_handler(app):
         def _body(self):
             if self.headers.get("X-Cairn") != "1" or "application/json" not in self.headers.get("Content-Type", ""):
                 raise ApiError(403, "forbidden")
-            length = int(self.headers.get("Content-Length") or 0)
+            try:
+                length = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                raise ApiError(400, "bad_length")
+            if length < 0:
+                raise ApiError(400, "bad_length")
             if length > MAX_BODY:
                 raise ApiError(413, "too_large")
             try:

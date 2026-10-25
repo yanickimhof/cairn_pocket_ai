@@ -23,6 +23,9 @@
 ## Later
 
 - Linux
+- Raise the minimum to macOS 14 and update the speech engine (MLX) to its latest version
+- Test with a screen reader
+- A list of components (SBOM) with each release
 - Offline installation for computers without Internet access
 - Import from any folder of audio files
 - More interface and transcript languages

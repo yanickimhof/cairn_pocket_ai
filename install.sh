@@ -2,15 +2,16 @@
 # Cairn installer for bash and zsh.
 # Detects the system, then installs everything in your own folder: no sudo, no system change.
 #
-#   curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/main/install.sh | bash
+#   curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.1.0/install.sh | bash
 #
 # Optional variables: CAIRN_HOME (default ~/Cairn), CAIRN_LLM (default qwen3:4b),
-# CAIRN_WHISPER_REPO (speech model), CAIRN_REF (branch or tag to install).
+# CAIRN_WHISPER_REPO (speech model), CAIRN_REF (branch or tag to install; the default is the release this script belongs to).
 set -euo pipefail
 umask 077
 
 REPO="yanickimhof/cairn_pocket_ai"
-REF="${CAIRN_REF:-main}"
+REF="${CAIRN_REF:-v0.1.0}"   # a fixed release, never a moving branch
+UV_VERSION="0.11.32"
 CAIRN_HOME="${CAIRN_HOME:-$HOME/Cairn}"
 LLM="${CAIRN_LLM:-qwen3:4b}"
 OLLAMA_ADDR="127.0.0.1:11434"
@@ -29,12 +30,16 @@ if [ "$ARCH" = "arm64" ]; then
   ENGINE="mlx"
   REQ="mlx-macos-arm64.txt"
   DEFAULT_WHISPER="mlx-community/whisper-large-v3-turbo"
+  DEFAULT_REV="a4aaeec0636e6fef84abdcbe3544cb2bf7e9f6fb"
 else
   ENGINE="faster"
   REQ="faster-macos-x86_64.txt"
   DEFAULT_WHISPER="deepdml/faster-whisper-large-v3-turbo-ct2"
+  DEFAULT_REV="4df90f75321148c3a29a9e2351b7ddf8f5b115a8"
 fi
 WHISPER_REPO="${CAIRN_WHISPER_REPO:-$DEFAULT_WHISPER}"
+WHISPER_REV=""   # the default model is fetched at a fixed revision; a model you choose is fetched as it is
+[ "$WHISPER_REPO" = "$DEFAULT_WHISPER" ] && WHISPER_REV="$DEFAULT_REV"
 # Models too small to give useful notes are refused, except for the automated tests.
 if [ "${CAIRN_ALLOW_TEST_MODELS:-}" != "1" ]; then
   case "$(printf '%s' "$WHISPER_REPO" | tr '[:upper:]' '[:lower:]')" in
@@ -57,7 +62,8 @@ fi
 if [ -z "$HERE" ] || [ ! -d "$HERE/requirements" ]; then
   say "Downloading Cairn ($REF)"
   HERE="$CAIRN_HOME/src"
-  rm -rf "$HERE"
+  rm -rf "$CAIRN_HOME/src.previous"
+  [ -d "$HERE" ] && mv "$HERE" "$CAIRN_HOME/src.previous"   # the version being replaced, kept for a way back
   mkdir -p "$HERE"
   curl --proto '=https' --tlsv1.2 -fsSL "https://codeload.github.com/$REPO/tar.gz/$REF" | tar -xz -C "$HERE" --strip-components=1
 fi
@@ -70,7 +76,7 @@ export UV_CACHE_DIR="$CAIRN_HOME/.cache/uv"
 UV="$(command -v uv || true)"
 if [ -z "$UV" ]; then
   say "Installing uv (Python manager) in $CAIRN_HOME/bin"
-  curl --proto '=https' --tlsv1.2 -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL="$CAIRN_HOME/bin" sh
+  curl --proto '=https' --tlsv1.2 -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | env UV_UNMANAGED_INSTALL="$CAIRN_HOME/bin" sh
   UV="$CAIRN_HOME/bin/uv"
 fi
 [ -x "$UV" ] || die "uv could not be installed."
@@ -103,6 +109,8 @@ if [ -z "$OLLAMA" ]; then
   unzip -q "$TMP/ollama.zip" -d "$CAIRN_HOME/bin"
   rm -rf "$TMP"
   codesign --verify --deep --strict "$CAIRN_HOME/bin/Ollama.app" || die "The Ollama signature is invalid, installation stopped."
+  # a valid signature is not enough: macOS must also accept it as a notarized Developer ID application
+  spctl --assess --type execute "$CAIRN_HOME/bin/Ollama.app" || die "macOS does not accept this build of Ollama as notarized, installation stopped."
   OLLAMA="$CAIRN_HOME/bin/Ollama.app/Contents/Resources/ollama"
 fi
 [ -x "$OLLAMA" ] || die "Ollama could not be set up."
@@ -128,7 +136,7 @@ say "Downloading the language model: $LLM"
 
 # 5. Speech model
 say "Downloading the speech model: $WHISPER_REPO"
-"$PY" -c "import sys; from huggingface_hub import snapshot_download as d; d(sys.argv[1], local_dir=sys.argv[2])" "$WHISPER_REPO" "$CAIRN_HOME/models/whisper"
+"$PY" -c "import sys; from huggingface_hub import snapshot_download as d; d(sys.argv[1], revision=sys.argv[3] or None, local_dir=sys.argv[2])" "$WHISPER_REPO" "$CAIRN_HOME/models/whisper" "$WHISPER_REV"
 
 # 6. Settings: everything stays local
 {

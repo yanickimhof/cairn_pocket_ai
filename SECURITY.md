@@ -8,13 +8,13 @@ Use GitHub's private vulnerability reporting (Security tab, "Report a vulnerabil
 
 | Component | Version | Size | From | Protection |
 |---|---|---|---|---|
-| Cairn files | Latest `main`, or the tag in `CAIRN_REF` | Under 1 MB | GitHub | HTTPS only (TLS 1.2 or later) |
-| Python manager (uv) | Latest | About 30 MB | astral.sh | Official installer, kept in the Cairn folder, your shell profile is untouched |
+| Cairn files | The release named in the install command (`v0.1.0`), or the tag in `CAIRN_REF` | Under 1 MB | GitHub | HTTPS only (TLS 1.2 or later), fixed release rather than a moving branch |
+| Python manager (uv) | 0.11.32 | About 30 MB | astral.sh | Official installer at a fixed version, kept in the Cairn folder, your shell profile is untouched |
 | Python | 3.11 | About 90 MB | uv | Kept in the Cairn folder |
 | Python packages | Pinned in `requirements/` | About 1 GB | PyPI | Versions and SHA-256 hashes pinned, installed with `--require-hashes` |
-| Model server (Ollama) | Latest | 0.2 to 1.7 GB, by system | ollama.com | Code signature checked before use, installed for your user only |
+| Model server (Ollama) | Latest | 0.2 to 1.7 GB, by system | ollama.com | Code signature checked before use (macOS: also accepted as notarized by the system; Windows: signed by Ollama), installed for your user only |
 | Language model | Qwen3 4B (`qwen3:4b`, default). On demand: Qwen3 8B (5.2 GB), 14B (9.3 GB) | 2.5 GB | Ollama registry | Layers verified by digest |
-| Speech model | Whisper large-v3-turbo. On demand: large-v3 (3.1 GB) | 1.6 GB | Hugging Face | Downloaded once, then offline (`HF_HUB_OFFLINE=1`) |
+| Speech model | Whisper large-v3-turbo. On demand: large-v3 (3.1 GB) | 1.6 GB | Hugging Face | Fixed revision (a commit of the repository), downloaded once, then offline (`HF_HUB_OFFLINE=1`) |
 
 About 5.5 GB in total on a clean Mac and 7 GB on Windows (estimates). An existing Ollama and Qwen3 model are reused. Optional models download only when you confirm in the app. The install page shows the exact minimum version and sizes for your system.
 
@@ -27,12 +27,28 @@ About 5.5 GB in total on a clean Mac and 7 GB on Windows (estimates). An existin
 - A network guard refuses any outside connection in the app and the speech engine, except the daily version check, and a daily privacy check observes Cairn, the speech engine and the model server. Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 - Checks on every change: shell and Python static analysis, secrets scan, and a full install test on macOS and Windows.
 
+## How it is checked
+
+An internal review, not a third-party audit.
+
+- **Automated, on every change:** unit and end-to-end tests with a stub speech engine and model server, a test that loads and drives the page script, shell and Python static analysis (shellcheck, bandit), a scan for secrets and personal paths, and a complete install and application test on macOS and Windows.
+- **Reviewed by hand and by test:** the local API (session, Host check, change header, content security policy), path handling on the Pocket (links are not followed), escaping of every export format, the update check, the installers and their downloads, the response to a disconnected Pocket, a stopped model server, a full disk, a corrupted note and a deleted recording.
+- **Accessibility:** automated WCAG 2.1 AA checks (axe-core) on every screen, light and dark, and a keyboard walk. A test with a screen reader has not been done.
+- **Dependencies:** pinned by hash, watched by Dependabot. Open alerts and why they do not apply are listed below.
+
+## Known limits
+
+- The network guard works inside the program. A proxy set in the environment (`HTTPS_PROXY` pointing at this computer) would carry connections through that proxy: the daily privacy check observes the real connections and reports it.
+- Dependabot reports `torch` (`torch.jit.script`), `setuptools` (legacy wheel installation) and `mlx` (`load_gguf`, `load`). Cairn never calls them: it loads fixed speech models, no GGUF file, and installs only hashed wheels. Updating `mlx` needs macOS 14 or later and is planned.
+- A summary written by a language model can contain errors: the fidelity indicator catches invented numbers and names, not every mistake.
+- Anyone who can run programs as you on this computer can read your notes: Cairn protects against the network and other web pages, not against a compromised account.
+
 ## Read before you run
 
 Piping a script into a shell means trusting it. To read it first:
 
 ```
-curl --proto '=https' --tlsv1.2 -fsSLO https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/main/install.sh
+curl --proto '=https' --tlsv1.2 -fsSLO https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.1.0/install.sh
 less install.sh
 bash install.sh
 ```

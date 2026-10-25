@@ -437,6 +437,133 @@ class AppTest(unittest.TestCase):
         self.assertEqual(self.c.call("GET", "/referral-qr.svg")[0], 404)
 
 
+class HardeningTest(unittest.TestCase):
+    """Defects found by the audit of October 2026, each kept as a regression test."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        os.environ.setdefault("CAIRN_HOME", str(self.root / "Cairn"))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_listing_reads_only_the_notes_that_changed(self):
+        from unittest import mock
+
+        from cairn import config, notes
+
+        store = notes.Store(self.root / "Texts")
+        for name in ("a", "b"):
+            store.save({"id": name, "status": "done", "clean": "word " * 50000, "segments": [{"text": "x"}], "summary": {"tldr": "t"}, "fidelity": 90})
+        rows = store.slim()
+        self.assertEqual(len(rows), 2)
+        self.assertTrue(all("clean" not in r and "segments" not in r and "summary" not in r for r in rows))
+        with mock.patch.object(config, "read_json", wraps=config.read_json) as reader:
+            store.slim()
+            store.light()
+            self.assertEqual(reader.call_count, 0, "unchanged notes must not be parsed again")
+            note = store.get("a")
+            note["title"] = "changed"
+            store.save(note)
+            reader.reset_mock()
+            self.assertEqual({r["id"]: r.get("title") for r in store.slim()}["a"], "changed")
+            self.assertEqual(reader.call_count, 1)
+
+    def test_old_note_is_scored_once_then_never_read_again_by_the_listing(self):
+        from unittest import mock
+
+        from cairn import config, notes
+
+        store = notes.Store(self.root / "Texts")
+        summary = {"tldr": "Anna sends 12 files to Paris on 15 March.", "key_points": ["Budget of 300 approved by Marc"]}
+        store.save({"id": "old", "status": "done", "summary": summary, "clean": "Anna sends 12 files to Paris on 15 March. Budget of 300 approved by Marc."})
+        first = store.light()[0]["fidelity"]
+        self.assertIsNotNone(first)
+        store.light()  # the score was saved with the note: this pass reads that file once more, then nothing
+        with mock.patch.object(config, "read_json", wraps=config.read_json) as reader:
+            self.assertEqual(store.light()[0]["fidelity"], first)
+            self.assertEqual(reader.call_count, 0)
+
+    def test_a_link_on_the_pocket_is_never_followed(self):
+        from cairn import pocket
+
+        folder = self.root / "RECORD"
+        folder.mkdir()
+        tone(folder / "real.wav", seconds=1)
+        secret = self.root / "secret.txt"
+        secret.write_text("private")
+        try:
+            os.symlink(secret, folder / "evil.mp3")
+        except (OSError, NotImplementedError):
+            self.skipTest("links are not available here")
+        self.assertEqual([p.name for p in pocket.list_recordings(folder)], ["real.wav"])
+
+    def test_copy_of_a_file_that_vanished_fails_at_once(self):
+        from cairn import pocket
+
+        started = time.time()
+        with self.assertRaises(OSError):
+            pocket.copy_verified(self.root / "gone.wav", self.root / "out" / "gone.wav")
+        self.assertLess(time.time() - started, 2)
+
+    def test_html_export_escapes_the_language_attribute(self):
+        from cairn import render
+
+        page = render.to_html({"id": "x", "title": "t", "lang": 'en"><script>1</script>', "summary": {}, "date": "2026-10-01T10:00:00"})
+        self.assertNotIn("<script>", page)
+        self.assertIn('<html lang="en">', page)
+
+    def test_markdown_export_does_not_carry_html_tags(self):
+        from cairn import render
+
+        evil = "<img src=x onerror=alert(1)> and <script>1</script>"
+        text = render.to_markdown({"id": "x", "title": evil, "summary": {"tldr": evil, "key_points": [evil]}, "clean": evil, "date": "2026-10-01T10:00:00"})
+        self.assertNotIn("<img", text)
+        self.assertNotIn("<script", text)
+        self.assertIn("&lt;img", text)
+        self.assertIn("3 < 5", render.to_markdown({"id": "x", "title": "t", "summary": {"tldr": "3 < 5"}}))
+
+    def test_a_recording_deleted_while_it_is_processed_does_not_come_back(self):
+        from unittest import mock
+
+        from cairn import jobs, notes, speech
+
+        store = notes.Store(self.root / "Texts")
+        audio = self.root / "a.wav"
+        tone(audio, seconds=1)
+        store.save({"id": "gone", "status": "waiting", "audio": str(audio), "date": "2026-10-01T10:00:00", "title": ""})
+        queue = jobs.Jobs(store)
+
+        def deleted_meanwhile(path, progress=None):
+            store.delete("gone")
+            return {"language": "en", "segments": [{"start": 0.0, "end": 1.0, "text": "Hello there everyone.", "logprob": -0.1, "no_speech": 0.0, "compression": 1.2}], "duration": 1.0}
+
+        with mock.patch.object(speech, "transcribe", deleted_meanwhile):
+            self.assertTrue(queue._try("gone", {"ui": "en"}))
+        self.assertFalse(store.exists("gone"))
+        self.assertEqual(queue.snapshot()["errors"], [])
+
+    def test_malformed_request_lengths_are_refused(self):
+        import socket
+
+        from cairn import server
+
+        app, httpd = server.make_server(18790)
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        try:
+            for length, expected in (("abc", b" 400 "), ("-5", b" 400 ")):
+                with socket.create_connection(("127.0.0.1", app.port), timeout=5) as conn:
+                    conn.sendall(
+                        ("POST /api/cancel HTTP/1.1\r\nHost: 127.0.0.1:%d\r\nCookie: cairn_session=%s\r\nContent-Type: application/json\r\n"
+                         "X-Cairn: 1\r\nContent-Length: %s\r\n\r\n" % (app.port, app.token, length)).encode()
+                    )
+                    self.assertIn(expected, conn.recv(200).split(b"\r\n")[0] + b" ")
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
+
+
 class SimpleNamespaceStore:
     def reset_interrupted(self):
         pass

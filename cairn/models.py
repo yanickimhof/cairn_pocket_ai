@@ -61,7 +61,7 @@ def listing(job):
         dict(m, installed=m["id"] in installed_llm, selected=m["id"] == chosen_llm) for m in catalog.LLM
     ]
     out_speech = [
-        dict({k: v for k, v in m.items() if k != "repo"}, installed=speech_installed(m), selected=m["id"] == chosen_speech)
+        dict({k: v for k, v in m.items() if k not in ("repo", "revision")}, installed=speech_installed(m), selected=m["id"] == chosen_speech)
         for m in speech_entries()
     ]
     return {"llm": out_llm, "speech": out_speech, "job": job, "server_up": llm.available()}
@@ -125,10 +125,10 @@ class Downloader:
             shutil.rmtree(part, ignore_errors=True)
             part.mkdir(parents=True, exist_ok=True)
             env = dict(os.environ, HF_HUB_OFFLINE="0", HF_HUB_DISABLE_TELEMETRY="1", DO_NOT_TRACK="1")
-            code = "import sys; from huggingface_hub import snapshot_download as d; d(sys.argv[1], local_dir=sys.argv[2])"
+            code = "import sys; from huggingface_hub import snapshot_download as d; d(sys.argv[1], revision=sys.argv[3] or None, local_dir=sys.argv[2])"
             flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
             proc = subprocess.Popen(  # nosec B603
-                [sys.executable, "-c", code, entry["repo"], str(part)],
+                [sys.executable, "-c", code, entry["repo"], str(part), entry.get("revision", "")],
                 env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, creationflags=flags,
             )
             while proc.poll() is None:

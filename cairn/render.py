@@ -1,6 +1,7 @@
 """Markdown, HTML and plain text versions of a note."""
 
 import html
+import re
 
 LABELS = {
     "fr": {
@@ -90,7 +91,8 @@ def to_markdown(note, transcript=True):
         out += ["## " + lab["transcript"], "", note["clean"], ""]
     info = _footer_info(note, lab)
     out += ["---", "", lab["footer"] + ((" " + info + ".") if info else ""), ""]
-    return "\n".join(out)
+    # what the model wrote (or the audio said) must not become markup in a viewer that renders HTML inside markdown
+    return re.sub(r"<(?=[A-Za-z/!?])", "&lt;", "\n".join(out))
 
 
 def to_text(note):
@@ -232,4 +234,4 @@ def to_html(note, transcript=True, fragment=False):
     return (
         '<!doctype html><html lang="%s"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
         "<title>%s</title><style>%s</style></head><body><main><div class=\"card\">%s</div></main></body></html>"
-    ) % (note.get("lang") or "en", e(note.get("title") or note["id"]), _PAGE_CSS, inner)
+    ) % (e(note.get("lang") if note.get("lang") in LABELS else "en"), e(note.get("title") or note["id"]), _PAGE_CSS, inner)

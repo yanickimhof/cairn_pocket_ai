@@ -1,4 +1,7 @@
-"""The models Cairn can use. Only models that do a good job are listed."""
+"""The models Cairn can use. Only models that do a good job are listed.
+
+A speech model is downloaded at a fixed revision (a commit of its Hugging Face repository), so what is
+downloaded is what was reviewed, not whatever the repository holds on the day."""
 
 GB = 1_000_000_000
 
@@ -10,12 +13,12 @@ LLM = [
 
 SPEECH = {
     "mlx": [
-        {"id": "turbo", "label": "Whisper large-v3-turbo", "repo": "mlx-community/whisper-large-v3-turbo", "bytes": int(1.61 * GB), "ram": 8, "tier": "standard"},
-        {"id": "large", "label": "Whisper large-v3", "repo": "mlx-community/whisper-large-v3-mlx", "bytes": int(3.08 * GB), "ram": 16, "tier": "high"},
+        {"id": "turbo", "label": "Whisper large-v3-turbo", "repo": "mlx-community/whisper-large-v3-turbo", "revision": "a4aaeec0636e6fef84abdcbe3544cb2bf7e9f6fb", "bytes": int(1.61 * GB), "ram": 8, "tier": "standard"},
+        {"id": "large", "label": "Whisper large-v3", "repo": "mlx-community/whisper-large-v3-mlx", "revision": "49e6aa286ad60c14352c404340ded53710378a11", "bytes": int(3.08 * GB), "ram": 16, "tier": "high"},
     ],
     "faster": [
-        {"id": "turbo", "label": "Whisper large-v3-turbo", "repo": "deepdml/faster-whisper-large-v3-turbo-ct2", "bytes": int(1.62 * GB), "ram": 8, "tier": "standard"},
-        {"id": "large", "label": "Whisper large-v3", "repo": "Systran/faster-whisper-large-v3", "bytes": int(3.09 * GB), "ram": 16, "tier": "high"},
+        {"id": "turbo", "label": "Whisper large-v3-turbo", "repo": "deepdml/faster-whisper-large-v3-turbo-ct2", "revision": "4df90f75321148c3a29a9e2351b7ddf8f5b115a8", "bytes": int(1.62 * GB), "ram": 8, "tier": "standard"},
+        {"id": "large", "label": "Whisper large-v3", "repo": "Systran/faster-whisper-large-v3", "revision": "edaa852ec7e145841d8ffdb056a99866b5f0a478", "bytes": int(3.09 * GB), "ram": 16, "tier": "high"},
     ],
 }
 
