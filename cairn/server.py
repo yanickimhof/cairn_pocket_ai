@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
-from . import catalog, config, jobs, llm, models, netguard, notes, pocket, privacy, render, score, speech
+from . import battery, catalog, config, jobs, llm, models, netguard, notes, pocket, privacy, render, score, speech
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -95,6 +95,7 @@ class App:
         self.port = 0
         self.downloads = models.Downloader()
         self.update_info = None  # set by the background watcher
+        self.gauge = battery.Gauge()  # battery of the Pocket, shown when it can be read
 
     # Pocket
 
@@ -127,6 +128,7 @@ class App:
             "ollama": llm.available(),
             "download": self.downloads.state(),
             "settings": config.load_settings(),
+            "battery": self.gauge.snapshot(),
             "update": self.update_info,
             "privacy": _privacy_summary(),
             "totals": {"notes": len(everything), "done": sum(1 for n in everything if n.get("status") == "done"),

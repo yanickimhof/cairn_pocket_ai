@@ -23,6 +23,7 @@
       exportLabel: "Exporter", exportHint: "Copier ou exporter la fiche", copyRich: "Copier", copyRichHint: "Copier, prêt à coller dans un courriel",
       copiedRich: "Copié", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exporté en ",
       importLabel: "Importer et transcrire", importHint: "Importer et traiter les enregistrements", count: "Enregistrements sur le Pocket",
+      batTip: "Batterie du Pocket : {n} %", batCharging: " · en charge (branché)",
       eyeShow: "Afficher la liste", eyeHide: "Masquer la liste", hiddenNote: "Mode sécurisé",
       rowHint: "Ouvrir", actionsHint: "Afficher les actions", durHint: "Durée", dateDur: "Date · durée · langue", scoreNoteHint: "Fidélité de la note : part des chiffres et des noms de la note retrouvés dans le transcript", scoreNaLang: "Fidélité non mesurable : la note n’est pas dans la langue de l’enregistrement et contient peu de chiffres et de noms. Refaites la note dans la langue de l’enregistrement pour la mesurer", scoreNaFew: "Fidélité non mesurable : la note contient trop peu de chiffres, de noms ou de termes à vérifier", scoreTermsHint: "Fidélité de la note : elle contient peu de chiffres et de noms, la mesure porte sur ses termes clés retrouvés dans le transcript", scoreRawHint: "Confiance de la transcription brute : estimation du moteur vocal, volontairement prudente sur la parole spontanée", rawLegend: "Confiance de la transcription brute",
       rename: "Renommer", saveName: "Enregistrer", viewText: "Voir le transcript", copyText: "Copier le transcript", closeLbl: "Fermer", noText: "Pas de transcript.", textLegend: "Les passages surlignés sont à vérifier.", redo: "Refaire", redoHint: "Refaire la note au niveau choisi. L'audio n'est retranscrit que si le modèle vocal a changé.",
@@ -58,6 +59,7 @@
       exportLabel: "Export", exportHint: "Copy or export the note", copyRich: "Copy", copyRichHint: "Copy, ready to paste in an email",
       copiedRich: "Copied", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exported as ",
       importLabel: "Import and transcribe", importHint: "Import and process the recordings", count: "Recordings on the Pocket",
+      batTip: "Pocket battery: {n} %", batCharging: " · charging (plugged in)",
       eyeShow: "Show the list", eyeHide: "Hide the list", hiddenNote: "Secure mode",
       rowHint: "Open", actionsHint: "Show actions", durHint: "Length", dateDur: "Date · length · language", scoreNoteHint: "Note fidelity: share of the note's numbers and names found in the transcript", scoreNaLang: "Fidelity cannot be measured: the note is not in the language of the recording and has few numbers and names. Redo the note in the recording's language to measure it", scoreNaFew: "Fidelity cannot be measured: the note has too few numbers, names or terms to check", scoreTermsHint: "Note fidelity: the note has few numbers and names, so it is measured on its key terms found in the transcript", scoreRawHint: "Raw transcript confidence: the speech engine's own estimate, deliberately cautious on spontaneous speech", rawLegend: "Raw transcript confidence",
       rename: "Rename", saveName: "Save", viewText: "View transcript", copyText: "Copy transcript", closeLbl: "Close", noText: "No transcript.", textLegend: "Highlighted passages are worth checking.", redo: "Redo", redoHint: "Redo the note at the chosen level. The audio is transcribed again only if the speech model has changed.",
@@ -210,6 +212,14 @@
     }
     else { h += '<button type="button" class="mbtn" data-a="mAsk" data-v="' + kind + '" data-id="' + esc(m.id) + '"' + (job && job.state === "running" ? " disabled" : "") + ">" + esc(t.mInstall) + "</button>"; }
     return h + "</div>";
+  }
+
+  function batteryIcon(level, charging) {  // the fill follows the level: green from 50 %, orange from 20 %, red below; a bolt while the Pocket is plugged in
+    var color = level >= 50 ? "var(--green)" : (level >= 20 ? "var(--orange)" : "var(--red)");
+    var svg = '<svg width="28" height="14" viewBox="0 0 28 14" fill="none" aria-hidden="true"><rect x="0.75" y="0.75" width="23.5" height="12.5" rx="3.5" stroke="' + color + '" stroke-width="1.5"></rect>' +
+      '<rect x="3" y="3" width="' + Math.max(1.5, 19 * level / 100).toFixed(1) + '" height="8" rx="1.8" fill="' + color + '"></rect><rect x="25.5" y="4.5" width="2" height="5" rx="1" fill="' + color + '"></rect>';
+    if (charging) { svg += '<path d="M13.6 2.6 8.9 7.6h3l-1 3.8 4.8-5.2h-3.1z" fill="#fff" stroke="' + color + '" stroke-width="0.9" stroke-linejoin="round"></path>'; }
+    return svg + "</svg>";
   }
 
   function viewModels(t) {
@@ -419,7 +429,10 @@
     h += '<button type="button" class="dotbtn"' + tip(connected ? t.connected : t.disconnected) + '><span class="dot" style="background:' + (connected ? "var(--green)" : "var(--orange)") + ";box-shadow:0 0 0 4px " + (connected ? "rgba(31,157,85,.18)" : "rgba(200,109,81,.24)") + '"></span></button>';
     var pv = st.privacy, sc = !pv ? "#86868B" : (pv.ok ? "#1E8E3E" : "#A4452A");
     var pt = t.localHint + ". " + t.privAuto + ": " + (!pv ? t.privNone : (pv.ok ? t.privOk + " · " + fmtDate(pv.when) : t.privBad));
-    h += '<span class="pill"' + tip(pt) + ">" + I.shield(sc, 18) + esc(t.local) + "</span></div>";
+    h += '<span class="pill"' + tip(pt) + ">" + I.shield(sc, 18) + esc(t.local) + "</span>";
+    var charging = connected && st.battery && st.battery.level != null && st.battery.level < 100;  // plugged in and not full: the Pocket does not publish its charging state
+    if (st.battery && st.battery.level != null) { h += '<span class="bat"' + tip(t.batTip.replace("{n}", st.battery.level) + (charging ? t.batCharging : "")) + ">" + batteryIcon(st.battery.level, charging) + "</span>"; }
+    h += "</div>";
     h += '<div class="row" style="gap:2px"><div style="margin-right:6px"' + tip(t.uiLang) + ">" + segLang("ui", ui(), "s34", t, "") + "</div>";
     h += '<button type="button" class="ib plain' + (S.hidden ? " hiddenon" : "") + '" data-a="eye" aria-pressed="' + S.hidden + '"' + tip(S.hidden ? t.eyeShow : t.eyeHide) + ">" + (S.hidden ? I.eyeOff : I.eye) + "</button>";
     h += '<button type="button" class="ib plain' + bg(S.aboutOpen) + (st.update && st.update.available ? " upd" : "") + '" data-a="about"' + tip(t.about) + ">" + I.info + "</button>";

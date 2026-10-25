@@ -40,6 +40,7 @@ An internal review, not a third-party audit.
 
 - The network guard works inside the program. A proxy set in the environment (`HTTPS_PROXY` pointing at this computer) would carry connections through that proxy: the daily privacy check observes the real connections and reports it.
 - Dependabot reports `torch` (`torch.jit.script`), `setuptools` (legacy wheel installation) and `mlx` (`load_gguf`, `load`). Cairn never calls them: it loads fixed speech models, no GGUF file, and installs only hashed wheels. Updating `mlx` means rebuilding the pinned package list for macOS 14, the minimum system, and is planned.
+- The Pocket battery reading (macOS) runs as a separate small program (Bluetooth only, read only), outside the in-program network guard. It opens no network connection, and the daily privacy check still covers the app and the speech engine.
 - A summary written by a language model can contain errors: the fidelity indicator catches invented numbers and names, not every mistake.
 - Anyone who can run programs as you on this computer can read your notes: Cairn protects against the network and other web pages, not against a compromised account.
 

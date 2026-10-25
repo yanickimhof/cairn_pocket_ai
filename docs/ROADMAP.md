@@ -1,6 +1,6 @@
 # Roadmap
 
-## v0.1 (preview): done
+## v0.1: done
 
 - One-command installer for macOS and Windows, with a self test
 - Pocket detection (green dot connected, orange dot not detected)
@@ -10,6 +10,7 @@
 - Automatic templates (meeting, call, presentation, idea, other)
 - Level of detail and language chosen per recording, redo a note at another level
 - Rename, copy, export (Markdown, HTML)
+- Pocket battery level over Bluetooth (macOS, read only, shown when readable)
 - Light default install, larger models on demand, removable from the app
 - Process one recording, skip or restore, stop, newest first
 - Secure mode (list hidden by default), FR/EN interface

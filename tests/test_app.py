@@ -658,6 +658,71 @@ class LanguageTest(unittest.TestCase):
             queue.set_options("n2", speech_lang="de")
 
 
+class BatteryTest(unittest.TestCase):
+    def test_a_reading_runs_in_the_background_and_only_fresh_values_are_shown(self):
+        import time
+        from unittest import mock
+
+        from cairn import battery
+
+        gauge = battery.Gauge(reader=lambda: ("ok", 64))
+        with mock.patch.object(battery, "available", return_value=True):
+            self.assertTrue(gauge.poll(now=1000.0))
+            for _ in range(100):
+                if not gauge.busy:
+                    break
+                time.sleep(0.02)
+            self.assertEqual(gauge.snapshot(), {"available": True, "level": 64, "state": "ok"})
+            self.assertFalse(gauge.poll(now=1000.0 + battery.REFRESH - 1))  # not before the next due time
+            gauge.when -= battery.STALE + 1  # an old value is no longer shown
+            self.assertIsNone(gauge.snapshot()["level"])
+        slow = battery.Gauge(reader=lambda: ("none", None))
+        slow.state, slow.tried = "none", 1000.0
+        self.assertFalse(slow.poll(now=1000.0 + battery.RETRY - 1))  # nothing read: tries less often
+        self.assertTrue(slow.poll(now=1000.0 + battery.RETRY + 1))
+        absent = battery.Gauge()
+        absent.state = "missing"
+        self.assertFalse(absent.poll(now=10 ** 9))  # component not installed: never tries
+        with mock.patch.object(battery, "available", return_value=False):
+            self.assertEqual(gauge.snapshot(), {"available": False})
+
+    def test_reading_is_read_only_and_survives_failures(self):
+        import subprocess
+        from unittest import mock
+
+        from cairn import battery
+
+        def run(code, out=""):
+            return mock.patch.object(battery.subprocess, "run", return_value=subprocess.CompletedProcess([], code, out, ""))
+
+        with run(0, "87\n"):
+            self.assertEqual(battery.read(), ("ok", 87))
+        with run(3):
+            self.assertEqual(battery.read(), ("missing", None))
+        with run(1):
+            self.assertEqual(battery.read(), ("none", None))
+        with run(0, "250\n"):
+            self.assertEqual(battery.read(), ("none", None))  # not a percentage
+        with mock.patch.object(battery.subprocess, "run", side_effect=subprocess.TimeoutExpired("x", 1)):
+            self.assertEqual(battery.read(), ("none", None))
+        source = open(battery.__file__.replace("battery.py", "battery_worker.py"), encoding="utf-8").read()
+        self.assertNotIn("write_gatt_char", source)  # the worker never writes to the Pocket
+        self.assertNotIn("pair", source.lower().replace("pairs with nothing", ""))
+
+    def test_no_setting_and_an_old_settings_file_with_the_key_still_loads(self):
+        import json
+        import tempfile
+        from unittest import mock
+
+        from cairn import config
+
+        self.assertNotIn("pocketbattery", config.DEFAULT_SETTINGS)
+        folder = Path(tempfile.mkdtemp())
+        (folder / "settings.json").write_text(json.dumps({"ui": "fr", "pocketbattery": True}), encoding="utf-8")
+        with mock.patch.object(config, "home", return_value=folder):
+            self.assertEqual(config.load_settings()["ui"], "fr")
+
+
 class SimpleNamespaceStore:
     def reset_interrupted(self):
         pass

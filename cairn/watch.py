@@ -5,7 +5,7 @@ import threading
 import time
 from datetime import datetime
 
-from . import config, jobs, privacy
+from . import battery, config, jobs, privacy
 
 DAY = 24 * 3600
 
@@ -30,9 +30,12 @@ class Watcher:
         """One pass. Does nothing while a job is running, so it never competes with the user's work."""
         now = time.time() if now is None else now
         app = self.app
+        settings = config.load_settings()
+        gauge = getattr(app, "gauge", None)
+        if gauge is not None and battery.available():
+            gauge.poll(now)  # a Bluetooth reading in the background: it never waits for, nor delays, a job
         if app.jobs.snapshot()["running"]:
             return
-        settings = config.load_settings()
         try:
             app.purge_pocket()
         except OSError:

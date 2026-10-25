@@ -1,3 +1,4 @@
 mlx-whisper
 huggingface_hub
 imageio-ffmpeg
+bleak; sys_platform == 'darwin'
