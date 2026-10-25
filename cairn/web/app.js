@@ -8,14 +8,14 @@
       about: "À propos", aboutTagline: "Pocket AI souverain",
       aboutText: "Importez, transcrivez et résumez vos enregistrements Pocket, entièrement sur cet ordinateur. Aucun compte, aucun cloud, aucune télémétrie.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · Licence MIT · Non affilié à Pocket.", uiLang: "Langue de l’interface",
-      polish: "Réécrire le transcript", polishHint: "Plus lisible, mais nettement plus lent", off: "Non", on: "Oui",
+      off: "Non", on: "Oui",
       processedIn: "traité en", notInstalled: "Non installé", getIt: "Installer", refText: "Acheter un Pocket : 10 % de réduction", refNote: "Lien de parrainage facultatif. L’offre dépend uniquement de Pocket et peut changer.",
       models: "Modèles", modelsHint: "Choisir ou ajouter des modèles", modelsSpeech: "Transcription", modelsLlm: "Résumés",
       tagline: "Votre Pocket. Votre ordinateur. Vos données.", mUse: "Utiliser", mRemove: "Supprimer ce modèle", mRemoveConfirm: "Supprimer {name} de cet ordinateur ? Vous pourrez le télécharger à nouveau.", mInUse: "Utilisé", mInstall: "Installer", mTier: { light: "Léger", standard: "Standard", high: "Élevé" },
       mRam: "{n} Go de mémoire conseillés", mConfirm: "Télécharger {name} ({size}) ? Une connexion internet est utilisée pour ce seul téléchargement.",
       mDownloading: "Téléchargement {pct} %", mFailed: "Échec du téléchargement : ", mDone: "Modèle installé", mDown: "Moteur local arrêté", mBusy: "Un traitement est en cours",
-      settings: "Réglages", transcriptLang: "Langue du transcript", transcriptLangHint: "Langue des résumés",
-      reprocess: "Retranscrire", reprocessHint: "Refaire la transcription et le résumé au niveau choisi", reprocessConfirm: "Retranscrire cet enregistrement ? Le texte et le résumé seront remplacés (le nom que vous avez choisi est conservé). Comptez autant de temps que la première fois.", short: "Court", mid: "Normal", full: "Complet",
+      settings: "Réglages", langHint: "Langue de la note",
+      short: "Court", mid: "Normal", full: "Complet",
       shortHint: "Court : TL;DR et actions", midHint: "Normal : + contexte et points clés", fullHint: "Complet : + détail par sujet",
       emptyPocket: "Vider le Pocket", emptyHint: "Vider le Pocket (copies vérifiées)",
       emptyConfirm: "Vider le Pocket ? {n} copies vérifiées sur {m}.", emptyNone: "Le Pocket est vide.",
@@ -28,15 +28,15 @@
       importLabel: "Importer et transcrire", importHint: "Importer et traiter les enregistrements", count: "Enregistrements sur le Pocket",
       eyeShow: "Afficher la liste", eyeHide: "Masquer la liste", hiddenNote: "Mode sécurisé",
       rowHint: "Ouvrir", actionsHint: "Afficher les actions", durHint: "Durée", dateDur: "Date · durée", qualityHint: "Fiabilité estimée",
-      rename: "Renommer", saveName: "Enregistrer", rerun: "Relancer le résumé", rerunHint: "Relancer au niveau choisi",
+      rename: "Renommer", saveName: "Enregistrer", viewText: "Voir le transcript", copyText: "Copier le transcript", closeLbl: "Fermer", noText: "Pas de transcript.", textLegend: "Les passages surlignés sont à vérifier.", redo: "Refaire", redoHint: "Refaire la note au niveau choisi. L'audio n'est retranscrit que si le modèle vocal a changé.",
       copilot: "Copier les passages douteux", passages: " à vérifier", copilotHint: "clic pour copier",
       deleteLocal: "Supprimer de cet ordinateur", deleteHint: "Supprimer audio et textes",
       deleteConfirm: "Supprimer audio et textes ? Si le Pocket est vidé, plus aucune copie.",
-      copied: "Copié", rerunning: "Résumé relancé : ", renamed: "Nom enregistré", deleted: "Supprimé", pocketEmptied: "Pocket vidé",
+      copied: "Copié", redoing: "Note refaite : ", renamed: "Nom enregistré", deleted: "Supprimé", pocketEmptied: "Pocket vidé",
       ready: "Prêt", waiting: "En attente", failed: "Échec : relancer le résumé", done: "Terminé", modelDown: "Moteur local arrêté : relancez Cairn",
       privAuto: "Contrôle automatique", privOk: "aucune connexion vers l’extérieur", privBad: "connexions détectées, voir docs/PRIVACY.md", privNone: "en attente", autoCheck: "Vérifier les mises à jour", autoHint: "Une requête à GitHub par jour",
       processNow: "Traiter maintenant", skipIt: "Ignorer", skipped: "Ignoré", putBack: "Remettre dans la file", stopJob: "Arrêter",
-      steps: { copying: "Copie depuis le Pocket", transcribing: "Transcription", cleaning: "Nettoyage du texte", summarizing: "Rédaction de la note", privacy: "Vérification de la confidentialité" },
+      steps: { copying: "Copie depuis le Pocket", transcribing: "Transcription", summarizing: "Rédaction de la note", privacy: "Vérification de la confidentialité" },
       none: "Aucun enregistrement.", tldr: "En bref", actions: "Actions", points: "Points clés", noSpeech: "Aucune parole détectée.",
       months: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."], error: "Erreur : "
     },
@@ -46,14 +46,14 @@
       about: "About", aboutTagline: "Sovereign Pocket AI",
       aboutText: "Import, transcribe and summarize your Pocket recordings, entirely on this computer. No account, no cloud, no telemetry.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · MIT license · Not affiliated with Pocket.", uiLang: "Interface language",
-      polish: "Polish the transcript", polishHint: "More readable, but much slower", off: "Off", on: "On",
+      off: "Off", on: "On",
       processedIn: "processed in", notInstalled: "Not installed", getIt: "Install", refText: "Get a Pocket: 10 % off", refNote: "Optional referral link. The offer is set by Pocket alone and may change.",
       models: "Models", modelsHint: "Choose or add models", modelsSpeech: "Transcription", modelsLlm: "Summaries",
       tagline: "Your Pocket. Your computer. Your data.", mUse: "Use", mRemove: "Remove this model", mRemoveConfirm: "Remove {name} from this computer? You can download it again later.", mInUse: "In use", mInstall: "Install", mTier: { light: "Light", standard: "Standard", high: "High" },
       mRam: "{n} GB of memory advised", mConfirm: "Download {name} ({size})? An internet connection is used for this download only.",
       mDownloading: "Downloading {pct}%", mFailed: "Download failed: ", mDone: "Model installed", mDown: "Local engine stopped", mBusy: "A job is running",
-      settings: "Settings", transcriptLang: "Transcript language", transcriptLangHint: "Summary language",
-      reprocess: "Transcribe again", reprocessHint: "Redo the transcription and the summary at the chosen level", reprocessConfirm: "Transcribe this recording again? The text and the summary will be replaced (the name you chose is kept). Allow as much time as the first time.", short: "Short", mid: "Standard", full: "Detailed",
+      settings: "Settings", langHint: "Note language",
+      short: "Short", mid: "Standard", full: "Detailed",
       shortHint: "Short: TL;DR and actions", midHint: "Standard: + context, key points", fullHint: "Detailed: + detail per topic",
       emptyPocket: "Empty the Pocket", emptyHint: "Empty the Pocket (copies verified)",
       emptyConfirm: "Empty the Pocket? {n} of {m} copies verified.", emptyNone: "The Pocket is empty.",
@@ -66,15 +66,15 @@
       importLabel: "Import and transcribe", importHint: "Import and process the recordings", count: "Recordings on the Pocket",
       eyeShow: "Show the list", eyeHide: "Hide the list", hiddenNote: "Secure mode",
       rowHint: "Open", actionsHint: "Show actions", durHint: "Length", dateDur: "Date · length", qualityHint: "Estimated reliability",
-      rename: "Rename", saveName: "Save", rerun: "Rerun the summary", rerunHint: "Rerun at the chosen level",
+      rename: "Rename", saveName: "Save", viewText: "View transcript", copyText: "Copy transcript", closeLbl: "Close", noText: "No transcript.", textLegend: "Highlighted passages are worth checking.", redo: "Redo", redoHint: "Redo the note at the chosen level. The audio is transcribed again only if the speech model has changed.",
       copilot: "Copy doubtful passages", passages: " to check", copilotHint: "click to copy",
       deleteLocal: "Delete from this computer", deleteHint: "Delete audio and texts",
       deleteConfirm: "Delete audio and texts? If the Pocket is emptied, no copy remains.",
-      copied: "Copied", rerunning: "Summary rerun: ", renamed: "Name saved", deleted: "Deleted", pocketEmptied: "Pocket emptied",
+      copied: "Copied", redoing: "Note redone: ", renamed: "Name saved", deleted: "Deleted", pocketEmptied: "Pocket emptied",
       ready: "Ready", waiting: "Waiting", failed: "Failed: rerun the summary", done: "Done", modelDown: "Local engine stopped: restart Cairn",
       privAuto: "Automatic check", privOk: "no connection to the outside", privBad: "connections detected, see docs/PRIVACY.md", privNone: "pending", autoCheck: "Check for updates", autoHint: "One request to GitHub per day",
       processNow: "Process now", skipIt: "Skip", skipped: "Skipped", putBack: "Put back in the queue", stopJob: "Stop",
-      steps: { copying: "Copying from the Pocket", transcribing: "Transcribing", cleaning: "Cleaning the text", summarizing: "Writing the note", privacy: "Checking privacy" },
+      steps: { copying: "Copying from the Pocket", transcribing: "Transcribing", summarizing: "Writing the note", privacy: "Checking privacy" },
       none: "No recordings.", tldr: "TL;DR", actions: "Actions", points: "Key points", noSpeech: "No speech detected.",
       months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], error: "Error: "
     }
@@ -129,11 +129,10 @@
   }
   function ui() { return S.ui || (S.server && S.server.settings.ui) || ((navigator.language || "en").slice(0, 2) === "fr" ? "fr" : "en"); }
   function T() { return D[ui()]; }
-  function tr() { return (S.server && S.server.settings.tr) || ui(); }
-  function noteLevel(id) {
-    var n = S.server && S.server.notes ? S.server.notes.filter(function (x) { return x.id === id; })[0] : null;
-    return (n && n.level) || "mid";
-  }
+  function findNote(id) { return S.server && S.server.notes ? S.server.notes.filter(function (x) { return x.id === id; })[0] : null; }
+  function noteLevel(id) { var n = findNote(id); return (n && n.level) || "mid"; }
+  function noteLang(id) { var n = findNote(id); return (n && n.lang) || ui(); }
+  function optionBar(t) { return seg3("rr", S.rr, "s36", t) + segLang("rl", S.rl, "s36", t, t.langHint); }
 
   function api(method, path, body) {
     var opt = { method: method, headers: {} };
@@ -229,12 +228,7 @@
 
   function viewSettings(t, st) {
     var h = '<div class="card panel">';
-    h += '<div class="setrow"' + tip(t.transcriptLangHint) + ">" + I.doc + segLang("tr", tr(), "s38", t, t.transcriptLangHint) + "</div>";
-    h += '<div class="hr"></div><div class="setrow"' + tip(t.polishHint) + '><span class="text" style="font-size:14px">' + esc(t.polish) + '</span><div class="seg s38">' +
-      [["0", t.off, false], ["1", t.on, true]].map(function (o) {
-        return '<button type="button" data-a="polish" data-v="' + o[0] + '" class="' + bg(!!st.settings.polish === o[2]).trim() + '">' + esc(o[1]) + "</button>";
-      }).join("") + "</div></div>";
-    h += '<div class="hr"></div><div class="setrow"' + tip(t.autoHint) + '><span class="text" style="font-size:14px">' + esc(t.autoCheck) + '</span><div class="seg s38">' +
+    h += '<div class="setrow"' + tip(t.autoHint) + '><span class="text" style="font-size:14px">' + esc(t.autoCheck) + '</span><div class="seg s38">' +
       [["0", t.off, false], ["1", t.on, true]].map(function (o) {
         return '<button type="button" data-a="autocheck" data-v="' + o[0] + '" class="' + bg(st.settings.autocheck !== false === o[2]).trim() + '">' + esc(o[1]) + "</button>";
       }).join("") + "</div></div>";
@@ -306,9 +300,10 @@
       h += '<div class="name"><input id="nameInput" type="text" value="' + esc(S.draft) + '" aria-label="' + esc(t.rename) + '"><button type="button" class="ib blue" data-a="saveName"' + tip(t.saveName) + ">" + I.checkW + "</button></div>";
     }
     var passInk = n.quality != null && n.quality < 85 ? "var(--warn)" : "var(--mute)";
-    h += '<div class="bar"><div class="row gap8">' + seg3("rr", S.rr, "s36", t) +
-      '<button type="button" class="ib blue" data-a="rerun"' + tip(t.rerunHint) + ">" + I.refreshW + "</button></div>";
+    h += '<div class="bar"><div class="row gap8" style="flex-wrap:wrap">' + optionBar(t) +
+      '<button type="button" class="mbtn blue" data-a="rerun"' + (S.server && S.server.job && S.server.job.running ? " disabled" : "") + tip(t.redoHint) + ">" + esc(t.redo) + "</button></div>";
     h += '<div class="row" style="gap:4px">';
+    h += '<button type="button" class="ib" data-a="viewText" data-id="' + esc(n.id) + '"' + tip(t.viewText) + ">" + I.doc.replace("#6E6E73", "#1D1D1F") + "</button>";
     h += '<button type="button" class="warn" data-a="copyDoubtful" style="color:' + passInk + '"' + tip(n.passages + t.passages + " · " + t.copilotHint) + ">" + (passInk === "var(--orange)" ? I.warnB.replace('width="16" height="16"', 'width="18" height="18"') : I.warnB.replace("#C86D51", "#6E6E73").replace('width="16" height="16"', 'width="18" height="18"')) + (n.passages || 0) + "</button>";
     h += '<button type="button" class="ib" data-a="startRename"' + tip(t.rename) + ">" + I.pencil + "</button>";
     h += '<button type="button" class="ib" data-a="toggleExport"' + tip(t.exportHint) + ">" + I.down + "</button>";
@@ -316,8 +311,6 @@
     if (S.exp === n.id) {
       h += '<div class="exp"><button type="button" class="main" data-a="expCopy"' + tip(t.copyRichHint) + ">" + I.copy + '</button><button type="button" data-a="expMd"' + tip(t.expMdHint) + '>MD</button><button type="button" data-a="expHtml"' + tip(t.expHtmlHint) + ">HTML</button></div>";
     }
-    h += '<div class="row gap8" style="margin-top:8px"><button type="button" class="mbtn" data-a="askReprocess"' + (S.server && S.server.job && S.server.job.running ? " disabled" : "") + tip(t.reprocessHint) + ">" + esc(t.reprocess) + "</button></div>";
-    if (S.reConfirm) { h += confirmBox(t.reprocessConfirm, "confirmReprocess", t); }
     if (S.delConfirm) { h += confirmBox(t.deleteConfirm, "confirmDelete", t); }
     if (n.error) { h += '<div class="err">' + esc(t.error + n.error) + "</div>"; }
     if (full && full.summary) {
@@ -345,7 +338,7 @@
   }
 
   function queueActions(n, job, t) {
-    var h = '<div class="detail"><div class="row gap8">' + seg3("rr", S.rr, "s36", t);
+    var h = '<div class="detail"><div class="row gap8" style="flex-wrap:wrap">' + optionBar(t);
     if (job.running && job.id === n.id) {
       h += '<button type="button" class="ib" data-a="stopJob"' + tip(t.stopJob) + ">" + I.stop + "</button>";
     } else {
@@ -427,6 +420,42 @@
     }
   }
 
+  // The transcript opens in a window of its own, outside the polled page, so it keeps its scroll position.
+  function closeText() {
+    var box = document.getElementById("txtview");
+    if (box) { box.parentNode.removeChild(box); document.body.style.overflow = ""; }
+  }
+
+  function showText(id) {
+    var t = T();
+    api("GET", "/api/note/" + encodeURIComponent(id)).then(function (full) {
+      var text = full.clean || "";
+      var weak = (full.doubtful || []).map(function (p) { return String(p.text || "").trim(); }).filter(Boolean);
+      var body = text.split(/\n+/).filter(function (x) { return x.trim(); }).map(function (line) {
+        var hit = weak.some(function (w) { return line.indexOf(w) !== -1; });
+        var m = line.match(/^\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*/);
+        var stamp = m ? '<span class="ts">' + esc(m[1]) + "</span>" : "";
+        return "<p" + (hit ? ' class="dbt"' : "") + ">" + stamp + esc(m ? line.slice(m[0].length) : line) + "</p>";
+      }).join("") || '<p class="small">' + esc(t.noText) + "</p>";
+      closeText();
+      var box = document.createElement("div");
+      box.id = "txtview";
+      box.innerHTML = '<div class="mback" data-tx="close"></div><div class="mcard" role="dialog" aria-modal="true" aria-label="' + esc(t.viewText) + '">' +
+        '<div class="mhead"><div class="mtitle">' + esc(full.title || id) + '</div><div class="row gap8">' +
+        '<button type="button" class="ib" data-tx="copy"' + tip(t.copyText) + ">" + I.copy.replace("#FFFFFF", "#1D1D1F") + "</button>" +
+        '<button type="button" class="ib grey2" data-tx="close"' + tip(t.closeLbl) + ">" + I.x + "</button></div></div>" +
+        (weak.length ? '<div class="mleg">' + esc(t.textLegend) + "</div>" : "") + '<div class="mbody">' + body + "</div></div>";
+      box.addEventListener("click", function (ev) {
+        var el = ev.target.closest("[data-tx]");
+        if (!el) { return; }
+        if (el.getAttribute("data-tx") === "close") { closeText(); return; }
+        navigator.clipboard.writeText(text).then(function () { flash(T().copied); });
+      });
+      document.body.appendChild(box);
+      document.body.style.overflow = "hidden";
+    }).catch(function (e) { flash(t.error + e.message); });
+  }
+
   function noteAction(id, action) {
     api("POST", "/api/note/" + encodeURIComponent(id) + "/" + action).then(refresh)
       .catch(function (e) { flash(T().error + (e.message === "busy" ? T().mBusy : e.message)); });
@@ -487,8 +516,6 @@
 
   var A = {
     ui: function (v) { S.ui = v; api("POST", "/api/settings", { ui: v }).then(refresh); },
-    tr: function (v) { api("POST", "/api/settings", { tr: v }).then(refresh); },
-    polish: function (v) { api("POST", "/api/settings", { polish: v === "1" }).then(refresh); },
     autocheck: function (v) { api("POST", "/api/settings", { autocheck: v === "1" }).then(refresh); },
     settings: function () { S.settingsOpen = !S.settingsOpen; S.emptyConfirm = false; },
     about: function () {
@@ -503,22 +530,20 @@
     import: function () {
       api("POST", "/api/import").then(refresh).catch(function (e) { flash(T().error + e.message); });
     },
-    row: function (v, id) { S.open = S.open === id ? null : id; S.delConfirm = false; S.edit = null; S.exp = null; S.reConfirm = false; S.rr = noteLevel(id); if (S.open) { loadFull(id); } },
+    row: function (v, id) { S.open = S.open === id ? null : id; S.delConfirm = false; S.edit = null; S.exp = null; S.rr = noteLevel(id); S.rl = noteLang(id); if (S.open) { loadFull(id); } },
     rr: function (v) {
       S.rr = v;
-      var id = S.open, n = S.server && S.server.notes ? S.server.notes.filter(function (x) { return x.id === id; })[0] : null;
-      if (n && n.status !== "done") { api("POST", "/api/note/" + encodeURIComponent(id) + "/level", { level: v }).then(refresh); }
+      var id = S.open, n = findNote(id);
+      if (n && n.status !== "done") { api("POST", "/api/note/" + encodeURIComponent(id) + "/options", { level: v }).then(refresh); }
     },
-    askReprocess: function () { S.reConfirm = true; },
-    confirmReprocess: function () {
-      var t = T(), id = S.open;
-      S.reConfirm = false;
-      api("POST", "/api/note/" + encodeURIComponent(id) + "/process", { level: S.rr, again: true }).then(function () { delete S.full[id]; refresh(); })
-        .catch(function (e) { flash(t.error + e.message); });
+    rl: function (v) {
+      S.rl = v;
+      var id = S.open, n = findNote(id);
+      if (n && n.status !== "done") { api("POST", "/api/note/" + encodeURIComponent(id) + "/options", { lang: v }).then(refresh); }
     },
     rerun: function () {
       var t = T(), id = S.open;
-      api("POST", "/api/note/" + encodeURIComponent(id) + "/rerun", { level: S.rr }).then(function () { delete S.full[id]; flash(t.rerunning + t[S.rr].toLowerCase()); refresh(); })
+      api("POST", "/api/note/" + encodeURIComponent(id) + "/rerun", { level: S.rr, lang: S.rl }).then(function () { delete S.full[id]; flash(t.redoing + t[S.rr].toLowerCase()); refresh(); })
         .catch(function (e) { flash(t.error + e.message); });
     },
     copyDoubtful: function () {
@@ -538,12 +563,13 @@
     expMd: function () { download(S.open, "md"); },
     expHtml: function () { download(S.open, "html"); },
     expCopy: function () { copyRich(S.open).catch(function () { flash(T().error + "clipboard"); }); },
+    viewText: function (v, id) { showText(id); },
     askDelete: function () { S.delConfirm = true; },
     confirmDelete: function () {
       var id = S.open;
       api("POST", "/api/note/" + encodeURIComponent(id) + "/delete").then(function () { S.open = null; S.delConfirm = false; flash(T().deleted); refresh(); });
     },
-    cancel: function () { S.delConfirm = false; S.reConfirm = false; S.emptyConfirm = false; S.mAsk = null; S.mDel = null; },
+    cancel: function () { S.delConfirm = false; S.emptyConfirm = false; S.mAsk = null; S.mDel = null; },
     askEmpty: function () {
       S.emptyConfirm = true; S.verify = null;
       api("GET", "/api/pocket/verify").then(function (v) { S.verify = v; render(); }).catch(function () { S.verify = { total: 0, verified: 0 }; render(); });
@@ -599,12 +625,17 @@
     if (ev.target.id === "folderInput") { S.folderDraft = ev.target.value; }
   });
   document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape") { closeText(); }
     if (ev.key === "Enter" && ev.target.id === "nameInput") { A.saveName(); }
     if (ev.key === "Enter" && ev.target.id === "folderInput") { A.folderSave(); }
   });
 
   function loop() {
     refresh().then(function () {
+      if (!S.uiSaved && S.server) {  // the note language defaults to the interface language, so the server must know it
+        S.uiSaved = true;
+        if (!S.server.settings.ui) { api("POST", "/api/settings", { ui: ui() }); }
+      }
       var busy = S.server && (S.server.job.running || (S.server.download && S.server.download.state === "running"));
       setTimeout(loop, busy ? 1000 : 2500);
     });

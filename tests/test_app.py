@@ -204,21 +204,30 @@ class AppTest(unittest.TestCase):
         self.assertEqual(full["title"], "Mon titre")  # a chosen name survives a rerun
         self.assertEqual(full["level"], "short")
         self.assertEqual(self.c.call("POST", "/api/note/%s/rerun" % note_id, {"level": "nope"})[0], 400)
-        # the level belongs to the recording: it can be chosen, and a finished one can be transcribed again
-        self.assertEqual(self.c.call("POST", "/api/note/%s/level" % note_id, {"level": "full"})[0], 200)
-        self.assertEqual(self.c.call("POST", "/api/note/%s/level" % note_id, {"level": "nope"})[0], 400)
-        self.assertEqual(self.c.call("POST", "/api/note/%s/process" % note_id, {})[0], 400)  # done: needs again
+        # the level belongs to the recording; Redo only transcribes again when the speech model has changed
+        self.assertEqual(self.c.call("POST", "/api/note/%s/options" % note_id, {"level": "full", "lang": "fr"})[0], 200)
+        self.assertEqual(self.c.call("POST", "/api/note/%s/options" % note_id, {"level": "nope"})[0], 400)
+        self.assertEqual(self.c.call("POST", "/api/note/%s/options" % note_id, {"lang": "xx"})[0], 400)
         before = len(StubModel.calls)
-        self.assertEqual(self.c.call("POST", "/api/note/%s/process" % note_id, {"again": True, "level": "mid"})[0], 202)
+        code, answer = self.c.call("POST", "/api/note/%s/rerun" % note_id, {"level": "mid", "lang": "en"})
+        self.assertEqual((code, answer["transcribe"]), (202, False))
         self.wait_idle()
+        from unittest import mock
+        from cairn import speech
+        with mock.patch.object(speech, "model_name", return_value="another speech model"):
+            code, answer = self.c.call("POST", "/api/note/%s/rerun" % note_id, {"level": "short"})
+            self.assertEqual((code, answer["transcribe"]), (202, True))
+            self.wait_idle()
         _, full = self.c.call("GET", "/api/note/" + note_id)
-        self.assertEqual((full["status"], full["level"], full["title"]), ("done", "mid", "Mon titre"))
+        self.assertEqual((full["status"], full["level"], full["title"], full["lang"]), ("done", "short", "Mon titre", "en"))
+        self.assertEqual(full["models"]["speech"], "another speech model")
         self.assertGreater(len(StubModel.calls), before)
 
     def test_07_settings(self):
-        self.assertEqual(self.c.call("POST", "/api/settings", {"ui": "fr", "tr": "en"})[0], 200)
+        self.assertEqual(self.c.call("POST", "/api/settings", {"ui": "fr"})[0], 200)
         _, st = self.c.call("GET", "/api/state")
-        self.assertEqual((st["settings"]["ui"], st["settings"]["tr"]), ("fr", "en"))
+        self.assertEqual(st["settings"]["ui"], "fr")
+        self.assertEqual(self.c.call("POST", "/api/settings", {"tr": "en"})[0], 400)  # the language belongs to each recording
         self.assertEqual(self.c.call("POST", "/api/settings", {"level": "full"})[0], 400)  # no global level any more
         self.assertEqual(self.c.call("POST", "/api/settings", {"ui": "xx"})[0], 400)
         self.assertEqual(self.c.call("POST", "/api/settings", {"audio_dir": "relative/path"})[0], 400)
