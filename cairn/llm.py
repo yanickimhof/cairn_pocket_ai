@@ -133,21 +133,34 @@ _FIELDS = {
 }
 
 
-def _condense(text, lang):
+def parts_of(text):
+    """Number of model calls needed to write the note: one per 3000 words of a very long recording, plus the final one."""
+    words = len(text.split())
+    return 1 if words <= LONG_WORDS else -(-words // 3000) + 1
+
+
+def _condense(text, lang, progress=None):
     """Very long recordings: reduce each part to its facts first, so the final prompt fits."""
     words = text.split()
     if len(words) <= LONG_WORDS:
         return text
     system = "Extract the facts, decisions, numbers, names and actions from this part of a conversation, as dense bullet points, in %s. Invent nothing." % NAMES[lang]
     parts = [" ".join(words[i : i + 3000]) for i in range(0, len(words), 3000)]
-    return "\n".join(chat(system, part, num_ctx=8192) for part in parts)
+    out = []
+    for index, part in enumerate(parts):
+        if progress:
+            progress(index)
+        out.append(chat(system, part, num_ctx=8192))
+    return "\n".join(out)
 
 
-def summarize(text, level, lang):
+def summarize(text, level, lang, progress=None):
     """Structured note: title, type, TL;DR, actions and, depending on the level, more."""
     if len(text.split()) < 5:
         return {"empty": True, "template": "other", "title": "", "tldr": "", "actions": []}
-    source = _condense(text, lang)
+    source = _condense(text, lang, progress)
+    if progress:
+        progress(parts_of(text) - 1)  # the final call
     system = (
         "You write professional notes from the transcript of a recorded conversation. Write in %s. "
         "Provide %s. Be factual and concise. Invent nothing: leave a field empty when the transcript does not say. "

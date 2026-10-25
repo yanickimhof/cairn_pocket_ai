@@ -437,6 +437,11 @@ class AppTest(unittest.TestCase):
         self.assertEqual(self.c.call("GET", "/referral-qr.svg")[0], 404)
 
 
+class SimpleNamespaceStore:
+    def reset_interrupted(self):
+        pass
+
+
 class UnitTest(unittest.TestCase):
     def test_process_now_then_continues_with_the_queue(self):
         import tempfile
@@ -535,6 +540,38 @@ class UnitTest(unittest.TestCase):
             with mock.patch.object(watch.config, "load_settings", return_value={"autoimport": False, "autocheck": False}):
                 watch.Watcher(app).tick(now=10**9)
             self.assertEqual(calls, [])  # turned off
+
+    def test_note_writing_reports_its_progress_on_long_recordings(self):
+        from unittest import mock
+
+        from cairn import llm
+
+        reply = '{"template": "other", "title": "T", "tldr": "x", "actions": []}'
+        seen = []
+        with mock.patch.object(llm, "chat", return_value=reply):
+            llm.summarize("word " * 7000, "mid", "en", progress=seen.append)
+            self.assertEqual(llm.parts_of("word " * 7000), 4)
+            self.assertEqual(seen, [0, 1, 2, 3])  # three parts condensed, then the final note
+            seen.clear()
+            llm.summarize("word " * 300, "mid", "en", progress=seen.append)
+            self.assertEqual((llm.parts_of("word " * 300), seen), (1, [0]))
+
+    def test_note_progress_moves_while_the_model_works(self):
+        from unittest import mock
+
+        from cairn import jobs, llm
+
+        store = SimpleNamespaceStore()
+        j = jobs.Jobs(store)
+        j._set(step="summarizing", call=(1, 4, 1000.0, 100.0))
+        with mock.patch.object(jobs.time, "time", return_value=1000.0):
+            self.assertEqual(j.snapshot()["pct"], 25)  # one call of four done, the next one just started
+        with mock.patch.object(jobs.time, "time", return_value=1100.0):
+            mid = j.snapshot()["pct"]
+        with mock.patch.object(jobs.time, "time", return_value=9999.0):
+            late = j.snapshot()["pct"]
+        self.assertTrue(25 < mid < late < 50, (mid, late))  # never reaches the next call before it is done
+        self.assertNotIn("call", j.snapshot())
 
     def test_network_guard_blocks_outside_connections(self):
         import subprocess

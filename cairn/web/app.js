@@ -401,7 +401,7 @@
       var open = S.open === n.id;
       var rowTip = running ? stepText(st.job, t) : (done || n.status === "error" ? t.rowHint : t.actionsHint);
       var subTip = done ? t.dateDur : (running ? "" : t.durHint);
-      var bar = running && st.job.pct != null ? '<span class="pbar"><span style="width:' + st.job.pct + '%"></span></span>' : "";
+      var bar = running ? (st.job.pct != null ? '<span class="pbar"><span style="width:' + st.job.pct + '%"></span></span>' : (st.job.step === "summarizing" ? '<span class="pbar ind"><span></span></span>' : "")) : "";
       return '<div class="item"><button type="button" class="rowbtn" data-a="row" data-id="' + esc(n.id) + '" aria-expanded="' + open + '"' + tip(rowTip) + '><span class="st">' + statusIcon(n, st.job) +
         '</span><span class="mid"><span class="main">' + esc(main) + '</span><span class="sub"' + tip(subTip) + ">" + esc(sub) + "</span>" + bar + "</span>" + (done ? scorePills(n, t) : "") + "</button>" +
         (open && (done || n.status === "error") ? viewDetail(n, t) : "") +
@@ -413,7 +413,11 @@
     var st = S.server;
     if (!st) { return ""; }
     var t = T(), job = st.job, ring = 0;
-    if (job.running && job.total) { ring = Math.min(1, (job.done + (job.pct != null ? job.pct / 100 : 0.5)) / job.total); }
+    if (job.running && job.total) {
+      var part = job.pct != null ? job.pct / 100 : 0.5;  // transcription fills the first 60 % of a recording, the note the rest
+      if (job.step === "transcribing") { part = (job.pct || 0) / 100 * 0.6; } else if (job.step === "summarizing") { part = 0.6 + 0.4 * part; }
+      ring = Math.min(1, (job.done + part) / job.total);
+    }
     else if (st.totals.notes) { ring = st.totals.done / st.totals.notes; }
     var connected = st.pocket.connected;
     var canImport = !job.running && (connected || st.totals.waiting > 0);

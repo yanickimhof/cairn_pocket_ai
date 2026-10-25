@@ -1,5 +1,6 @@
 """Background work: import from the Pocket, transcribe, summarize. One job at a time."""
 
+import math
 import os
 import threading
 import time
@@ -17,14 +18,21 @@ class Jobs:
     def __init__(self, store):
         self.store = store
         self.lock = threading.Lock()
-        self._state = {"running": False, "kind": "", "step": "", "id": None, "done": 0, "total": 0, "pct": None, "errors": []}
+        self._state = {"running": False, "kind": "", "step": "", "id": None, "done": 0, "total": 0, "pct": None, "part": 0, "parts": 0, "errors": []}
         self.cancelled = False
         self.paused = False  # set by Stop: automatic processing waits for new recordings or a manual start
         self.store.reset_interrupted()
 
     def snapshot(self):
         with self.lock:
-            return dict(self._state, errors=list(self._state["errors"]))
+            data = dict(self._state, errors=list(self._state["errors"]))
+        call = data.pop("call", None)
+        if call and data.get("step") == "summarizing":
+            # The model reports nothing while it works, so the bar moves with the time a call usually takes
+            index, total, started, usual = call
+            fraction = 1 - math.exp(-(time.time() - started) / usual)
+            data["pct"] = min(99, round(100 * (index + 0.9 * fraction) / total))
+        return data
 
     def _set(self, **changes):
         with self.lock:
@@ -38,7 +46,7 @@ class Jobs:
         with self.lock:
             if self._state["running"]:
                 raise Busy("A job is already running.")
-            self._state.update(running=True, kind=kind, step="", id=None, done=0, total=0, pct=None, errors=[])
+            self._state.update(running=True, kind=kind, step="", id=None, done=0, total=0, pct=None, part=0, parts=0, errors=[])
             self.cancelled = False
             if kind in ("import", "rerun"):
                 self.paused = False
@@ -214,7 +222,7 @@ class Jobs:
         def step(name):
             note["status"], note["step"] = name, name
             self.store.save(note)
-            self._set(step=name, pct=0 if name == "transcribing" else None)
+            self._set(step=name, pct=0 if name == "transcribing" else None, part=0, parts=0, call=None)
 
         def pct(value):
             self._set(pct=value)
@@ -245,7 +253,17 @@ class Jobs:
 
     def _summarize(self, note, level, lang):
         text = note.get("clean") or ""
-        summary = llm.summarize(text, level, lang)
+        total = llm.parts_of(text)
+
+        starts = []
+
+        def progress(index):  # which call of the model is running, so the person sees the note being written
+            starts.append(time.time())
+            usual = (starts[-1] - starts[0]) / index if index else 120.0  # seconds a call takes: a guess, then measured
+            self._set(part=index + 1, parts=total, call=(index, total, starts[-1], max(usual, 5.0)) if total > 1 else None,
+                      pct=0 if total > 1 else None)
+
+        summary = llm.summarize(text, level, lang, progress)
         note["summary"], note["lang"] = summary, lang
         note["fidelity"] = score.fidelity(summary, text)
         if note.get("template") in llm.TEMPLATES:
