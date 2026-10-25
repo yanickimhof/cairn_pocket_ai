@@ -41,4 +41,4 @@ Cairn also checks for you. Once a day, when idle, it runs a small local test and
 
 Under `~/Cairn` by default (audio, texts, exports). The audio folder can be changed in Settings. Use full disk encryption in case the computer is lost or stolen.
 
-Deleting a recording in the app removes it everywhere: the file on the Pocket (at its next connection if it is not connected), and the audio, transcript and summary on this computer. The Pocket has no protection of its own, so a file left on it can be read by anyone who holds the device. Nothing is kept: deleting cannot be undone. Cairn writes to the Pocket only when you ask for it, by deleting a recording or by emptying the Pocket, which is offered once every copy you kept is verified.
+Deleting a recording in the app removes it everywhere: the file on the Pocket (at its next connection if it is not connected), and the audio, transcript and summary on this computer. The Pocket has no protection of its own, so a file left on it can be read by anyone who holds the device. Nothing is kept: deleting cannot be undone. Cairn writes to the Pocket only when you ask for it, by deleting a recording.

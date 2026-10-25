@@ -16,10 +16,7 @@
       mDownloading: "Téléchargement {pct} %", mFailed: "Échec du téléchargement : ", mDone: "Modèle installé", mDown: "Moteur local arrêté", mBusy: "Un traitement est en cours",
       settings: "Réglages", langHint: "Langue de la note", levelHint: "Niveau de détail",
       short: "Court", mid: "Normal", full: "Complet",
-      shortHint: "Court : TL;DR et actions", midHint: "Normal : + contexte et points clés", fullHint: "Complet : + détail par sujet",
-      emptyPocket: "Vider le Pocket", emptyHint: "Vider le Pocket (copies vérifiées)",
-      emptyConfirm: "Vider le Pocket ? {n} copies vérifiées sur {m}.", emptyNone: "Le Pocket est vide.",
-      emptyNot: "{n} copies vérifiées sur {m}. Importez d’abord.", emptyAbsent: "Pocket non détecté.",
+      shortHint: "Court : TL;DR et actions", midHint: "Normal : + contexte et points clés", fullHint: "Complet : + détail par sujet", 
       cancel: "Annuler", confirmLabel: "Confirmer",
       connected: "Pocket connecté", disconnected: "Pocket non détecté", local: "Local", localHint: "Tout reste sur cet ordinateur",
       folder: "Dossier des audios", folderHint: "Dossier de sauvegarde des audios", folderChange: "Changer", folderSaved: "Dossier enregistré", folderType: "Chemin du dossier",
@@ -32,7 +29,7 @@
       passages: " à vérifier", tplHint: "Type de note", tpl: { meeting: "Réunion", call: "Appel", presentation: "Présentation", idea: "Idée", other: "Note" },
       deleteLocal: "Supprimer de cet ordinateur", deleteHint: "Supprimer l'enregistrement",
       deleteConfirm: "Supprimer l'audio, le transcript et le résumé, sur le Pocket et sur cet ordinateur ? Irréversible.", deleteConfirmOff: "Supprimer l'audio, le transcript et le résumé sur cet ordinateur ? Le Pocket n'est pas branché : son fichier sera effacé au prochain branchement. Irréversible.", deletedLater: "Supprimé · fichier du Pocket effacé au prochain branchement",
-      copied: "Copié", redoing: "Note refaite : ", renamed: "Nom enregistré", deleted: "Supprimé", pocketEmptied: "Pocket vidé",
+      copied: "Copié", redoing: "Note refaite : ", renamed: "Nom enregistré", deleted: "Supprimé", 
       ready: "Prêt", waiting: "En attente", failed: "Échec : relancer le résumé", done: "Terminé", modelDown: "Moteur local arrêté : relancez Cairn",
       privAuto: "Contrôle automatique", privOk: "aucune connexion vers l’extérieur", privBad: "connexions détectées, voir docs/PRIVACY.md", privNone: "en attente", autoCheck: "Vérifier les mises à jour", autoHint: "Une requête à GitHub par jour", autoProcess: "Traiter automatiquement", autoProcessHint: "Transcrit et résume les enregistrements en attente sans attendre votre clic. Stop met en pause.", autoImport: "Importer au branchement", autoImportHint: "Copie les nouveaux enregistrements dès que le Pocket est branché, sans les traiter", queueTip: "{n} en attente de traitement",
       processNow: "Traiter maintenant", skipIt: "Ignorer", skipped: "Ignoré", putBack: "Remettre dans la file", stopJob: "Arrêter",
@@ -54,10 +51,7 @@
       mDownloading: "Downloading {pct}%", mFailed: "Download failed: ", mDone: "Model installed", mDown: "Local engine stopped", mBusy: "A job is running",
       settings: "Settings", langHint: "Note language", levelHint: "Level of detail",
       short: "Short", mid: "Standard", full: "Detailed",
-      shortHint: "Short: TL;DR and actions", midHint: "Standard: + context, key points", fullHint: "Detailed: + detail per topic",
-      emptyPocket: "Empty the Pocket", emptyHint: "Empty the Pocket (copies verified)",
-      emptyConfirm: "Empty the Pocket? {n} of {m} copies verified.", emptyNone: "The Pocket is empty.",
-      emptyNot: "{n} of {m} copies verified. Import first.", emptyAbsent: "Pocket not detected.",
+      shortHint: "Short: TL;DR and actions", midHint: "Standard: + context, key points", fullHint: "Detailed: + detail per topic", 
       cancel: "Cancel", confirmLabel: "Confirm",
       connected: "Pocket connected", disconnected: "Pocket not detected", local: "Local", localHint: "Everything stays on this computer",
       folder: "Audio folder", folderHint: "Audio backup folder", folderChange: "Change", folderSaved: "Folder saved", folderType: "Folder path",
@@ -70,7 +64,7 @@
       passages: " to check", tplHint: "Note type", tpl: { meeting: "Meeting", call: "Call", presentation: "Presentation", idea: "Idea", other: "Note" },
       deleteLocal: "Delete from this computer", deleteHint: "Delete the recording",
       deleteConfirm: "Delete the audio, transcript and summary, on the Pocket and on this computer? This cannot be undone.", deleteConfirmOff: "Delete the audio, transcript and summary on this computer? The Pocket is not connected: its file will be erased the next time it is connected. This cannot be undone.", deletedLater: "Deleted · the Pocket file will be erased at the next connection",
-      copied: "Copied", redoing: "Note redone: ", renamed: "Name saved", deleted: "Deleted", pocketEmptied: "Pocket emptied",
+      copied: "Copied", redoing: "Note redone: ", renamed: "Name saved", deleted: "Deleted", 
       ready: "Ready", waiting: "Waiting", failed: "Failed: rerun the summary", done: "Done", modelDown: "Local engine stopped: restart Cairn",
       privAuto: "Automatic check", privOk: "no connection to the outside", privBad: "connections detected, see docs/PRIVACY.md", privNone: "pending", autoCheck: "Check for updates", autoHint: "One request to GitHub per day", autoProcess: "Process automatically", autoProcessHint: "Transcribes and summarizes waiting recordings without waiting for your click. Stop pauses it.", autoImport: "Import on connect", autoImportHint: "Copies new recordings as soon as the Pocket is connected, without processing them", queueTip: "{n} waiting to be processed",
       processNow: "Process now", skipIt: "Skip", skipped: "Skipped", putBack: "Put back in the queue", stopJob: "Stop",
@@ -85,7 +79,6 @@
     gear: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg>',
     doc: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v4h4"></path><path d="M10 12h5"></path><path d="M10 16h5"></path></svg>',
     folder: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>',
-    mic: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path></svg>',
     pencil: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="m13.5 6.5 4 4"></path></svg>',
     trash: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4271B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="M6 7l1 13h10l1-13"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>',
     x: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>',
@@ -116,7 +109,7 @@
 
   var S = {
     ui: null, hidden: true, settingsOpen: false, aboutOpen: false, open: null, edit: null, draft: "", exp: null,
-    delConfirm: false, emptyConfirm: false, verify: null, rr: "mid", rl: "en", server: null, full: {}, about: null, upd: null,
+    delConfirm: false, rr: "mid", rl: "en", server: null, full: {}, about: null, upd: null,
     folderEdit: false, folderDraft: "", wasRunning: false
   };
   var lastView = "";
@@ -255,16 +248,6 @@
     }
     h += '<div class="hr"></div><div class="setrow"' + tip(t.modelsHint) + "><span class=\"text\" style=\"font-size:14px\">" + esc(t.models) + '</span><button type="button" class="mbtn" data-a="models">' + esc(S.modelsOpen ? "−" : "+") + "</button></div>";
     if (S.modelsOpen) { h += viewModels(t); }
-    h += '<div class="hr"></div><div class="setrow"' + tip(t.emptyHint) + ">" + I.mic + '<button type="button" class="ib" data-a="askEmpty"' + tip(t.emptyPocket) + ">" + I.trash + "</button></div>";
-    if (S.emptyConfirm) {
-      var v = S.verify, text, yes = null;
-      if (!st.pocket.connected) { text = t.emptyAbsent; }
-      else if (!v) { text = "…"; }
-      else if (!v.total) { text = t.emptyNone; }
-      else if (v.verified < v.total) { text = t.emptyNot.replace("{n}", v.verified).replace("{m}", v.total); }
-      else { text = t.emptyConfirm.replace("{n}", v.verified).replace("{m}", v.total); yes = "confirmEmpty"; }
-      h += confirmBox(text, yes, t);
-    }
     return h + "</div>";
   }
 
@@ -564,7 +547,7 @@
     autoprocess: function (v) { api("POST", "/api/settings", { autoprocess: v === "1" }).then(refresh); },
     autoimport: function (v) { api("POST", "/api/settings", { autoimport: v === "1" }).then(refresh); },
     autocheck: function (v) { api("POST", "/api/settings", { autocheck: v === "1" }).then(refresh); },
-    settings: function () { S.settingsOpen = !S.settingsOpen; S.emptyConfirm = false; },
+    settings: function () { S.settingsOpen = !S.settingsOpen; },
     about: function () {
       S.aboutOpen = !S.aboutOpen;
       if (S.aboutOpen) { api("GET", "/api/about").then(function (a) { S.about = a; render(); }); }
@@ -624,15 +607,7 @@
       api("POST", "/api/note/" + encodeURIComponent(id) + "/delete").then(function (r) { S.open = null; S.delConfirm = false; flash(r.pocket ? T().deleted : T().deletedLater); refresh(); })
         .catch(function (e) { S.delConfirm = false; flash(T().error + e.message); });
     },
-    cancel: function () { S.delConfirm = false; S.emptyConfirm = false; S.mAsk = null; S.mDel = null; },
-    askEmpty: function () {
-      S.emptyConfirm = true; S.verify = null;
-      api("GET", "/api/pocket/verify").then(function (v) { S.verify = v; render(); }).catch(function () { S.verify = { total: 0, verified: 0 }; render(); });
-    },
-    confirmEmpty: function () {
-      api("POST", "/api/pocket/empty", { confirm: true }).then(function () { S.emptyConfirm = false; flash(T().pocketEmptied); refresh(); })
-        .catch(function (e) { S.emptyConfirm = false; flash(T().error + e.message); });
-    },
+    cancel: function () { S.delConfirm = false; S.mAsk = null; S.mDel = null; },
     folder: function () {
       api("POST", "/api/pick-folder").then(function (r) { return api("POST", "/api/settings", { audio_dir: r.path }); })
         .then(function () { flash(T().folderSaved); refresh(); })
