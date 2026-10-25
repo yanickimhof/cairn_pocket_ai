@@ -1,6 +1,8 @@
 # Cairn
 
-**Sovereign Pocket AI.** Turn your Pocket recordings into clean, structured notes, entirely on your computer.
+**Your Pocket. Your computer. Your data.**
+
+Sovereign Pocket AI. Turn your Pocket recordings into clean, structured notes, entirely on your computer.
 
 No cloud, no account, no telemetry. Nothing leaves your machine.
 
