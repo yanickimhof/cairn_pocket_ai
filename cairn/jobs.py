@@ -94,15 +94,20 @@ class Jobs:
             note["status"] = "waiting"
             self.store.save(note)
 
-    def set_options(self, note_id, level=None, lang=None):
-        """Choose the level of detail and the language of one recording (the interface language until chosen)."""
+    def set_options(self, note_id, level=None, lang=None, speech_lang=None):
+        """Choose the level of detail and the language of one recording (the interface language until chosen),
+        and the language of its audio ("auto" lets the speech engine detect it)."""
         if (level is not None and level not in config.LEVELS) or (lang is not None and lang not in config.LANGS):
+            raise ValueError("bad_option")
+        if speech_lang is not None and speech_lang != "auto" and speech_lang not in config.LANGS:
             raise ValueError("bad_option")
         note = self.store.get(note_id)
         if level is not None:
             note["level"] = level
         if lang is not None:
             note["lang"] = lang
+        if speech_lang is not None:
+            note["speech_lang"] = None if speech_lang == "auto" else speech_lang
         self.store.save(note)
 
     @staticmethod
@@ -244,9 +249,11 @@ class Jobs:
         started = time.time()
         try:
             step("transcribing")
-            result = speech.transcribe(note["audio"], progress=pct)
+            spoken = note.get("speech_lang") if note.get("speech_lang") in config.LANGS else None  # None: the engine detects it
+            result = speech.transcribe(note["audio"], progress=pct, **({"language": spoken} if spoken else {}))
             quality, doubtful = speech.assess(result["segments"])
-            note.update(
+            shares, mixed = speech.language_mix(result["segments"])
+            note.update(speech_lang_used=spoken, languages=shares, mixed=mixed,
                 segments=result["segments"], quality=quality, doubtful=doubtful, passages=len(doubtful),
                 duration=result["duration"] or note.get("duration"), lang=lang, heard=result.get("language"), error="",
             )
@@ -283,7 +290,8 @@ class Jobs:
 
         summary = llm.summarize(text, level, lang, progress)
         note["summary"], note["lang"] = summary, lang
-        note["fidelity"] = score.fidelity(summary, text)
+        heard = note.get("heard")
+        note["fidelity"], note["fidelity_basis"] = score.fidelity_detail(summary, text, words_ok=heard in (None, lang))
         if note.get("template") in llm.TEMPLATES:
             summary["template"] = note["template"]
         if summary.get("title") and not note.get("renamed"):
@@ -293,14 +301,16 @@ class Jobs:
 
     # Redo a finished recording at the chosen level
 
-    def start_rerun(self, note_id, level, lang=None):
+    def start_rerun(self, note_id, level, lang=None, speech_lang=None):
         """Redo a finished note at the chosen level. The audio is transcribed again only when the speech
-        model has changed since the note was made; otherwise the transcript is kept and only the summary
-        is rewritten. Returns True when the audio is transcribed again."""
+        model has changed since the note was made, or the language of the audio was changed; otherwise the
+        transcript is kept and only the summary is rewritten. Returns True when the audio is transcribed again."""
         note = self.store.get(note_id)
         made_with = (note.get("models") or {}).get("speech")
-        again = bool(made_with) and made_with != speech.model_name() and os.path.exists(note.get("audio", ""))
-        self.set_options(note_id, level, lang)
+        self.set_options(note_id, level, lang, speech_lang)
+        note = self.store.get(note_id)
+        spoken_changed = note.get("speech_lang") != note.get("speech_lang_used")
+        again = ((bool(made_with) and made_with != speech.model_name()) or spoken_changed) and os.path.exists(note.get("audio", ""))
         if again:
             self._start("import", self._one, note_id)
         else:

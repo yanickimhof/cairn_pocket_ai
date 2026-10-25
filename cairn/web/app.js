@@ -14,7 +14,7 @@
       tagline: "Votre Pocket. Votre ordinateur. Vos données.", mUse: "Utiliser", mRemove: "Supprimer ce modèle", mRemoveConfirm: "Supprimer {name} de cet ordinateur ? Vous pourrez le télécharger à nouveau.", mInUse: "Utilisé", mInstall: "Installer", mTier: { light: "Léger", standard: "Standard", high: "Élevé" },
       mRam: "{n} Go de mémoire conseillés", mConfirm: "Télécharger {name} ({size}) ? Une connexion internet est utilisée pour ce seul téléchargement.",
       mDownloading: "Téléchargement {pct} %", mFailed: "Échec du téléchargement : ", mDone: "Modèle installé", mDown: "Moteur local arrêté", mBusy: "Un traitement est en cours",
-      settings: "Réglages", langHint: "Langue de la note", levelHint: "Niveau de détail",
+      settings: "Réglages", langHint: "Langue de la note", speechHint: "Langue de l’enregistrement (transcription). Auto : détectée au début du fichier. Appuyez, puis Refaire pour retranscrire", speechAuto: "Auto", mixedHint: "Deux langues repérées : la transcription suit une seule langue, les passages dans l’autre peuvent être imprécis. Choisissez la langue de l’enregistrement, puis Refaire", levelHint: "Niveau de détail",
       short: "Court", mid: "Normal", full: "Complet",
       shortHint: "Court : TL;DR et actions", midHint: "Normal : + contexte et points clés", fullHint: "Complet : + détail par sujet", 
       cancel: "Annuler", confirmLabel: "Confirmer",
@@ -24,7 +24,7 @@
       copiedRich: "Copié", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exporté en ",
       importLabel: "Importer et transcrire", importHint: "Importer et traiter les enregistrements", count: "Enregistrements sur le Pocket",
       eyeShow: "Afficher la liste", eyeHide: "Masquer la liste", hiddenNote: "Mode sécurisé",
-      rowHint: "Ouvrir", actionsHint: "Afficher les actions", durHint: "Durée", dateDur: "Date · durée", scoreNoteHint: "Fidélité de la note : part des chiffres et des noms de la note retrouvés dans le transcript", scoreRawHint: "Confiance de la transcription brute : estimation du moteur vocal, volontairement prudente sur la parole spontanée", rawLegend: "Confiance de la transcription brute",
+      rowHint: "Ouvrir", actionsHint: "Afficher les actions", durHint: "Durée", dateDur: "Date · durée · langue", scoreNoteHint: "Fidélité de la note : part des chiffres et des noms de la note retrouvés dans le transcript", scoreNaLang: "Fidélité non mesurable : la note n’est pas dans la langue de l’enregistrement et contient peu de chiffres et de noms. Refaites la note dans la langue de l’enregistrement pour la mesurer", scoreNaFew: "Fidélité non mesurable : la note contient trop peu de chiffres, de noms ou de termes à vérifier", scoreTermsHint: "Fidélité de la note : elle contient peu de chiffres et de noms, la mesure porte sur ses termes clés retrouvés dans le transcript", scoreRawHint: "Confiance de la transcription brute : estimation du moteur vocal, volontairement prudente sur la parole spontanée", rawLegend: "Confiance de la transcription brute",
       rename: "Renommer", saveName: "Enregistrer", viewText: "Voir le transcript", copyText: "Copier le transcript", closeLbl: "Fermer", noText: "Pas de transcript.", textLegend: "Les passages surlignés sont à vérifier.", redo: "Refaire", redoHint: "Refaire la note au niveau choisi. L'audio n'est retranscrit que si le modèle vocal a changé.",
       passages: " à vérifier", tplHint: "Type de note", tpl: { meeting: "Réunion", call: "Appel", presentation: "Présentation", idea: "Idée", other: "Note" },
       deleteLocal: "Supprimer de cet ordinateur", deleteHint: "Supprimer l'enregistrement",
@@ -49,7 +49,7 @@
       tagline: "Your Pocket. Your computer. Your data.", mUse: "Use", mRemove: "Remove this model", mRemoveConfirm: "Remove {name} from this computer? You can download it again later.", mInUse: "In use", mInstall: "Install", mTier: { light: "Light", standard: "Standard", high: "High" },
       mRam: "{n} GB of memory advised", mConfirm: "Download {name} ({size})? An internet connection is used for this download only.",
       mDownloading: "Downloading {pct}%", mFailed: "Download failed: ", mDone: "Model installed", mDown: "Local engine stopped", mBusy: "A job is running",
-      settings: "Settings", langHint: "Note language", levelHint: "Level of detail",
+      settings: "Settings", langHint: "Note language", speechHint: "Language of the recording (transcription). Auto: detected at the start of the file. Tap, then Redo to transcribe again", speechAuto: "Auto", mixedHint: "Two languages detected: the transcription follows one language, passages in the other may be inaccurate. Choose the language of the recording, then Redo", levelHint: "Level of detail",
       short: "Short", mid: "Standard", full: "Detailed",
       shortHint: "Short: TL;DR and actions", midHint: "Standard: + context, key points", fullHint: "Detailed: + detail per topic", 
       cancel: "Cancel", confirmLabel: "Confirm",
@@ -59,7 +59,7 @@
       copiedRich: "Copied", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exported as ",
       importLabel: "Import and transcribe", importHint: "Import and process the recordings", count: "Recordings on the Pocket",
       eyeShow: "Show the list", eyeHide: "Hide the list", hiddenNote: "Secure mode",
-      rowHint: "Open", actionsHint: "Show actions", durHint: "Length", dateDur: "Date · length", scoreNoteHint: "Note fidelity: share of the note's numbers and names found in the transcript", scoreRawHint: "Raw transcript confidence: the speech engine's own estimate, deliberately cautious on spontaneous speech", rawLegend: "Raw transcript confidence",
+      rowHint: "Open", actionsHint: "Show actions", durHint: "Length", dateDur: "Date · length · language", scoreNoteHint: "Note fidelity: share of the note's numbers and names found in the transcript", scoreNaLang: "Fidelity cannot be measured: the note is not in the language of the recording and has few numbers and names. Redo the note in the recording's language to measure it", scoreNaFew: "Fidelity cannot be measured: the note has too few numbers, names or terms to check", scoreTermsHint: "Note fidelity: the note has few numbers and names, so it is measured on its key terms found in the transcript", scoreRawHint: "Raw transcript confidence: the speech engine's own estimate, deliberately cautious on spontaneous speech", rawLegend: "Raw transcript confidence",
       rename: "Rename", saveName: "Save", viewText: "View transcript", copyText: "Copy transcript", closeLbl: "Close", noText: "No transcript.", textLegend: "Highlighted passages are worth checking.", redo: "Redo", redoHint: "Redo the note at the chosen level. The audio is transcribed again only if the speech model has changed.",
       passages: " to check", tplHint: "Note type", tpl: { meeting: "Meeting", call: "Call", presentation: "Presentation", idea: "Idea", other: "Note" },
       deleteLocal: "Delete from this computer", deleteHint: "Delete the recording",
@@ -109,7 +109,7 @@
 
   var S = {
     ui: null, hidden: true, settingsOpen: false, aboutOpen: false, open: null, edit: null, draft: "", exp: null,
-    delConfirm: false, rr: "mid", rl: "en", server: null, full: {}, about: null, upd: null,
+    delConfirm: false, rr: "mid", rl: "en", sp: "auto", server: null, full: {}, about: null, upd: null,
     folderEdit: false, folderDraft: "", wasRunning: false
   };
   var lastView = "";
@@ -125,6 +125,13 @@
   function findNote(id) { return S.server && S.server.notes ? S.server.notes.filter(function (x) { return x.id === id; })[0] : null; }
   function noteLevel(id) { var n = findNote(id); return (n && n.level) || "mid"; }
   function noteLang(id) { var n = findNote(id); return (n && n.lang) || ui(); }
+  function noteSpeech(id) { var n = findNote(id); return (n && n.speech_lang) || "auto"; }
+  // Language shown on a finished row: the one the engine heard, and the other when the recording mixes two.
+  function langTag(n) {
+    if (!n.heard) { return ""; }
+    var h = String(n.heard).toUpperCase();
+    return n.mixed ? h + "+" + (h === "FR" ? "EN" : "FR") : h;
+  }
   function lvlIcon(k) { return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" aria-hidden="true">' + I.lvl[k] + "</svg>"; }
   var LANG_NAME = { fr: "Français", en: "English" };
   function cycleBtn(key, icon, label, hint) {
@@ -132,7 +139,8 @@
   }
   // One tap changes the choice and moves on to the next one: nothing opens, nothing moves.
   function optionBar(t) {
-    return cycleBtn("lvl", lvlIcon(S.rr), "", t.levelHint + " : " + t[S.rr]) + cycleBtn("lang", "", String(S.rl).toUpperCase(), t.langHint + " : " + (LANG_NAME[S.rl] || S.rl));
+    return cycleBtn("lvl", lvlIcon(S.rr), "", t.levelHint + " : " + t[S.rr]) + cycleBtn("lang", "", String(S.rl).toUpperCase(), t.langHint + " : " + (LANG_NAME[S.rl] || S.rl)) +
+      cycleBtn("sp", I_WAVE, S.sp === "auto" ? t.speechAuto : S.sp.toUpperCase(), t.speechHint + " : " + (S.sp === "auto" ? t.speechAuto : LANG_NAME[S.sp]));
   }
   function exportList(n, t) {
     if (S.exp !== n.id) { return ""; }
@@ -300,7 +308,10 @@
     var h = "";
     if (n.fidelity != null) {
       var tone = n.fidelity >= 90 ? "g" : n.fidelity >= 75 ? "a" : "r";
-      h += '<span class="pl ' + tone + '"' + tip(t.scoreNoteHint + " : " + n.fidelity + " %") + ">" + I_NOTE + n.fidelity + "</span>";
+      h += '<span class="pl ' + tone + '"' + tip((n.fidelity_basis === "terms" ? t.scoreTermsHint : t.scoreNoteHint) + " : " + n.fidelity + " %") + ">" + I_NOTE + n.fidelity + "</span>";
+    }
+    else if (n.done && n.fidelity_basis) {
+      h += '<span class="pl n"' + tip(n.fidelity_basis === "language" ? t.scoreNaLang : t.scoreNaFew) + ">" + I_NOTE + "–</span>";
     }
     if (n.quality != null) { h += '<span class="pl n"' + tip(t.scoreRawHint + " : " + n.quality + " %") + ">" + I_WAVE + n.quality + "</span>"; }
     if (n.passages) { h += '<span class="pl a"' + tip(n.passages + t.passages) + ">" + I_WARN + n.passages + "</span>"; }
@@ -380,10 +391,10 @@
     return '<div class="list">' + notes.map(function (n) {
       var done = n.status === "done", running = st.job.running && st.job.id === n.id;
       var main = done ? n.title : fmtDate(n.date) || n.id;
-      var sub = done ? [fmtDate(n.date), fmtDur(n.duration)].filter(Boolean).join(" · ") : (running ? stepText(st.job, t) : (n.status === "skipped" ? t.skipped + " · " : "") + fmtDur(n.duration));
+      var sub = done ? [fmtDate(n.date), fmtDur(n.duration), langTag(n)].filter(Boolean).join(" · ") : (running ? stepText(st.job, t) : (n.status === "skipped" ? t.skipped + " · " : "") + fmtDur(n.duration));
       var open = S.open === n.id;
       var rowTip = running ? stepText(st.job, t) : (done || n.status === "error" ? t.rowHint : t.actionsHint);
-      var subTip = done ? t.dateDur : (running ? "" : t.durHint);
+      var subTip = done ? (n.mixed ? t.mixedHint : t.dateDur) : (running ? "" : t.durHint);
       var bar = running ? (st.job.pct != null ? '<span class="pbar"><span style="width:' + st.job.pct + '%"></span></span>' : (st.job.step === "summarizing" ? '<span class="pbar ind"><span></span></span>' : "")) : "";
       return '<div class="item"><button type="button" class="rowbtn" data-a="row" data-id="' + esc(n.id) + '" aria-expanded="' + open + '"' + tip(rowTip) + '><span class="st">' + statusIcon(n, st.job) +
         '</span><span class="mid"><span class="main">' + esc(main) + '</span><span class="sub"' + tip(subTip) + ">" + esc(sub) + "</span>" + bar + "</span>" + (done ? scorePills(n, t) : "") + "</button>" +
@@ -560,7 +571,7 @@
     import: function () {
       api("POST", "/api/import").then(refresh).catch(function (e) { flash(T().error + e.message); });
     },
-    row: function (v, id) { S.open = S.open === id ? null : id; S.delConfirm = false; S.edit = null; S.exp = null; S.rr = noteLevel(id); S.rl = noteLang(id); if (S.open) { loadFull(id); } },
+    row: function (v, id) { S.open = S.open === id ? null : id; S.delConfirm = false; S.edit = null; S.exp = null; S.rr = noteLevel(id); S.rl = noteLang(id); S.sp = noteSpeech(id); if (S.open) { loadFull(id); } },
     cycleTpl: function () {
       var id = S.open, full = S.full[id];
       if (!full) { return; }
@@ -569,8 +580,8 @@
         .catch(function (e) { flash(T().error + e.message); });
     },
     cycle: function (v) {
-      var order = v === "lvl" ? ["short", "mid", "full"] : ["fr", "en"], cur = v === "lvl" ? S.rr : S.rl;
-      (v === "lvl" ? A.rr : A.rl)(order[(order.indexOf(cur) + 1) % order.length]);
+      var order = v === "lvl" ? ["short", "mid", "full"] : v === "sp" ? ["auto", "fr", "en"] : ["fr", "en"], cur = v === "lvl" ? S.rr : v === "sp" ? S.sp : S.rl;
+      (v === "lvl" ? A.rr : v === "sp" ? A.sp : A.rl)(order[(order.indexOf(cur) + 1) % order.length]);
     },
     rr: function (v) {
       S.rr = v;
@@ -582,9 +593,14 @@
       var id = S.open, n = findNote(id);
       if (n && n.status !== "done") { api("POST", "/api/note/" + encodeURIComponent(id) + "/options", { lang: v }).then(refresh); }
     },
+    sp: function (v) {
+      S.sp = v;
+      var id = S.open, n = findNote(id);
+      if (n && n.status !== "done") { api("POST", "/api/note/" + encodeURIComponent(id) + "/options", { speech_lang: v }).then(refresh); }
+    },
     rerun: function () {
       var t = T(), id = S.open;
-      api("POST", "/api/note/" + encodeURIComponent(id) + "/rerun", { level: S.rr, lang: S.rl }).then(function () { delete S.full[id]; flash(t.redoing + t[S.rr].toLowerCase()); refresh(); })
+      api("POST", "/api/note/" + encodeURIComponent(id) + "/rerun", { level: S.rr, lang: S.rl, speech_lang: S.sp }).then(function () { delete S.full[id]; flash(t.redoing + t[S.rr].toLowerCase()); refresh(); })
         .catch(function (e) { flash(t.error + e.message); });
     },
     startRename: function () {

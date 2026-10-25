@@ -225,7 +225,8 @@ class App:
         except KeyError:
             raise ApiError(404, "not_found")
         if note.get("fidelity") is None and note.get("status") == "done":
-            note["fidelity"] = score.fidelity(note.get("summary"), note.get("clean"))
+            heard = note.get("heard")
+            note["fidelity"], note["fidelity_basis"] = score.fidelity_detail(note.get("summary"), note.get("clean"), words_ok=heard in (None, note.get("lang")))
         return note
 
     def export(self, note_id, fmt, transcript, fragment):
@@ -472,18 +473,19 @@ def make_handler(app):
                 return self._json(200, {"ok": True})
             if method == "POST" and action == "rerun":
                 level, lang = body.get("level"), body.get("lang")
-                if level not in config.LEVELS or (lang is not None and lang not in config.LANGS):
+                spoken = body.get("speech_lang")
+                if level not in config.LEVELS or (lang is not None and lang not in config.LANGS) or (spoken is not None and spoken not in ("auto",) + config.LANGS):
                     raise ApiError(400, "bad_level")
                 app.get_note(note_id)
                 try:
-                    transcribe = app.jobs.start_rerun(note_id, level, lang)
+                    transcribe = app.jobs.start_rerun(note_id, level, lang, body.get("speech_lang"))
                 except jobs.Busy:
                     raise ApiError(409, "busy")
                 return self._json(202, {"ok": True, "transcribe": transcribe})
             if method == "POST" and action == "options":
                 app.get_note(note_id)
                 try:
-                    app.jobs.set_options(note_id, body.get("level"), body.get("lang"))
+                    app.jobs.set_options(note_id, body.get("level"), body.get("lang"), body.get("speech_lang"))
                 except ValueError as error:
                     raise ApiError(400, str(error))
                 return self._json(200, {"ok": True})

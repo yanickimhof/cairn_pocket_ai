@@ -12,7 +12,7 @@ from . import config, score
 
 ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,150}")
 HEAVY = ("segments", "clean", "doubtful", "summary")  # what makes a note large: left out of the listing copy
-LIGHT = ("id", "title", "date", "duration", "status", "quality", "fidelity", "passages", "level", "lang", "error", "step")
+LIGHT = ("id", "title", "date", "duration", "status", "quality", "fidelity", "fidelity_basis", "speech_lang", "heard", "mixed", "passages", "level", "lang", "error", "step")
 
 
 def make_id(rel):
@@ -119,26 +119,35 @@ class Store:
     def light(self):
         rows = []
         for n in self.slim():
+            needs_score = n.get("fidelity") is None and n.get("fidelity_na") != score.VERSION
+            if n.get("status") == "done" and (needs_score or "languages" not in n):
+                n = self._backfill(n["id"]) or n  # notes made before these indicators existed: read once, then kept with the note
             row = {k: n.get(k) for k in LIGHT}
-            if row["fidelity"] is None and n.get("status") == "done" and not n.get("fidelity_na"):
-                row["fidelity"] = self._backfill_fidelity(n["id"])  # notes made before this score existed
             row["done"] = row["status"] == "done"
             rows.append(row)
         return sorted(rows, key=lambda r: r.get("date") or "", reverse=True)
 
-    def _backfill_fidelity(self, note_id):
-        """Score an older note once and keep the result with it, so the listing never reads its transcript again."""
+    def _backfill(self, note_id):
+        """Compute what an older note lacks (fidelity, languages) and keep it with the note, so the listing
+        never reads its transcript again. Returns the note without its transcript."""
         try:
             note = self.get(note_id)
         except KeyError:
             return None
-        value = score.fidelity(note.get("summary"), note.get("clean"))
-        if value is None:
-            note["fidelity_na"] = True  # too few numbers and names to tell
-        else:
-            note["fidelity"] = value
+        heard = note.get("heard")
+        if note.get("fidelity") is None and note.get("fidelity_na") != score.VERSION:
+            value, basis = score.fidelity_detail(note.get("summary"), note.get("clean"), words_ok=heard in (None, note.get("lang")))
+            note["fidelity_basis"] = basis
+            if value is None:
+                note["fidelity_na"] = score.VERSION  # nothing to check with this method: not tried again until it changes
+            else:
+                note["fidelity"] = value
+        if "languages" not in note:
+            from . import speech
+
+            note["languages"], note["mixed"] = speech.language_mix(note.get("segments"))
         self.save(note)
-        return value
+        return {k: v for k, v in note.items() if k not in HEAVY}
 
     def find_source(self, rel):
         for note in self.slim():

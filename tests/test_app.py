@@ -450,6 +450,8 @@ class HardeningTest(unittest.TestCase):
         rows = store.slim()
         self.assertEqual(len(rows), 2)
         self.assertTrue(all("clean" not in r and "segments" not in r and "summary" not in r for r in rows))
+        store.light()  # older notes are completed once (languages), then kept with the note
+        store.light()
         with mock.patch.object(config, "read_json", wraps=config.read_json) as reader:
             store.slim()
             store.light()
@@ -515,6 +517,27 @@ class HardeningTest(unittest.TestCase):
         self.assertIn("&lt;img", text)
         self.assertIn("3 < 5", render.to_markdown({"id": "x", "title": "t", "summary": {"tldr": "3 < 5"}}))
 
+    def test_a_general_note_is_measured_on_its_key_terms(self):
+        from cairn import score
+
+        summary = {"tldr": "The course covers community management, educational leadership and volunteer engagement.",
+                   "key_points": ["Stakeholders expect transparent communication", "Mentoring improves retention of volunteers"],
+                   "context": "A lecture about organisational governance and participation."}
+        faithful = ("We talk about community management and educational leadership, how volunteer engagement works, "
+                    "stakeholders and transparent communication, mentoring and retention, organisational governance, participation.")
+        self.assertEqual(score.fidelity_detail(summary, faithful)[1], "terms")
+        self.assertGreaterEqual(score.fidelity(summary, faithful), 80)
+        invented = "We discuss the weather forecast and a recipe for chocolate cake with some friends tonight."
+        self.assertLess(score.fidelity(summary, invented), 30)
+        self.assertEqual(score.fidelity_detail(summary, faithful, words_ok=False), (None, "language"))  # note and audio in two languages
+        self.assertEqual(score.fidelity_detail({"tldr": "Short."}, faithful), (None, "few"))  # nothing to check
+
+    def test_facts_still_come_first(self):
+        from cairn import score
+
+        summary = {"tldr": "Anna sends 12 files to Paris on 15 March.", "key_points": ["Budget of 300 approved by Marc"]}
+        self.assertEqual(score.fidelity_detail(summary, "Anna sends 12 files to Paris on 15 March. Budget of 300 approved by Marc.")[1], "facts")
+
     def test_a_recording_deleted_while_it_is_processed_does_not_come_back(self):
         from unittest import mock
 
@@ -553,6 +576,84 @@ class HardeningTest(unittest.TestCase):
         finally:
             httpd.shutdown()
             httpd.server_close()
+
+
+class LanguageTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        os.environ.setdefault("CAIRN_HOME", str(self.root / "Cairn"))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    @staticmethod
+    def segs(*texts):
+        return [{"start": i * 10.0, "end": i * 10.0 + 9.0, "text": x, "logprob": -0.2, "no_speech": 0.0, "compression": 1.2} for i, x in enumerate(texts)]
+
+    def test_two_languages_in_one_recording_are_noticed(self):
+        from cairn import speech
+
+        french = ["Nous allons parler de la réunion et de ce que nous avons fait dans le projet.",
+                  "Il est important que vous soyez là pour la présentation avec le client."]
+        english = ["So this is what we have to do for the next release and it is not easy.",
+                   "I think that we will have the budget but there is a risk with the plan.",
+                   "We can do it if you are with us and the team is ready for that."]
+        shares, mixed = speech.language_mix(self.segs(*(french * 3 + english)))
+        self.assertTrue(mixed)
+        self.assertGreater(shares["fr"], shares["en"])
+        shares, mixed = speech.language_mix(self.segs(*(french * 6)))
+        self.assertFalse(mixed)
+        self.assertEqual(speech.language_mix(self.segs("Hello"))[0], {})  # too short to say
+
+    def test_the_language_of_the_audio_is_passed_to_the_engine_and_a_change_transcribes_again(self):
+        from unittest import mock
+
+        from cairn import jobs, notes, speech
+
+        store = notes.Store(self.root / "Texts")
+        audio = self.root / "a.wav"
+        tone(audio, seconds=1)
+        store.save({"id": "n1", "status": "waiting", "audio": str(audio), "date": "2026-10-01T10:00:00", "title": ""})
+        queue = jobs.Jobs(store)
+        seen = []
+
+        def fake(path, progress=None, language=None):
+            seen.append(language)
+            return {"language": language or "fr", "segments": self.segs("Bonjour tout le monde, nous allons commencer la réunion."), "duration": 9.0}
+
+        summary = {"template": "other", "title": "T", "tldr": "x", "actions": []}
+        with mock.patch.object(speech, "transcribe", fake), mock.patch.object(speech, "model_name", lambda: "stub"), \
+                mock.patch("cairn.llm.summarize", lambda *a, **k: dict(summary)):
+            queue._process("n1", {"ui": "fr"})
+            self.assertEqual(seen, [None])  # auto: the engine detects it
+            note = store.get("n1")
+            self.assertIsNone(note["speech_lang_used"])
+            self.assertIn("languages", note)
+            # same language of the audio: only the summary is rewritten
+            with mock.patch.object(queue, "_start") as start:
+                self.assertFalse(queue.start_rerun("n1", "mid", "fr", "auto"))
+                self.assertEqual(start.call_args[0][0], "rerun")
+            # another language of the audio: the audio is transcribed again with it
+            with mock.patch.object(queue, "_start") as start:
+                self.assertTrue(queue.start_rerun("n1", "mid", "fr", "en"))
+                self.assertEqual(start.call_args[0][0], "import")
+            queue._process("n1", {"ui": "fr"})
+            self.assertEqual(seen, [None, "en"])
+            self.assertEqual(store.get("n1")["speech_lang_used"], "en")
+
+    def test_choosing_the_audio_language_is_validated_and_kept(self):
+        from cairn import jobs, notes
+
+        store = notes.Store(self.root / "Texts")
+        store.save({"id": "n2", "status": "waiting", "audio": "", "title": ""})
+        queue = jobs.Jobs(store)
+        queue.set_options("n2", speech_lang="fr")
+        self.assertEqual(store.get("n2")["speech_lang"], "fr")
+        queue.set_options("n2", speech_lang="auto")
+        self.assertIsNone(store.get("n2")["speech_lang"])
+        with self.assertRaises(ValueError):
+            queue.set_options("n2", speech_lang="de")
 
 
 class SimpleNamespaceStore:
