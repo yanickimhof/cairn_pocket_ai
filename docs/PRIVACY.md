@@ -4,7 +4,7 @@ One rule: **your recordings never leave your computer.**
 
 ## What Cairn does
 
-- Reads the audio files from your Pocket over USB and copies them to a folder you choose.
+- Reads the audio files from your Pocket over USB and copies them to a folder you choose. It deletes on the Pocket only what you ask it to delete.
 - Transcribes, titles and summarizes them on your computer, with models that run offline.
 - Stores everything in that folder: audio, transcripts, summaries, exports.
 
@@ -41,4 +41,4 @@ Cairn also checks for you. Once a day, when idle, it runs a small local test and
 
 Under `~/Cairn` by default (audio, texts, exports). The audio folder can be changed in Settings. Use full disk encryption in case the computer is lost or stolen.
 
-Deleting a recording in the app removes its local files. Emptying the Pocket is a separate action, offered only once every copy is verified.
+Deleting a recording in the app removes it everywhere: the file on the Pocket (at its next connection if it is not connected), and the audio, transcript and summary on this computer. The Pocket has no protection of its own, so a file left on it can be read by anyone who holds the device. Nothing is kept: deleting cannot be undone. Cairn writes to the Pocket only when you ask for it, by deleting a recording or by emptying the Pocket, which is offered once every copy you kept is verified.

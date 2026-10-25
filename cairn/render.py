@@ -6,7 +6,7 @@ LABELS = {
     "fr": {
         "tldr": "En bref", "actions": "Actions", "context": "Contexte", "key_points": "Points clés",
         "decisions": "Décisions", "topics": "Détail par sujet", "doubtful": "Passages à vérifier",
-        "transcript": "Transcription", "reliability": "Fiabilité estimée",
+        "transcript": "Transcription", "raw": "Confiance de la transcription brute", "fidelity": "Fidélité de la note au transcript",
         "footer": "Note produite par Cairn · Pocket AI souverain. Rien n'a quitté cet ordinateur.", "words": "mots", "processed": "traité en", "models": "Modèles",
         "empty": "Aucune parole détectée dans cet enregistrement.",
         "templates": {"meeting": "Réunion", "call": "Appel", "presentation": "Présentation", "idea": "Idée", "other": "Note"},
@@ -14,7 +14,7 @@ LABELS = {
     "en": {
         "tldr": "TL;DR", "actions": "Actions", "context": "Context", "key_points": "Key points",
         "decisions": "Decisions", "topics": "Detail by topic", "doubtful": "Passages to check",
-        "transcript": "Transcript", "reliability": "Estimated reliability",
+        "transcript": "Transcript", "raw": "Raw transcript confidence", "fidelity": "Note fidelity to the transcript",
         "footer": "Produced by Cairn · Sovereign Pocket AI. Nothing left this computer.", "words": "words", "processed": "processed in", "models": "Models",
         "empty": "No speech detected in this recording.",
         "templates": {"meeting": "Meeting", "call": "Call", "presentation": "Presentation", "idea": "Idea", "other": "Note"},
@@ -33,6 +33,17 @@ def labels(note):
     return LABELS.get(note.get("lang") if note.get("lang") in LABELS else "en", LABELS["en"])
 
 
+def _scores(note, lab):
+    """The two indicators, each with its own label: fidelity of the finished note and the speech
+    engine's confidence in the raw transcript."""
+    out = []
+    if note.get("fidelity") is not None:
+        out.append((lab["fidelity"], note["fidelity"]))
+    if note.get("quality") is not None:
+        out.append((lab["raw"], note["quality"]))
+    return out
+
+
 def _meta(note, lab):
     parts = []
     if note.get("date"):
@@ -42,8 +53,7 @@ def _meta(note, lab):
     summary = note.get("summary") or {}
     if summary.get("template") in lab["templates"]:
         parts.append(lab["templates"][summary["template"]])
-    if note.get("quality") is not None:
-        parts.append("%s %d %%" % (lab["reliability"], note["quality"]))
+    parts += ["%s %d %%" % (text, value) for text, value in _scores(note, lab)]
     return " · ".join(parts)
 
 
@@ -130,10 +140,6 @@ _LOGO = (
 )
 
 
-def _quality_color(value):
-    return "#1B7F3B" if value >= 85 else "#B26A00" if value >= 70 else "#C0392B"
-
-
 def to_html(note, transcript=True, fragment=False):
     """HTML version of a note. fragment=True gives inline-styled markup without the page, safe to paste in an email."""
     lab, s = labels(note), note.get("summary") or {}
@@ -157,16 +163,15 @@ def to_html(note, transcript=True, fragment=False):
         chips.append(e(stamp(note["duration"])))
     if s.get("template") in lab["templates"]:
         chips.append(e(lab["templates"][s["template"]]))
-    if chips:
+    if chips or _scores(note, lab):
         body.append(
             '<div style="display:flex;flex-wrap:wrap;gap:6px 8px;margin-bottom:4px">%s%s</div>'
             % (
                 "".join('<span style="font-size:13px;color:%s;background:%s;border-radius:999px;padding:3px 12px">%s</span>' % (c("mute"), c("soft"), t) for t in chips),
-                (
-                    '<span style="font-size:13px;font-weight:600;color:%s;background:%s;border-radius:999px;padding:3px 12px">%s %d %%</span>'
-                    % (_quality_color(note["quality"]), c("soft"), e(lab["reliability"]), note["quality"])
-                    if note.get("quality") is not None
-                    else ""
+                "".join(
+                    '<span style="font-size:13px;color:%s;background:%s;border-radius:999px;padding:3px 12px">%s %d %%</span>'
+                    % (c("mute"), c("soft"), e(text), value)
+                    for text, value in _scores(note, lab)
                 ),
             )
         )

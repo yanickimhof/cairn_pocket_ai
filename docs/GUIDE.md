@@ -1,8 +1,35 @@
 # Guide
 
-## Choosing what to process
+## Importing and processing
 
-Tap a waiting recording to process it now: Cairn does that one first, then carries on with every other waiting recording, newest first. Recordings you put back while it runs are picked up too. Each recording has its own level of detail (short, standard, detailed; standard by default) and its own language (FR or EN, the interface language by default): choose them before processing, in the same panel. Skip a recording to leave it out of the queue (it can be restored). Stop interrupts the current job. On a finished note, choose a level and press **Redo**: Cairn rewrites the note at that level and keeps your chosen name. The audio is transcribed again only if you changed the speech model since the note was made; otherwise the transcript is reused, which takes seconds. Secure mode hides the list of notes until you reveal it.
+- **Import:** as soon as the Pocket is connected, Cairn copies and verifies the new recordings and lists them as waiting. Nothing is transcribed until you decide. This can be turned off in Settings (**Import on connect**, on by default).
+- **Process:** the badge on the central button counts the recordings waiting. Press the button to process them all, newest first, or tap one recording to process it first. Settings, **Process automatically** (off by default), does it without your click; **Stop** then pauses it until new recordings arrive or you start a job yourself.
+- **Skip:** leave a recording out of the queue; it can be put back.
+- **Stop:** interrupts the current job.
+
+## One note, one set of choices
+
+Each recording has its own **level of detail** (short, standard, detailed), its own **language** (FR or EN, the interface language by default) and its own **type** (meeting, call, presentation, idea, note; chosen by the model). Tap a button on the note to change its choice: each tap moves to the next one. Your choices are kept.
+
+On a finished note, **Redo** rewrites it with the choices you made and keeps your name and type. The audio is transcribed again only if you changed the speech model since the note was made; otherwise the transcript is reused, which takes seconds.
+
+The document icon opens the transcript in a window: doubtful passages are highlighted, and the confidence of the raw transcript is shown at the top.
+
+## Reading the indicators
+
+Each finished note shows up to three pills on its row, with an explanation on hover:
+
+| Pill | Meaning |
+|---|---|
+| Check | **Fidelity of the note** to the transcript: the share of its numbers and names found in the transcribed text. Green from 90 %, amber from 75 %, red below. It catches invented details, not misheard words. |
+| Waveform | **Confidence of the raw transcript**, the speech engine's own estimate. It is deliberately cautious on spontaneous speech, so 55 to 70 % is common on a lively meeting and does not mean the note is poor. |
+| Warning | Number of passages worth checking, when there are some. |
+
+Both scores appear in the exports (Markdown, HTML, copy). Secure mode hides the list of notes until you reveal it.
+
+## Deleting
+
+The trash icon on a note deletes it everywhere, for good: the file on the Pocket, and the audio, transcript and summary on this computer. If the Pocket is not connected, its file is erased the next time it is. Exports already saved in `~/Cairn/Exports` are not touched. The Pocket has no protection of its own, which is why deleting there matters. Settings also offers to empty the Pocket once every copy is verified.
 
 ## Models
 

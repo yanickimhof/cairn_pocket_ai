@@ -194,6 +194,18 @@ class AppTest(unittest.TestCase):
         self.wait_idle()
         self.assertEqual(len(StubModel.calls), before)  # nothing new to process
 
+    def test_06b_note_type_is_chosen_per_recording_and_survives_a_redo(self):
+        _, st = self.c.call("GET", "/api/state")
+        note_id = st["notes"][0]["id"]
+        self.assertEqual(self.c.call("POST", "/api/note/%s/template" % note_id, {"template": "idea"})[0], 200)
+        self.assertEqual(self.c.call("POST", "/api/note/%s/template" % note_id, {"template": "nope"})[0], 400)
+        _, full = self.c.call("GET", "/api/note/" + note_id)
+        self.assertEqual(full["summary"]["template"], "idea")
+        self.assertEqual(self.c.call("POST", "/api/note/%s/rerun" % note_id, {"level": "mid"})[0], 202)
+        self.wait_idle()
+        _, full = self.c.call("GET", "/api/note/" + note_id)
+        self.assertEqual(full["summary"]["template"], "idea")  # the model's own guess does not overwrite the choice
+
     def test_06_rename_rerun_levels(self):
         _, st = self.c.call("GET", "/api/state")
         note_id = st["notes"][0]["id"]
@@ -231,6 +243,81 @@ class AppTest(unittest.TestCase):
         self.assertEqual(self.c.call("POST", "/api/settings", {"level": "full"})[0], 400)  # no global level any more
         self.assertEqual(self.c.call("POST", "/api/settings", {"ui": "xx"})[0], 400)
         self.assertEqual(self.c.call("POST", "/api/settings", {"audio_dir": "relative/path"})[0], 400)
+
+    def test_watcher_processes_the_queue_only_when_asked_and_not_after_a_stop(self):
+        from types import SimpleNamespace
+        from unittest import mock
+
+        from cairn import watch
+
+        calls = []
+        jobs_ns = SimpleNamespace(snapshot=lambda: {"running": False}, start_privacy=lambda: None, start_sync=lambda: None,
+                                  start_queue=lambda: calls.append("queue"), paused=False)
+        app = SimpleNamespace(jobs=jobs_ns, pocket_state=lambda: {"new": 0}, waiting_count=lambda: 3, purge_pocket=lambda: 0,
+                              check_update=lambda: {"available": False}, update_info=None)
+        fresh = {"when": "2999-01-01T00:00:00"}
+        with mock.patch.object(watch.privacy, "last_report", return_value=fresh):
+            with mock.patch.object(watch.config, "load_settings", return_value={"autoimport": True, "autocheck": False}):
+                watch.Watcher(app).tick(now=10**9)
+            self.assertEqual(calls, [])  # off by default
+            with mock.patch.object(watch.config, "load_settings", return_value={"autoimport": True, "autocheck": False, "autoprocess": True}):
+                watcher = watch.Watcher(app)
+                watcher.tick(now=10**9)
+                self.assertEqual(calls, ["queue"])
+                jobs_ns.paused = True  # the person pressed Stop
+                watcher.tick(now=10**9 + 500)
+                self.assertEqual(calls, ["queue"])
+
+    def test_08c_sync_copies_without_processing_and_the_badge_counts_what_is_new(self):
+        extra = self.pocket / "2026-10-12"
+        extra.mkdir(exist_ok=True)
+        tone(extra / "fresh.wav", seconds=1)
+        _, st = self.c.call("GET", "/api/state")
+        self.assertGreaterEqual(st["pocket"]["new"], 1)
+        self.app.jobs.start_sync()
+        self.wait_idle()
+        _, st = self.c.call("GET", "/api/state")
+        self.assertEqual(st["pocket"]["new"], 0)
+        row = [n for n in st["notes"] if (self.c.call("GET", "/api/note/" + n["id"])[1].get("source") or "").endswith("fresh.wav")][0]
+        self.assertEqual(row["status"], "waiting")  # copied and visible, not processed
+        self.c.call("POST", "/api/note/%s/delete" % row["id"], {"pocket": True})
+
+    def test_08b_delete_erases_everywhere_and_waits_for_a_disconnected_pocket(self):
+        from unittest import mock
+
+        from cairn import pocket as pocket_module
+
+        extra_dir = self.pocket / "2026-10-09"
+        extra_dir.mkdir(exist_ok=True)
+        now, later = extra_dir / "now.wav", extra_dir / "later.wav"
+        tone(now, seconds=1)
+        tone(later, seconds=1)
+        self.assertEqual(self.c.call("POST", "/api/import")[0], 202)
+        self.wait_idle()
+        _, st = self.c.call("GET", "/api/state")
+        sources = {i: self.c.call("GET", "/api/note/" + i)[1] for i in [n["id"] for n in st["notes"]]}
+        now_id = [i for i, n in sources.items() if n["source"].endswith("now.wav")][0]
+        later_id = [i for i, n in sources.items() if n["source"].endswith("later.wav")][0]
+        audio_now, audio_later = sources[now_id]["audio"], sources[later_id]["audio"]
+        # Pocket connected: the file, the local copy and the note are all gone at once
+        code, out = self.c.call("POST", "/api/note/%s/delete" % now_id)
+        self.assertEqual((code, out["pocket"]), (200, True))
+        self.assertFalse(now.exists())
+        self.assertFalse(os.path.exists(audio_now))
+        self.assertEqual(self.c.call("GET", "/api/note/" + now_id)[0], 404)
+        # Pocket not connected: the note and local copy go now, the Pocket file at the next connection
+        with mock.patch.object(pocket_module, "find_pocket", return_value=None):
+            code, out = self.c.call("POST", "/api/note/%s/delete" % later_id)
+            self.assertEqual((code, out["pocket"]), (200, False))
+        self.assertTrue(later.exists())
+        self.assertFalse(os.path.exists(audio_later))
+        self.assertEqual(self.app.purge_pocket(), 1)  # the Pocket is connected again
+        self.assertFalse(later.exists())
+        self.assertEqual(self.app.store.ignored(), set())
+        self.assertEqual(self.c.call("POST", "/api/import")[0], 202)
+        self.wait_idle()
+        _, st = self.c.call("GET", "/api/state")
+        self.assertFalse([n for n in st["notes"] if n["id"] in (now_id, later_id)])  # nothing comes back
 
     def test_08_empty_pocket_needs_verified_copies(self):
         _, v = self.c.call("GET", "/api/pocket/verify")
@@ -406,8 +493,8 @@ class UnitTest(unittest.TestCase):
         calls = []
         idle = {"running": False}
         app = SimpleNamespace(
-            jobs=SimpleNamespace(snapshot=lambda: idle, start_privacy=lambda: calls.append("privacy")),
-            check_update=lambda: calls.append("update") or {"available": False}, update_info=None)
+            jobs=SimpleNamespace(snapshot=lambda: idle, start_privacy=lambda: calls.append("privacy"), start_sync=lambda: calls.append("sync")),
+            pocket_state=lambda: {"new": 0}, waiting_count=lambda: 0, purge_pocket=lambda: 0, check_update=lambda: calls.append("update") or {"available": False}, update_info=None)
         with mock.patch.object(watch.config, "load_settings", return_value={"autocheck": True}), mock.patch.object(watch.privacy, "last_report", return_value=None):
             watcher = watch.Watcher(app)
             idle["running"] = True
@@ -422,6 +509,32 @@ class UnitTest(unittest.TestCase):
         with mock.patch.object(watch.config, "load_settings", return_value={"autocheck": False}), mock.patch.object(watch.privacy, "last_report", return_value=None):
             watch.Watcher(app).tick(now=10**9)
         self.assertEqual(calls, ["privacy"])  # update check turned off
+
+    def test_watcher_copies_new_recordings_when_the_pocket_is_connected(self):
+        from types import SimpleNamespace
+        from unittest import mock
+
+        from cairn import watch
+
+        calls = []
+        state = {"new": 2}
+        app = SimpleNamespace(
+            jobs=SimpleNamespace(snapshot=lambda: {"running": False}, start_privacy=lambda: None, start_sync=lambda: calls.append("sync")),
+            pocket_state=lambda: state, waiting_count=lambda: 0, purge_pocket=lambda: 0, check_update=lambda: {"available": False}, update_info=None)
+        fresh = {"when": "2999-01-01T00:00:00"}
+        with mock.patch.object(watch.privacy, "last_report", return_value=fresh):
+            with mock.patch.object(watch.config, "load_settings", return_value={"autoimport": True, "autocheck": False}):
+                watcher = watch.Watcher(app)
+                watcher.tick(now=10**9)
+                self.assertEqual(calls, ["sync"])
+                watcher.tick(now=10**9 + 30)
+                self.assertEqual(calls, ["sync"])  # a failing copy is not retried in a loop
+                watcher.tick(now=10**9 + 200)
+                self.assertEqual(calls, ["sync", "sync"])
+            calls.clear()
+            with mock.patch.object(watch.config, "load_settings", return_value={"autoimport": False, "autocheck": False}):
+                watch.Watcher(app).tick(now=10**9)
+            self.assertEqual(calls, [])  # turned off
 
     def test_network_guard_blocks_outside_connections(self):
         import subprocess
@@ -478,6 +591,43 @@ class UnitTest(unittest.TestCase):
         self.assertNotIn("<script>alert", out)
         self.assertIn("&lt;b&gt;", out)
 
+
+    def test_note_fidelity_counts_numbers_and_names_found_in_the_transcript(self):
+        from cairn import score
+
+        transcript = "Bonjour, ici Marc Dupont. Le budget est de 12500 francs, livraison le 14 mars à Lausanne."
+        good = {"tldr": "Réunion avec Marc Dupont.", "key_points": ["Budget de 12 500 francs", "Livraison le 14 mars à Lausanne"], "actions": []}
+        self.assertEqual(score.fidelity(good, transcript), 100)
+        invented = dict(good, key_points=["Budget de 99 000 francs", "Livraison le 3 avril à Genève"])
+        low = score.fidelity(invented, transcript)
+        self.assertTrue(low is not None and low < 60, low)
+        spoken = {"tldr": "Point à 11 h.", "key_points": ["Prix de 20 euros", "Équipe de 5 personnes"], "actions": []}
+        self.assertEqual(score.fidelity(spoken, "Rendez-vous à onze heures, prix vingt euros, équipe de cinq personnes."), 100)
+        clock = {"tldr": "Appel.", "actions": [{"what": "Relancer après 00:11", "when": "vendredi 10:00"}], "key_points": ["Budget 450 euros", "Prix 20 euros"]}
+        self.assertEqual(score.fidelity(clock, "Vendredi à 10 heures. Budget 450 euros, prix 20 euros."), 100)
+        self.assertIsNone(score.fidelity({"tldr": "Une courte note.", "actions": []}, transcript))  # too few details to tell
+
+    def test_fidelity_is_stored_with_the_note_and_listed_for_older_notes(self):
+        from cairn import notes
+
+        store = notes.Store(Path(tempfile.mkdtemp()))
+        summary = {"tldr": "Appel avec Sophie Martin.", "key_points": ["Prix 450 euros", "Rendez-vous le 12 mai"], "actions": []}
+        store.save({"id": "old", "status": "done", "summary": summary, "clean": "Sophie Martin au téléphone, prix 450 euros, rendez-vous le 12 mai."})
+        row = store.light()[0]
+        self.assertEqual(row["fidelity"], 100)
+
+    def test_exports_name_both_indicators(self):
+        from cairn import render
+
+        note = {"id": "x", "title": "T", "lang": "fr", "clean": "texte", "quality": 61, "fidelity": 92, "summary": {"template": "meeting", "tldr": "Court."}}
+        md = render.to_markdown(note)
+        self.assertIn("Fidélité de la note au transcript 92 %", md)
+        self.assertIn("Confiance de la transcription brute 61 %", md)
+        self.assertNotIn("Fiabilité estimée", md)
+        page = render.to_html(note, fragment=True)
+        self.assertIn("Fidélité de la note au transcript 92 %", page)
+        self.assertIn("Confiance de la transcription brute 61 %", page)
+        self.assertNotIn("C0392B", page)  # no alarm red on a score
 
     def test_html_export_design(self):
         from cairn import render

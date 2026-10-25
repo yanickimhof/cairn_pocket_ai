@@ -27,14 +27,14 @@
       copiedRich: "Copié", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exporté en ",
       importLabel: "Importer et transcrire", importHint: "Importer et traiter les enregistrements", count: "Enregistrements sur le Pocket",
       eyeShow: "Afficher la liste", eyeHide: "Masquer la liste", hiddenNote: "Mode sécurisé",
-      rowHint: "Ouvrir", actionsHint: "Afficher les actions", durHint: "Durée", dateDur: "Date · durée", qualityHint: "Fiabilité estimée",
+      rowHint: "Ouvrir", actionsHint: "Afficher les actions", durHint: "Durée", dateDur: "Date · durée", scoreNoteHint: "Fidélité de la note : part des chiffres et des noms de la note retrouvés dans le transcript", scoreRawHint: "Confiance de la transcription brute : estimation du moteur vocal, volontairement prudente sur la parole spontanée", rawLegend: "Confiance de la transcription brute",
       rename: "Renommer", saveName: "Enregistrer", viewText: "Voir le transcript", copyText: "Copier le transcript", closeLbl: "Fermer", noText: "Pas de transcript.", textLegend: "Les passages surlignés sont à vérifier.", redo: "Refaire", redoHint: "Refaire la note au niveau choisi. L'audio n'est retranscrit que si le modèle vocal a changé.",
-      copilot: "Copier les passages douteux", passages: " à vérifier", copilotHint: "clic pour copier",
-      deleteLocal: "Supprimer de cet ordinateur", deleteHint: "Supprimer audio et textes",
-      deleteConfirm: "Supprimer audio et textes ? Si le Pocket est vidé, plus aucune copie.",
+      passages: " à vérifier", tplHint: "Type de note", tpl: { meeting: "Réunion", call: "Appel", presentation: "Présentation", idea: "Idée", other: "Note" },
+      deleteLocal: "Supprimer de cet ordinateur", deleteHint: "Supprimer l'enregistrement",
+      deleteConfirm: "Supprimer l'audio, le transcript et le résumé, sur le Pocket et sur cet ordinateur ? Irréversible.", deleteConfirmOff: "Supprimer l'audio, le transcript et le résumé sur cet ordinateur ? Le Pocket n'est pas branché : son fichier sera effacé au prochain branchement. Irréversible.", deletedLater: "Supprimé · fichier du Pocket effacé au prochain branchement",
       copied: "Copié", redoing: "Note refaite : ", renamed: "Nom enregistré", deleted: "Supprimé", pocketEmptied: "Pocket vidé",
       ready: "Prêt", waiting: "En attente", failed: "Échec : relancer le résumé", done: "Terminé", modelDown: "Moteur local arrêté : relancez Cairn",
-      privAuto: "Contrôle automatique", privOk: "aucune connexion vers l’extérieur", privBad: "connexions détectées, voir docs/PRIVACY.md", privNone: "en attente", autoCheck: "Vérifier les mises à jour", autoHint: "Une requête à GitHub par jour",
+      privAuto: "Contrôle automatique", privOk: "aucune connexion vers l’extérieur", privBad: "connexions détectées, voir docs/PRIVACY.md", privNone: "en attente", autoCheck: "Vérifier les mises à jour", autoHint: "Une requête à GitHub par jour", autoProcess: "Traiter automatiquement", autoProcessHint: "Transcrit et résume les enregistrements en attente sans attendre votre clic. Stop met en pause.", autoImport: "Importer au branchement", autoImportHint: "Copie les nouveaux enregistrements dès que le Pocket est branché, sans les traiter", queueTip: "{n} en attente de traitement",
       processNow: "Traiter maintenant", skipIt: "Ignorer", skipped: "Ignoré", putBack: "Remettre dans la file", stopJob: "Arrêter",
       steps: { copying: "Copie depuis le Pocket", transcribing: "Transcription", summarizing: "Rédaction de la note", privacy: "Vérification de la confidentialité" },
       none: "Aucun enregistrement.", tldr: "En bref", actions: "Actions", points: "Points clés", noSpeech: "Aucune parole détectée.",
@@ -65,14 +65,14 @@
       copiedRich: "Copied", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exported as ",
       importLabel: "Import and transcribe", importHint: "Import and process the recordings", count: "Recordings on the Pocket",
       eyeShow: "Show the list", eyeHide: "Hide the list", hiddenNote: "Secure mode",
-      rowHint: "Open", actionsHint: "Show actions", durHint: "Length", dateDur: "Date · length", qualityHint: "Estimated reliability",
+      rowHint: "Open", actionsHint: "Show actions", durHint: "Length", dateDur: "Date · length", scoreNoteHint: "Note fidelity: share of the note's numbers and names found in the transcript", scoreRawHint: "Raw transcript confidence: the speech engine's own estimate, deliberately cautious on spontaneous speech", rawLegend: "Raw transcript confidence",
       rename: "Rename", saveName: "Save", viewText: "View transcript", copyText: "Copy transcript", closeLbl: "Close", noText: "No transcript.", textLegend: "Highlighted passages are worth checking.", redo: "Redo", redoHint: "Redo the note at the chosen level. The audio is transcribed again only if the speech model has changed.",
-      copilot: "Copy doubtful passages", passages: " to check", copilotHint: "click to copy",
-      deleteLocal: "Delete from this computer", deleteHint: "Delete audio and texts",
-      deleteConfirm: "Delete audio and texts? If the Pocket is emptied, no copy remains.",
+      passages: " to check", tplHint: "Note type", tpl: { meeting: "Meeting", call: "Call", presentation: "Presentation", idea: "Idea", other: "Note" },
+      deleteLocal: "Delete from this computer", deleteHint: "Delete the recording",
+      deleteConfirm: "Delete the audio, transcript and summary, on the Pocket and on this computer? This cannot be undone.", deleteConfirmOff: "Delete the audio, transcript and summary on this computer? The Pocket is not connected: its file will be erased the next time it is connected. This cannot be undone.", deletedLater: "Deleted · the Pocket file will be erased at the next connection",
       copied: "Copied", redoing: "Note redone: ", renamed: "Name saved", deleted: "Deleted", pocketEmptied: "Pocket emptied",
       ready: "Ready", waiting: "Waiting", failed: "Failed: rerun the summary", done: "Done", modelDown: "Local engine stopped: restart Cairn",
-      privAuto: "Automatic check", privOk: "no connection to the outside", privBad: "connections detected, see docs/PRIVACY.md", privNone: "pending", autoCheck: "Check for updates", autoHint: "One request to GitHub per day",
+      privAuto: "Automatic check", privOk: "no connection to the outside", privBad: "connections detected, see docs/PRIVACY.md", privNone: "pending", autoCheck: "Check for updates", autoHint: "One request to GitHub per day", autoProcess: "Process automatically", autoProcessHint: "Transcribes and summarizes waiting recordings without waiting for your click. Stop pauses it.", autoImport: "Import on connect", autoImportHint: "Copies new recordings as soon as the Pocket is connected, without processing them", queueTip: "{n} waiting to be processed",
       processNow: "Process now", skipIt: "Skip", skipped: "Skipped", putBack: "Put back in the queue", stopJob: "Stop",
       steps: { copying: "Copying from the Pocket", transcribing: "Transcribing", summarizing: "Writing the note", privacy: "Checking privacy" },
       none: "No recordings.", tldr: "TL;DR", actions: "Actions", points: "Key points", noSpeech: "No speech detected.",
@@ -238,6 +238,14 @@
       [["0", t.off, false], ["1", t.on, true]].map(function (o) {
         return '<button type="button" data-a="autocheck" data-v="' + o[0] + '" class="' + bg(st.settings.autocheck !== false === o[2]).trim() + '">' + esc(o[1]) + "</button>";
       }).join("") + "</div></div>";
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.autoImportHint) + '><span class="text" style="font-size:14px">' + esc(t.autoImport) + '</span><div class="seg s38">' +
+      [["0", t.off, false], ["1", t.on, true]].map(function (o) {
+        return '<button type="button" data-a="autoimport" data-v="' + o[0] + '" class="' + bg(st.settings.autoimport !== false === o[2]).trim() + '">' + esc(o[1]) + "</button>";
+      }).join("") + "</div></div>";
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.autoProcessHint) + '><span class="text" style="font-size:14px">' + esc(t.autoProcess) + '</span><div class="seg s38">' +
+      [["0", t.off, false], ["1", t.on, true]].map(function (o) {
+        return '<button type="button" data-a="autoprocess" data-v="' + o[0] + '" class="' + bg((st.settings.autoprocess === true) === o[2]).trim() + '">' + esc(o[1]) + "</button>";
+      }).join("") + "</div></div>";
     h += '<div class="hr"></div><div class="setrow"' + tip(t.folderHint) + ">" + I.folder;
     h += '<div class="row gap8" style="min-width:0"><span class="text" style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(shortPath(st.settings.audio_dir)) + "</span>";
     h += '<button type="button" class="ib" data-a="folder"' + tip(t.folderChange) + ">" + I.pencil + "</button></div></div>";
@@ -299,22 +307,52 @@
     return n.status === "skipped" ? I.skip : I.wait;
   }
 
+  // Closed row: fidelity of the finished note (colored), the speech engine's confidence in the raw
+  // transcript (neutral), and the passages worth checking (only when there are some).
+  var I_NOTE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var I_WAVE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4"/></svg>';
+  var I_WARN = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4 3 20h18z"/><path d="M12 10v4"/><path d="M12 17h.01"/></svg>';
+
+  function scorePills(n, t) {
+    var h = "";
+    if (n.fidelity != null) {
+      var tone = n.fidelity >= 90 ? "g" : n.fidelity >= 75 ? "a" : "r";
+      h += '<span class="pl ' + tone + '"' + tip(t.scoreNoteHint + " : " + n.fidelity + " %") + ">" + I_NOTE + n.fidelity + "</span>";
+    }
+    if (n.quality != null) { h += '<span class="pl n"' + tip(t.scoreRawHint + " : " + n.quality + " %") + ">" + I_WAVE + n.quality + "</span>"; }
+    if (n.passages) { h += '<span class="pl a"' + tip(n.passages + t.passages) + ">" + I_WARN + n.passages + "</span>"; }
+    return h ? '<span class="pls">' + h + "</span>" : "";
+  }
+
+  var TPL = ["meeting", "call", "presentation", "idea", "other"];
+  var TPL_ICON = {
+    meeting: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.5 0 4.5 2 4.5 5"/>',
+    call: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+    presentation: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/>',
+    idea: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+    other: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>'
+  };
+  function noteTpl(full) { var k = full && full.summary && full.summary.template; return TPL.indexOf(k) >= 0 ? k : "other"; }
+  function tplButton(full, t) {
+    if (!full || !full.summary) { return ""; }
+    var k = noteTpl(full);
+    return '<button type="button" class="ib" data-a="cycleTpl"' + tip(t.tplHint + " : " + t.tpl[k]) + '><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + TPL_ICON[k] + "</svg></button>";
+  }
+
   function viewDetail(n, t) {
     var full = S.full[n.id];
     var h = '<div class="detail">';
     if (S.edit === n.id) {
       h += '<div class="name"><input id="nameInput" type="text" value="' + esc(S.draft) + '" aria-label="' + esc(t.rename) + '"><button type="button" class="ib blue" data-a="saveName"' + tip(t.saveName) + ">" + I.checkW + "</button></div>";
     }
-    var passInk = n.quality != null && n.quality < 85 ? "var(--warn)" : "var(--mute)";
     h += '<div class="bar"><div class="row gap8" style="flex-wrap:wrap">' + optionBar(t) +
       '<button type="button" class="ib blue" data-a="rerun"' + (S.server && S.server.job && S.server.job.running ? " disabled" : "") + tip(t.redoHint) + ">" + I.refreshW + "</button></div>";
-    h += '<div class="row" style="gap:4px">';
+    h += '<div class="row" style="gap:4px">' + tplButton(full, t);
     h += '<button type="button" class="ib" data-a="viewText" data-id="' + esc(n.id) + '"' + tip(t.viewText) + ">" + I.doc.replace("#6E6E73", "#1D1D1F") + "</button>";
-    h += '<button type="button" class="warn" data-a="copyDoubtful" style="color:' + passInk + '"' + tip(n.passages + t.passages + " · " + t.copilotHint) + ">" + (passInk === "var(--orange)" ? I.warnB.replace('width="16" height="16"', 'width="18" height="18"') : I.warnB.replace("#C86D51", "#6E6E73").replace('width="16" height="16"', 'width="18" height="18"')) + (n.passages || 0) + "</button>";
     h += '<button type="button" class="ib" data-a="startRename"' + tip(t.rename) + ">" + I.pencil + "</button>";
     h += '<span class="pop"><button type="button" class="ib' + (S.exp === n.id ? " on" : "") + '" data-a="toggleExport"' + tip(t.exportHint) + ">" + I.down + "</button>" + exportList(n, t) + "</span>";
     h += '<button type="button" class="ib" data-a="askDelete"' + tip(t.deleteHint) + ">" + I.trash + "</button></div></div>";
-    if (S.delConfirm) { h += confirmBox(t.deleteConfirm, "confirmDelete", t); }
+    if (S.delConfirm) { h += confirmBox(S.server && S.server.pocket && S.server.pocket.connected ? t.deleteConfirm : t.deleteConfirmOff, "confirmDelete", t); }
     if (n.error) { h += '<div class="err">' + esc(t.error + n.error) + "</div>"; }
     if (full && full.summary) {
       var s = full.summary;
@@ -364,9 +402,8 @@
       var rowTip = running ? stepText(st.job, t) : (done || n.status === "error" ? t.rowHint : t.actionsHint);
       var subTip = done ? t.dateDur : (running ? "" : t.durHint);
       var bar = running && st.job.pct != null ? '<span class="pbar"><span style="width:' + st.job.pct + '%"></span></span>' : "";
-      var q = done && n.quality != null ? '<span class="q" style="color:' + (n.quality < 85 ? "var(--warn)" : "var(--mute)") + '"' + tip(t.qualityHint) + ">" + n.quality + " %</span>" : "";
       return '<div class="item"><button type="button" class="rowbtn" data-a="row" data-id="' + esc(n.id) + '" aria-expanded="' + open + '"' + tip(rowTip) + '><span class="st">' + statusIcon(n, st.job) +
-        '</span><span class="mid"><span class="main">' + esc(main) + '</span><span class="sub"' + tip(subTip) + ">" + esc(sub) + "</span>" + bar + '</span><span style="min-width:54px;display:inline-flex;justify-content:flex-end">' + q + "</span></button>" +
+        '</span><span class="mid"><span class="main">' + esc(main) + '</span><span class="sub"' + tip(subTip) + ">" + esc(sub) + "</span>" + bar + "</span>" + (done ? scorePills(n, t) : "") + "</button>" +
         (open && (done || n.status === "error") ? viewDetail(n, t) : "") +
         (open && !done ? queueActions(n, st.job, t) : "") + "</div>";
     }).join("") + "</div>";
@@ -393,7 +430,8 @@
     h += '<div class="hero"><div class="ring"' + (job.running ? tip(stepText(job, t)) : "") + '><svg class="arc" width="156" height="156" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="#E5E5EA" stroke-width="3"></circle>' +
       '<circle cx="50" cy="50" r="46" fill="none" stroke="#3368A0" stroke-width="3" stroke-linecap="round" stroke-dasharray="' + (ring * 289).toFixed(1) + ' 289" transform="rotate(-90 50 50)"></circle></svg>';
     h += '<button type="button" class="import' + (job.running ? " busy" : "") + '" data-a="import"' + (canImport ? "" : " disabled") + tip(t.importHint) + ">" + I.downBig + "</button>";
-    if (connected) { h += '<span class="badge"' + tip(t.count) + ">" + st.pocket.count + "</span>"; }
+    var todo = (st.pocket.new || 0) + (st.totals.waiting || 0);
+    if (todo > 0) { h += '<span class="badge"' + tip(t.queueTip.replace("{n}", todo)) + ">" + todo + "</span>"; }
     h += "</div></div>";
     h += '<div class="eye"><button type="button" class="ib' + (S.hidden ? " hiddenon" : "") + '" data-a="eye" aria-pressed="' + S.hidden + '"' + tip(S.hidden ? t.eyeShow : t.eyeHide) + ">" + (S.hidden ? I.eyeOff : I.eye) + "</button>";
     if (S.hidden) { h += '<div class="note">' + esc(t.hiddenNote) + "</div>"; }
@@ -447,7 +485,7 @@
         '<div class="mhead"><div class="mtitle">' + esc(full.title || id) + '</div><div class="row gap8">' +
         '<button type="button" class="ib" data-tx="copy"' + tip(t.copyText) + ">" + I.copy.replace("#FFFFFF", "#1D1D1F") + "</button>" +
         '<button type="button" class="ib grey2" data-tx="close"' + tip(t.closeLbl) + ">" + I.x + "</button></div></div>" +
-        (weak.length ? '<div class="mleg">' + esc(t.textLegend) + "</div>" : "") + '<div class="mbody">' + body + "</div></div>";
+        (full.quality != null ? '<div class="mleg">' + esc(t.rawLegend) + " : " + full.quality + " %</div>" : "") + (weak.length ? '<div class="mleg">' + esc(t.textLegend) + "</div>" : "") + '<div class="mbody">' + body + "</div></div>";
       box.addEventListener("click", function (ev) {
         var el = ev.target.closest("[data-tx]");
         if (!el) { return; }
@@ -519,6 +557,8 @@
 
   var A = {
     ui: function (v) { S.ui = v; api("POST", "/api/settings", { ui: v }).then(refresh); },
+    autoprocess: function (v) { api("POST", "/api/settings", { autoprocess: v === "1" }).then(refresh); },
+    autoimport: function (v) { api("POST", "/api/settings", { autoimport: v === "1" }).then(refresh); },
     autocheck: function (v) { api("POST", "/api/settings", { autocheck: v === "1" }).then(refresh); },
     settings: function () { S.settingsOpen = !S.settingsOpen; S.emptyConfirm = false; },
     about: function () {
@@ -534,6 +574,13 @@
       api("POST", "/api/import").then(refresh).catch(function (e) { flash(T().error + e.message); });
     },
     row: function (v, id) { S.open = S.open === id ? null : id; S.delConfirm = false; S.edit = null; S.exp = null; S.rr = noteLevel(id); S.rl = noteLang(id); if (S.open) { loadFull(id); } },
+    cycleTpl: function () {
+      var id = S.open, full = S.full[id];
+      if (!full) { return; }
+      var next = TPL[(TPL.indexOf(noteTpl(full)) + 1) % TPL.length];
+      api("POST", "/api/note/" + encodeURIComponent(id) + "/template", { template: next }).then(function () { delete S.full[id]; return refresh(); })
+        .catch(function (e) { flash(T().error + e.message); });
+    },
     cycle: function (v) {
       var order = v === "lvl" ? ["short", "mid", "full"] : ["fr", "en"], cur = v === "lvl" ? S.rr : S.rl;
       (v === "lvl" ? A.rr : A.rl)(order[(order.indexOf(cur) + 1) % order.length]);
@@ -553,10 +600,6 @@
       api("POST", "/api/note/" + encodeURIComponent(id) + "/rerun", { level: S.rr, lang: S.rl }).then(function () { delete S.full[id]; flash(t.redoing + t[S.rr].toLowerCase()); refresh(); })
         .catch(function (e) { flash(t.error + e.message); });
     },
-    copyDoubtful: function () {
-      var id = S.open;
-      fetchText("/api/note/" + encodeURIComponent(id) + "/export?fmt=doubtful").then(function (txt) { return navigator.clipboard.writeText(txt); }).then(function () { flash(T().copied); });
-    },
     startRename: function () {
       var n = S.server.notes.filter(function (x) { return x.id === S.open; })[0];
       S.edit = S.open; S.draft = n ? n.title : "";
@@ -574,7 +617,8 @@
     askDelete: function () { S.delConfirm = true; },
     confirmDelete: function () {
       var id = S.open;
-      api("POST", "/api/note/" + encodeURIComponent(id) + "/delete").then(function () { S.open = null; S.delConfirm = false; flash(T().deleted); refresh(); });
+      api("POST", "/api/note/" + encodeURIComponent(id) + "/delete").then(function (r) { S.open = null; S.delConfirm = false; flash(r.pocket ? T().deleted : T().deletedLater); refresh(); })
+        .catch(function (e) { S.delConfirm = false; flash(T().error + e.message); });
     },
     cancel: function () { S.delConfirm = false; S.emptyConfirm = false; S.mAsk = null; S.mDel = null; },
     askEmpty: function () {
