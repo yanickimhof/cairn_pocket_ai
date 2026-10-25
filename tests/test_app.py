@@ -309,6 +309,34 @@ class AppTest(unittest.TestCase):
 
 
 class UnitTest(unittest.TestCase):
+    def test_process_now_then_continues_with_the_queue(self):
+        import tempfile
+        from unittest import mock
+
+        from cairn import jobs, notes
+
+        folder = Path(tempfile.mkdtemp())
+        store = notes.Store(folder / "Texts")
+        for name, status, date in (("a", "waiting", "2026-10-08T17:00"), ("b", "skipped", "2026-10-08T16:00"),
+                                   ("c", "waiting", "2026-10-08T15:00"), ("d", "waiting", "2026-10-08T14:00")):
+            audio = folder / (name + ".wav")
+            audio.write_bytes(b"x")
+            store.save({"id": name, "source": name, "status": status, "date": date, "audio": str(audio)})
+        job = jobs.Jobs(store)
+        order = []
+
+        def fake(note_id, settings):
+            order.append(note_id)
+            if note_id == "a":
+                job.restore("b")  # put back while the job is running
+            note = store.get(note_id)
+            note["status"] = "done"
+            store.save(note)
+
+        with mock.patch.object(job, "_process", side_effect=fake):
+            job._one("c")  # chosen first, then everything else that is waiting, including the one put back
+        self.assertEqual(order, ["c", "a", "b", "d"])
+
     def test_update_check_sees_prereleases(self):
         import io
         from unittest import mock

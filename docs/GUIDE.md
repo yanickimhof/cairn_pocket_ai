@@ -2,7 +2,7 @@
 
 ## Choosing what to process
 
-Tap a waiting recording to process it now, or skip it (it can be restored). Newest recordings come first, and Stop interrupts the current job. Secure mode hides the list of notes until you reveal it.
+Tap a waiting recording to process it now: Cairn does that one first, then carries on with every other waiting recording, newest first. Recordings you put back while it runs are picked up too. Skip a recording to leave it out of the queue (it can be restored). Stop interrupts the current job. Secure mode hides the list of notes until you reveal it.
 
 ## Models
 
