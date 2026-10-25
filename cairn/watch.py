@@ -1,4 +1,5 @@
-"""Quiet background upkeep: a daily privacy check and, unless turned off, a daily look for a new version."""
+"""Quiet background upkeep: new recordings are copied from the Pocket as soon as it is connected (unless turned off),
+recordings are processed by themselves only if the person turned that on, plus a daily privacy check and, unless turned off, a daily look for a new version."""
 
 import threading
 import time
@@ -22,6 +23,8 @@ class Watcher:
         self.app = app
         self.update_at = 0.0
         self.privacy_at = 0.0
+        self.sync_at = 0.0
+        self.queue_at = 0.0
 
     def tick(self, now=None):
         """One pass. Does nothing while a job is running, so it never competes with the user's work."""
@@ -29,7 +32,28 @@ class Watcher:
         app = self.app
         if app.jobs.snapshot()["running"]:
             return
-        if config.load_settings().get("autocheck", True) and now - self.update_at >= DAY:
+        settings = config.load_settings()
+        try:
+            app.purge_pocket()
+        except OSError:
+            pass
+        if settings.get("autoimport", True) and now - self.sync_at >= 120:
+            if app.pocket_state().get("new"):
+                self.sync_at = now  # at most one attempt every two minutes, so a failing copy never loops
+                app.jobs.paused = False  # new recordings are new work
+                try:
+                    app.jobs.start_sync()
+                except jobs.Busy:
+                    pass
+                return
+        if settings.get("autoprocess", False) and not app.jobs.paused and now - self.queue_at >= 60 and app.waiting_count():
+            self.queue_at = now
+            try:
+                app.jobs.start_queue()
+            except jobs.Busy:
+                pass
+            return
+        if settings.get("autocheck", True) and now - self.update_at >= DAY:
             self.update_at = now
             try:
                 app.update_info = app.check_update()
@@ -43,10 +67,10 @@ class Watcher:
                 pass
 
     def loop(self):
-        time.sleep(90)
+        time.sleep(10)
         while True:
             self.tick()
-            time.sleep(60)
+            time.sleep(20)
 
 
 def start(app):

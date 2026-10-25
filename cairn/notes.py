@@ -6,10 +6,10 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
-from . import config
+from . import config, score
 
 ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,150}")
-LIGHT = ("id", "title", "date", "duration", "status", "quality", "passages", "level", "lang", "error", "step")
+LIGHT = ("id", "title", "date", "duration", "status", "quality", "fidelity", "passages", "level", "lang", "error", "step")
 
 
 def make_id(rel):
@@ -64,10 +64,28 @@ class Store:
             notes = [config.read_json(f, default=None) for f in files]
         return [n for n in notes if n and n.get("id")]
 
+    # Recordings the person deleted on this computer only: they stay on the Pocket but are never imported again.
+
+    def ignored(self):
+        try:
+            return {x for x in (self.folder / "ignored.txt").read_text(encoding="utf-8").splitlines() if x}
+        except OSError:
+            return set()
+
+    def ignore(self, rel, on=True):
+        with self.lock:
+            items = self.ignored()
+            items.add(rel) if on else items.discard(rel)
+            (self.folder / "ignored.txt").write_text("\n".join(sorted(items)), encoding="utf-8")
+
     def light(self):
-        rows = [{k: n.get(k) for k in LIGHT} for n in self.all()]
-        for row in rows:
+        rows = []
+        for n in self.all():
+            row = {k: n.get(k) for k in LIGHT}
+            if row["fidelity"] is None and n.get("status") == "done":
+                row["fidelity"] = score.fidelity(n.get("summary"), n.get("clean"))  # notes made before this score existed
             row["done"] = row["status"] == "done"
+            rows.append(row)
         return sorted(rows, key=lambda r: r.get("date") or "", reverse=True)
 
     def find_source(self, rel):

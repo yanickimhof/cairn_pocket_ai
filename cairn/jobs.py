@@ -5,7 +5,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import config, llm, pocket, privacy, speech
+from . import config, llm, pocket, privacy, score, speech
 from .notes import guess_date, make_id
 
 
@@ -19,6 +19,7 @@ class Jobs:
         self.lock = threading.Lock()
         self._state = {"running": False, "kind": "", "step": "", "id": None, "done": 0, "total": 0, "pct": None, "errors": []}
         self.cancelled = False
+        self.paused = False  # set by Stop: automatic processing waits for new recordings or a manual start
         self.store.reset_interrupted()
 
     def snapshot(self):
@@ -39,6 +40,8 @@ class Jobs:
                 raise Busy("A job is already running.")
             self._state.update(running=True, kind=kind, step="", id=None, done=0, total=0, pct=None, errors=[])
             self.cancelled = False
+            if kind in ("import", "rerun"):
+                self.paused = False
         threading.Thread(target=self._guard, args=(target,) + args, daemon=True).start()
 
     def _guard(self, target, *args):
@@ -55,6 +58,7 @@ class Jobs:
             if not self._state["running"]:
                 return
             self.cancelled = True
+            self.paused = True
         speech.abort()
 
     def start_privacy(self):
@@ -149,11 +153,23 @@ class Jobs:
     def start_import(self):
         self._start("import", self._import)
 
-    def _import(self):
+    def start_sync(self):
+        """Copy the new recordings from the Pocket without processing them: the person sees them all and decides."""
+        self._start("sync", self._import, False)
+
+    def start_queue(self):
+        """Process the recordings that are waiting (automatic processing)."""
+        self._start("queue", self._queue)
+
+    def _queue(self):
+        self._drain(config.load_settings())
+
+    def _import(self, process=True):
         settings = config.load_settings()
         source = pocket.find_pocket()
         if source:
-            files = pocket.list_recordings(source)
+            skip = self.store.ignored()
+            files = [f for f in pocket.list_recordings(source) if f.relative_to(source).as_posix() not in skip]
             self._set(step="copying", total=len(files), done=0)
             audio_dir = Path(settings["audio_dir"])
             for index, path in enumerate(files):
@@ -163,7 +179,8 @@ class Jobs:
                 except OSError as error:
                     self._fail("%s: %s" % (path.name, error))
         self._set(step="", done=0, total=0)
-        self._drain(settings)
+        if process:
+            self._drain(settings)
 
     def _copy_one(self, source, path, audio_dir):
         rel = path.relative_to(source).as_posix()
@@ -230,6 +247,9 @@ class Jobs:
         text = note.get("clean") or ""
         summary = llm.summarize(text, level, lang)
         note["summary"], note["lang"] = summary, lang
+        note["fidelity"] = score.fidelity(summary, text)
+        if note.get("template") in llm.TEMPLATES:
+            summary["template"] = note["template"]
         if summary.get("title") and not note.get("renamed"):
             note["title"] = summary["title"]
         if not note.get("title"):

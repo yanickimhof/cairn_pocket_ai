@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
-from . import catalog, config, jobs, llm, models, netguard, notes, pocket, privacy, render
+from . import catalog, config, jobs, llm, models, netguard, notes, pocket, privacy, render, score
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -101,17 +101,30 @@ class App:
     def pocket_state(self):
         try:
             folder = pocket.find_pocket()
-            return {"connected": bool(folder), "count": len(pocket.list_recordings(folder)) if folder else 0}
+            if not folder:
+                return {"connected": False, "count": 0, "new": 0}
+            files = pocket.list_recordings(folder)
+            skip = self.store.ignored()
+            known = {n.get("source") for n in self.store.all()}
+            fresh = [f for f in files if (rel := f.relative_to(folder).as_posix()) not in skip and rel not in known]
+            return {"connected": True, "count": len(files), "new": len(fresh)}
         except OSError:
-            return {"connected": False, "count": 0}
+            return {"connected": False, "count": 0, "new": 0}
+
+    def waiting_count(self):
+        """Recordings copied and waiting to be processed (a failed one is not retried by itself)."""
+        return sum(1 for n in self.store.all() if n.get("status") == "waiting" and os.path.exists(n.get("audio", "")))
 
     def verify_pocket(self):
         folder = pocket.find_pocket()
         if not folder:
             raise ApiError(409, "pocket_not_found")
         files = pocket.list_recordings(folder)
-        good = []
+        good, skip = [], self.store.ignored()
         for path in files:
+            if path.relative_to(folder).as_posix() in skip:  # deleted by the person on this computer: nothing to protect
+                good.append(path)
+                continue
             note = self.store.find_source(path.relative_to(folder).as_posix())
             audio = (note or {}).get("audio")
             try:
@@ -125,8 +138,10 @@ class App:
         files, good = self.verify_pocket()
         if len(good) != len(files):
             raise ApiError(409, "not_all_verified")
+        folder = pocket.find_pocket()
         for path in good:
             path.unlink()
+            self.store.ignore(path.relative_to(folder).as_posix(), on=False)
         return len(good)
 
     # State
@@ -235,9 +250,12 @@ class App:
 
     def get_note(self, note_id):
         try:
-            return self.store.get(note_id)
+            note = self.store.get(note_id)
         except KeyError:
             raise ApiError(404, "not_found")
+        if note.get("fidelity") is None and note.get("status") == "done":
+            note["fidelity"] = score.fidelity(note.get("summary"), note.get("clean"))
+        return note
 
     def export(self, note_id, fmt, transcript, fragment):
         note = self.get_note(note_id)
@@ -251,8 +269,31 @@ class App:
             return "text/plain", render.to_text(note), ".txt"
         raise ApiError(400, "bad_format")
 
+    def purge_pocket(self):
+        """Erase from the Pocket the recordings the person deleted. A file whose deletion was waiting for the
+        Pocket to be connected goes now. Returns how many files were erased."""
+        folder = pocket.find_pocket()
+        if not folder:
+            return 0
+        erased, root = 0, folder.resolve()
+        for rel in sorted(self.store.ignored()):
+            target = (folder / rel).resolve()
+            try:
+                if root in target.parents and target.is_file():
+                    target.unlink()
+                    erased += 1
+                self.store.ignore(rel, on=False)  # gone from the Pocket: nothing left to remember
+            except OSError:
+                continue  # read-only or busy: tried again at the next connection
+        return erased
+
     def delete_note(self, note_id):
+        """Delete a recording everywhere: audio, transcript and summary on this computer, and the file on the
+        Pocket (at its next connection if it is not connected now). Returns whether the Pocket file is gone."""
         note = self.get_note(note_id)
+        rel = note.get("source")
+        if rel:
+            self.store.ignore(rel)  # never imported again; also the memo of a Pocket file still to erase
         audio = note.get("audio")
         if audio and Path(audio).is_file():
             try:
@@ -260,6 +301,8 @@ class App:
             except OSError:
                 pass
         self.store.delete(note_id)
+        self.purge_pocket()
+        return not rel or rel not in self.store.ignored()
 
 
 def make_handler(app):
@@ -445,6 +488,15 @@ def make_handler(app):
                 note["title"], note["renamed"] = title, True
                 app.store.save(note)
                 return self._json(200, {"ok": True})
+            if method == "POST" and action == "template":
+                kind = body.get("template")
+                if kind not in llm.TEMPLATES:
+                    raise ApiError(400, "bad_template")
+                note = app.get_note(note_id)
+                note["template"] = kind  # the person's choice, kept when the note is redone
+                note["summary"] = dict(note.get("summary") or {}, template=kind)
+                app.store.save(note)
+                return self._json(200, {"ok": True})
             if method == "POST" and action == "rerun":
                 level, lang = body.get("level"), body.get("lang")
                 if level not in config.LEVELS or (lang is not None and lang not in config.LANGS):
@@ -476,8 +528,7 @@ def make_handler(app):
                 getattr(app.jobs, action)(note_id)
                 return self._json(200, {"ok": True})
             if method == "POST" and action == "delete":
-                app.delete_note(note_id)
-                return self._json(200, {"ok": True})
+                return self._json(200, {"ok": True, "pocket": app.delete_note(note_id)})
             raise ApiError(404, "not_found")
 
     return Handler
