@@ -20,7 +20,7 @@ No cloud, no account, no telemetry. Nothing leaves your machine.
 |---|---|
 | ![HTML export](docs/screenshots/html-export.png) | ![Email](docs/screenshots/email.png) |
 
-> **Status: v0.1.0, first stable release.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [roadmap](docs/ROADMAP.md).
+> **Status: v0.2.0, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [roadmap](docs/ROADMAP.md).
 
 ## Install
 
@@ -29,13 +29,13 @@ Paste one command in a terminal. It detects your system and installs everything 
 bash or zsh:
 
 ```
-curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.1.0/install.sh | bash
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.2.0/install.sh | bash
 ```
 
 PowerShell:
 
 ```
-irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.1.0/install.ps1 | iex
+irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.2.0/install.ps1 | iex
 ```
 
 | | Minimum | Recommended |
@@ -59,6 +59,10 @@ In the Pocket mobile app, open the device settings, then:
 You need neither the Pocket desktop app nor a Pocket account on the computer.
 
 > **Battery (macOS):** when it can read the Pocket over Bluetooth, Cairn shows a small battery next to the Local badge (read only, no pairing). The Pocket accepts one Bluetooth connection at a time, so nothing shows while the Pocket app on your phone is connected to it: closing the app is not enough: switch the phone to airplane mode (or turn its Bluetooth off), and the battery appears.
+
+> **Pocket status (macOS, optional):** in Settings, you can enter your own Pocket session key to also see the firmware, device state and storage used, read only. This is not required and nothing is captured by Cairn for you: see [docs/GUIDE.md](docs/GUIDE.md#pocket-status-macos-optional) for what the key is and where it comes from.
+
+> **Speaker identification (optional):** in Settings, turn on **Identify speakers** and install its model (Settings > Models) to see who's speaking in the transcript and the note. Off by default, fully local once installed; see [docs/GUIDE.md](docs/GUIDE.md#speaker-identification-diarization-optional) for setup.
 
 ## Use it
 

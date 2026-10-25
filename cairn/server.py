@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
-from . import battery, catalog, config, jobs, llm, models, netguard, notes, pocket, privacy, render, score, speech
+from . import battery, catalog, config, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, speech
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -96,6 +96,7 @@ class App:
         self.downloads = models.Downloader()
         self.update_info = None  # set by the background watcher
         self.gauge = battery.Gauge()  # battery of the Pocket, shown when it can be read
+        self.status = pocket_status.StatusGauge()  # firmware/state/storage, shown only once a session key is set
 
     # Pocket
 
@@ -129,6 +130,7 @@ class App:
             "download": self.downloads.state(),
             "settings": config.load_settings(),
             "battery": self.gauge.snapshot(),
+            "pocket_status": self.status.snapshot(),
             "update": self.update_info,
             "privacy": _privacy_summary(),
             "totals": {"notes": len(everything), "done": sum(1 for n in everything if n.get("status") == "done"),

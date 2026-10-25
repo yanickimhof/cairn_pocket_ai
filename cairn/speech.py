@@ -157,7 +157,10 @@ def assess(segments):
 
 
 def raw_lines(segments):
-    return ["[%02d:%02d] %s" % (int(s["start"]) // 60, int(s["start"]) % 60, s["text"]) for s in segments]
+    return [
+        "[%02d:%02d] %s%s" % (int(s["start"]) // 60, int(s["start"]) % 60, (s["speaker"] + ": ") if s.get("speaker") else "", s["text"])
+        for s in segments
+    ]
 
 
 def model_name():

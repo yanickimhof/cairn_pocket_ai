@@ -34,6 +34,9 @@ class Watcher:
         gauge = getattr(app, "gauge", None)
         if gauge is not None and battery.available():
             gauge.poll(now)  # a Bluetooth reading in the background: it never waits for, nor delays, a job
+        status = getattr(app, "status", None)
+        if status is not None and battery.available() and settings.get("pocket_key"):
+            status.poll(settings["pocket_key"], now)
         if app.jobs.snapshot()["running"]:
             return
         try:

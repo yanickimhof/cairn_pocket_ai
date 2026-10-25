@@ -9,7 +9,7 @@ from pathlib import Path
 
 from . import catalog
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 REPO = "yanickimhof/cairn_pocket_ai"
 REFERRAL_URL = "https://referral.heypocketai.com/refer/39179caf?source=desktop_qr"
 AUDIO_EXT = (".mp3", ".wav", ".m4a", ".opus", ".ogg", ".flac")
@@ -17,7 +17,7 @@ LOOPBACK = re.compile(r"127\.0\.0\.1:\d{2,5}")
 DEFAULT_LLM = "qwen3:4b"
 LEVELS = ("short", "mid", "full")
 LANGS = ("fr", "en")
-DEFAULT_SETTINGS = {"ui": None, "audio_dir": None, "llm": None, "speech": None, "autocheck": True, "autoimport": True, "autoprocess": False}
+DEFAULT_SETTINGS = {"ui": None, "audio_dir": None, "llm": None, "speech": None, "autocheck": True, "autoimport": True, "autoprocess": False, "pocket_key": None, "diarize": False, "hf_token": None}
 
 _lock = threading.RLock()
 
@@ -111,6 +111,26 @@ def save_settings(patch):
                     raise ValueError("The audio folder must be an absolute path.")
                 folder.mkdir(parents=True, exist_ok=True)
                 current["audio_dir"] = str(folder)
+            elif key == "diarize" and isinstance(value, bool):
+                current["diarize"] = value
+            elif key == "hf_token":
+                # a Hugging Face access token, used only to download the gated diarization model once.
+                # Not sent anywhere by Cairn beyond that one download; never logged. Empty clears it.
+                if value in (None, ""):
+                    current["hf_token"] = None
+                elif isinstance(value, str) and 8 <= len(value.strip()) <= 200 and not any(c.isspace() for c in value.strip()):
+                    current["hf_token"] = value.strip()
+                else:
+                    raise ValueError("Invalid Hugging Face token.")
+            elif key == "pocket_key":
+                # the person's own Pocket BLE session key (captured by them, with their own tools), used only to
+                # read firmware/state/storage over an authenticated connection. Empty clears it. Never logged.
+                if value in (None, ""):
+                    current["pocket_key"] = None
+                elif isinstance(value, str) and len(value.strip()) == 16 and value.strip().isprintable() and not any(c.isspace() for c in value.strip()):
+                    current["pocket_key"] = value.strip()
+                else:
+                    raise ValueError("The Pocket session key must be exactly 16 characters.")
             else:
                 raise ValueError("Invalid setting: %s" % key)
         write_json(home() / "settings.json", current)

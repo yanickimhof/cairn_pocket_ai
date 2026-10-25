@@ -22,5 +22,11 @@ SPEECH = {
     ],
 }
 
+DIAR = [
+    {"id": "pyannote-3.1", "label": "Diarisation (pyannote 3.1)", "repo": "pyannote/speaker-diarization-3.1",
+     "bytes": int(0.3 * GB), "ram": 4, "tier": "light", "gated": True},
+]
+
 LLM_IDS = tuple(m["id"] for m in LLM)
 SPEECH_IDS = ("turbo", "large")
+DIAR_IDS = tuple(m["id"] for m in DIAR)

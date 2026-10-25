@@ -723,6 +723,166 @@ class BatteryTest(unittest.TestCase):
             self.assertEqual(config.load_settings()["ui"], "fr")
 
 
+class PocketStatusTest(unittest.TestCase):
+    def test_key_setting_is_validated_and_never_logged_on_a_wrong_length(self):
+        import tempfile
+        from unittest import mock
+
+        from cairn import config
+
+        folder = Path(tempfile.mkdtemp())
+        with mock.patch.object(config, "home", return_value=folder):
+            self.assertEqual(config.save_settings({"pocket_key": "FakeKey1234567AB"})["pocket_key"], "FakeKey1234567AB")
+            self.assertIsNone(config.save_settings({"pocket_key": ""})["pocket_key"])
+            self.assertIsNone(config.save_settings({"pocket_key": None})["pocket_key"])
+            with self.assertRaises(ValueError):
+                config.save_settings({"pocket_key": "tooshort"})
+            with self.assertRaises(ValueError):
+                config.save_settings({"pocket_key": "has a space here"})
+
+    def test_a_reading_is_only_tried_with_a_full_length_key_and_only_fresh_data_is_shown(self):
+        import time
+        from unittest import mock
+
+        from cairn import pocket_status
+
+        gauge = pocket_status.StatusGauge(reader=lambda key: ("ok", {"firmware": "1.8", "state": 0, "used_kb": 100, "total_kb": 1000}))
+        self.assertFalse(gauge.poll("short", now=1000.0))  # never tried with an invalid-length key
+        self.assertTrue(gauge.poll("FakeKey1234567AB", now=1000.0))
+        for _ in range(100):
+            if not gauge.busy:
+                break
+            time.sleep(0.02)
+        self.assertEqual(gauge.snapshot(), {"state": "ok", "data": {"firmware": "1.8", "state": 0, "used_kb": 100, "total_kb": 1000}})
+        self.assertFalse(gauge.poll("FakeKey1234567AB", now=1000.0 + pocket_status.REFRESH - 1))
+        gauge.when -= pocket_status.STALE + 1
+        self.assertIsNone(gauge.snapshot()["data"])
+        rejected = pocket_status.StatusGauge(reader=lambda key: ("rejected", None))
+        rejected.state, rejected.tried = "rejected", 1000.0
+        self.assertFalse(rejected.poll("FakeKey1234567AB", now=1000.0 + pocket_status.RETRY - 1))
+        self.assertTrue(rejected.poll("FakeKey1234567AB", now=1000.0 + pocket_status.RETRY + 1))
+        absent = pocket_status.StatusGauge()
+        absent.state = "missing"
+        self.assertFalse(absent.poll("FakeKey1234567AB", now=10 ** 9))  # component not installed: never tries
+
+    def test_read_only_parses_known_responses_and_the_worker_sends_no_write_command(self):
+        import subprocess
+        from unittest import mock
+
+        from cairn import pocket_status
+
+        def run(code, out=""):
+            return mock.patch.object(pocket_status.subprocess, "run", return_value=subprocess.CompletedProcess([], code, out, ""))
+
+        with run(0, '{"firmware": "1.8", "state": 0, "used_kb": 100, "total_kb": 1000}\n'):
+            self.assertEqual(pocket_status.read("FakeKey1234567AB"), ("ok", {"firmware": "1.8", "state": 0, "used_kb": 100, "total_kb": 1000}))
+        with run(3):
+            self.assertEqual(pocket_status.read("FakeKey1234567AB"), ("missing", None))
+        with run(2):
+            self.assertEqual(pocket_status.read("FakeKey1234567AB"), ("rejected", None))
+        with run(1):
+            self.assertEqual(pocket_status.read("FakeKey1234567AB"), ("none", None))
+        with mock.patch.object(pocket_status.subprocess, "run", side_effect=subprocess.TimeoutExpired("x", 1)):
+            self.assertEqual(pocket_status.read("FakeKey1234567AB"), ("none", None))
+        source = open(pocket_status.__file__.replace("pocket_status.py", "pocket_status_worker.py"), encoding="utf-8").read()
+        for forbidden in ("APP&T&", "WIFI"):
+            self.assertNotIn(forbidden, source)  # no clock set, no WiFi command: read-only, as promised
+
+    def test_worker_parses_the_documented_response_format(self):
+        from cairn import pocket_status_worker as w
+
+        result = {}
+        w._parse("MCU&FW&1.8", result)
+        w._parse("MCU&STE&0", result)
+        w._parse("MCU&SPA&060846&061032", result)
+        w._parse("MCU&SOMETHING&unrelated", result)  # unknown lines are ignored, not guessed at
+        self.assertEqual(result, {"firmware": "1.8", "state": 0, "used_kb": 60846, "total_kb": 61032})
+
+
+class DiarizationTest(unittest.TestCase):
+    def test_settings_are_validated_and_off_by_default(self):
+        import tempfile
+        from unittest import mock
+
+        from cairn import config
+
+        self.assertFalse(config.DEFAULT_SETTINGS["diarize"])
+        self.assertIsNone(config.DEFAULT_SETTINGS["hf_token"])
+        folder = Path(tempfile.mkdtemp())
+        with mock.patch.object(config, "home", return_value=folder):
+            self.assertTrue(config.save_settings({"diarize": True})["diarize"])
+            self.assertEqual(config.save_settings({"hf_token": "hf_abcdefgh12345"})["hf_token"], "hf_abcdefgh12345")
+            self.assertIsNone(config.save_settings({"hf_token": ""})["hf_token"])
+            with self.assertRaises(ValueError):
+                config.save_settings({"hf_token": "short"})
+            with self.assertRaises(ValueError):
+                config.save_settings({"diarize": "yes"})
+
+    def test_speakers_are_numbered_by_order_of_first_speech_not_by_the_raw_label(self):
+        from cairn import diarize
+
+        segments = [{"start": 0.0, "end": 2.0}, {"start": 2.0, "end": 4.0}, {"start": 4.0, "end": 6.0}]
+        turns = [{"start": 0.0, "end": 2.0, "speaker": "SPEAKER_01"}, {"start": 2.0, "end": 4.0, "speaker": "SPEAKER_00"},
+                 {"start": 4.0, "end": 6.0, "speaker": "SPEAKER_01"}]
+        out = diarize.assign(segments, turns, "en")
+        self.assertEqual([s["speaker"] for s in out], ["Speaker 1", "Speaker 2", "Speaker 1"])
+        self.assertEqual(diarize.assign(list(segments), [], "en"), segments)  # no turns: nothing added, no crash
+
+    def test_raw_lines_carries_the_speaker_label_only_when_one_was_assigned(self):
+        from cairn import speech
+
+        segments = [{"start": 1.0, "end": 2.0, "text": "Hello"}, {"start": 65.0, "end": 66.0, "text": "there", "speaker": "Speaker 2"}]
+        self.assertEqual(speech.raw_lines(segments), ["[00:01] Hello", "[01:05] Speaker 2: there"])
+
+    def test_a_result_is_only_trusted_from_an_installed_model_and_the_worker_sends_nothing_over_the_network(self):
+        import subprocess
+        from unittest import mock
+
+        from cairn import diarize
+
+        with mock.patch.object(diarize.models, "diar_installed", return_value=False):
+            self.assertEqual(diarize.run("x.mp3"), ("missing", None))
+        with mock.patch.object(diarize.models, "diar_installed", return_value=True):
+            with mock.patch.object(diarize.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, '[{"start": 0.0, "end": 1.0, "speaker": "SPEAKER_00"}]\n', "")):
+                self.assertEqual(diarize.run("x.mp3"), ("ok", [{"start": 0.0, "end": 1.0, "speaker": "SPEAKER_00"}]))
+            with mock.patch.object(diarize.subprocess, "run", return_value=subprocess.CompletedProcess([], 3, "", "")):
+                self.assertEqual(diarize.run("x.mp3"), ("missing", None))
+            with mock.patch.object(diarize.subprocess, "run", return_value=subprocess.CompletedProcess([], 1, "", "boom")):
+                self.assertEqual(diarize.run("x.mp3"), ("none", None))
+        source = open(diarize.__file__.replace("diarize.py", "diarize_worker.py"), encoding="utf-8").read()
+        self.assertIn("HF_HUB_OFFLINE", source)  # inference never reaches the network
+        self.assertNotIn("requests.", source)
+
+    def test_catalog_lists_one_gated_diarization_model(self):
+        from cairn import catalog
+
+        self.assertEqual(len(catalog.DIAR), 1)
+        self.assertTrue(catalog.DIAR[0]["gated"])
+        self.assertEqual(catalog.DIAR_IDS, ("pyannote-3.1",))
+
+    def test_install_requires_a_token_and_removal_is_blocked_while_the_feature_is_on(self):
+        import tempfile
+        from unittest import mock
+
+        from cairn import config, models
+
+        folder = Path(tempfile.mkdtemp())
+        with mock.patch.object(config, "home", return_value=folder):
+            downloads = models.Downloader()
+            with self.assertRaises(ValueError):
+                downloads.start("diar", "pyannote-3.1")  # no token set yet
+            config.save_settings({"hf_token": "hf_abcdefgh12345"})
+            with mock.patch.object(models, "diar_installed", return_value=True):
+                config.save_settings({"diarize": True})
+                with self.assertRaises(ValueError):
+                    models.remove("diar", "pyannote-3.1")  # must turn the feature off first
+                config.save_settings({"diarize": False})
+            with mock.patch.object(models, "diar_dir", return_value=folder / "models" / "diar"):
+                (folder / "models" / "diar").mkdir(parents=True)
+                (folder / "models" / "diar" / models.MARK).write_text("ok", encoding="utf-8")
+                self.assertEqual(models.remove("diar", "pyannote-3.1"), {"ok": True})
+
+
 class SimpleNamespaceStore:
     def reset_interrupted(self):
         pass

@@ -21,6 +21,20 @@ def speech_entries():
     return catalog.SPEECH.get(cfg.get("engine"), [])
 
 
+def diar_dir():
+    """Where the diarization model's weights are cached (kept inside Cairn's own folder, not the user's global
+    Hugging Face cache), and the marker file that says the one-time download finished."""
+    return config.home() / "models" / "diar"
+
+
+def diar_installed():
+    return (diar_dir() / MARK).exists()
+
+
+def diar_entries():
+    return [dict(m, installed=diar_installed()) for m in catalog.DIAR]
+
+
 def speech_dir(model_id):
     return config.home() / "models" / model_id
 
@@ -64,7 +78,7 @@ def listing(job):
         dict({k: v for k, v in m.items() if k not in ("repo", "revision")}, installed=speech_installed(m), selected=m["id"] == chosen_speech)
         for m in speech_entries()
     ]
-    return {"llm": out_llm, "speech": out_speech, "job": job, "server_up": llm.available()}
+    return {"llm": out_llm, "speech": out_speech, "diar": diar_entries(), "job": job, "server_up": llm.available()}
 
 
 class Downloader:
@@ -89,12 +103,16 @@ class Downloader:
                 raise RuntimeError("busy")
             if kind == "llm":
                 entry = next((m for m in catalog.LLM if m["id"] == model_id), None)
+            elif kind == "diar":
+                entry = next((m for m in catalog.DIAR if m["id"] == model_id), None)
+                if entry is not None and not config.load_settings().get("hf_token"):
+                    raise ValueError("token_required")
             else:
                 entry = next((m for m in speech_entries() if m["id"] == model_id), None)
             if entry is None:
                 raise ValueError("unknown_model")
             self.job = {"kind": kind, "id": model_id, "state": "running", "pct": 0, "error": ""}
-        target = self._pull_llm if kind == "llm" else self._fetch_speech
+        target = self._pull_llm if kind == "llm" else self._fetch_diar if kind == "diar" else self._fetch_speech
         threading.Thread(target=target, args=(entry,), daemon=True).start()
 
     def _pull_llm(self, entry):
@@ -146,6 +164,50 @@ class Downloader:
             shutil.rmtree(part, ignore_errors=True)
             self._set(state="error", error=str(error)[:200])
 
+    def _fetch_diar(self, entry):
+        """Installs the diarization package (pyannote.audio) if needed, then downloads its gated model
+        weights with the person's own Hugging Face token, cached inside Cairn's own folder. The token is
+        passed as an environment variable to a subprocess, never written to a file, never logged."""
+        target = diar_dir()
+        part = target.with_name(target.name + ".part")
+        token = config.load_settings().get("hf_token") or ""
+        try:
+            shutil.rmtree(part, ignore_errors=True)
+            part.mkdir(parents=True, exist_ok=True)
+            self._set(pct=2)
+            try:
+                import pyannote.audio  # noqa: F401
+            except ImportError:
+                pip = subprocess.run(  # nosec B603
+                    [sys.executable, "-m", "pip", "install", "--quiet", "pyannote.audio"],
+                    capture_output=True, text=True, timeout=1800, check=False,
+                )
+                if pip.returncode != 0:
+                    tail = (pip.stderr or "").strip().splitlines()[-1:]
+                    raise RuntimeError("Could not install pyannote.audio. " + " ".join(tail))
+            self._set(pct=40)
+            env = dict(os.environ, HF_HUB_DISABLE_TELEMETRY="1", DO_NOT_TRACK="1", HF_HOME=str(part / "hf_cache"), HF_TOKEN=token)
+            code = (
+                "import os, sys\n"
+                "from pyannote.audio import Pipeline\n"
+                "Pipeline.from_pretrained(sys.argv[1], use_auth_token=os.environ.get('HF_TOKEN') or None)\n"
+            )
+            flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+            proc = subprocess.run(  # nosec B603
+                [sys.executable, "-c", code, entry["repo"]], env=env, capture_output=True, text=True,
+                timeout=1800, check=False, creationflags=flags,
+            )
+            if proc.returncode != 0:
+                tail = (proc.stderr or "").strip().splitlines()[-1:]
+                raise RuntimeError("Download failed. " + " ".join(tail))
+            (part / MARK).write_text("ok", encoding="utf-8")
+            shutil.rmtree(target, ignore_errors=True)
+            os.replace(part, target)
+            self._set(state="done", pct=100)
+        except Exception as error:  # reported to the page, never raised; the token itself is never included
+            shutil.rmtree(part, ignore_errors=True)
+            self._set(state="error", error=str(error)[:200])
+
 
 def select(kind, model_id):
     """Use an installed model from now on."""
@@ -170,6 +232,13 @@ def remove(kind, model_id):
             llm.delete_model(model_id)
         except (OSError, ValueError, llm.LLMError):
             raise ValueError("remove_failed")
+        return {"ok": True}
+    if kind == "diar":
+        if model_id not in catalog.DIAR_IDS or not diar_installed():
+            raise ValueError("not_installed")
+        if config.load_settings().get("diarize"):
+            raise ValueError("in_use")
+        shutil.rmtree(diar_dir(), ignore_errors=True)
         return {"ok": True}
     entry = next((m for m in speech_entries() if m["id"] == model_id), None)
     if entry is None or not speech_installed(entry):

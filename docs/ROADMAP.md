@@ -1,5 +1,10 @@
 # Roadmap
 
+## v0.2: done
+
+- Optional Pocket status (firmware, device state, storage used), read only, from your own session key
+- Optional speaker identification (diarization), fully local, with the model installed on demand
+
 ## v0.1: done
 
 - One-command installer for macOS and Windows, with a self test

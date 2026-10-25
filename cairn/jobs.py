@@ -6,7 +6,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import config, llm, pocket, privacy, score, speech
+from . import config, diarize, llm, pocket, privacy, score, speech
 from .notes import guess_date, make_id
 
 
@@ -258,7 +258,13 @@ class Jobs:
                 duration=result["duration"] or note.get("duration"), lang=lang, heard=result.get("language"), error="",
             )
             keep()
-            note["clean"] = "\n\n".join(speech.raw_lines(result["segments"]))  # the recognized text is already punctuated
+            if settings.get("diarize") and diarize.available():
+                step("diarizing")
+                state, turns = diarize.run(note["audio"])
+                if state == "ok":
+                    diarize.assign(note["segments"], turns, lang)
+                    keep()
+            note["clean"] = "\n\n".join(speech.raw_lines(note["segments"]))  # the recognized text is already punctuated
             step("summarizing")
             self._summarize(note, level, lang)
             cfg = config.install_config()

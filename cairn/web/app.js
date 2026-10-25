@@ -10,7 +10,11 @@
       aboutLegal: "v{v} · © 2026 Yanick Imhof · Licence MIT · Non affilié à Pocket.", uiLang: "Langue de l’interface",
       off: "Non", on: "Oui",
       processedIn: "traité en", notInstalled: "Non installé", getIt: "Installer", refText: "Acheter un Pocket : 10 % de réduction", refNote: "Lien de parrainage facultatif. L’offre dépend uniquement de Pocket et peut changer.",
-      models: "Modèles", modelsHint: "Choisir ou ajouter des modèles", modelsSpeech: "Transcription", modelsLlm: "Résumés",
+      models: "Modèles", modelsHint: "Choisir ou ajouter des modèles", modelsSpeech: "Transcription", modelsLlm: "Résumés", modelsDiar: "Identification des interlocuteurs",
+      hfToken: "Jeton HuggingFace", hfTokenHint: "Nécessaire une seule fois pour télécharger le modèle de diarisation (gratuit, compte HuggingFace requis). Jamais utilisé ailleurs.",
+      hfTokenNone: "Non configuré", hfTokenOn: "Configuré", hfTokenSaved: "Jeton enregistré", hfTokenCleared: "Jeton supprimé", hfTokenInvalid: "Jeton invalide",
+      diarizeLabel: "Identifier les interlocuteurs", diarizeHint: "Ajoute qui parle dans le transcript et la note. Nécessite le modèle de diarisation (ci-dessous). Tourne entièrement en local.",
+      diarNeedsToken: "Configure d'abord un jeton HuggingFace", diarNeedsModel: "Installe d'abord le modèle de diarisation",
       tagline: "Votre Pocket. Votre ordinateur. Vos données.", mUse: "Utiliser", mRemove: "Supprimer ce modèle", mRemoveConfirm: "Supprimer {name} de cet ordinateur ? Vous pourrez le télécharger à nouveau.", mInUse: "Utilisé", mInstall: "Installer", mTier: { light: "Léger", standard: "Standard", high: "Élevé" },
       mRam: "{n} Go de mémoire conseillés", mConfirm: "Télécharger {name} ({size}) ? Une connexion internet est utilisée pour ce seul téléchargement.",
       mDownloading: "Téléchargement {pct} %", mFailed: "Échec du téléchargement : ", mDone: "Modèle installé", mDown: "Moteur local arrêté", mBusy: "Un traitement est en cours",
@@ -20,6 +24,11 @@
       cancel: "Annuler", confirmLabel: "Confirmer",
       connected: "Pocket connecté", disconnected: "Pocket non détecté", local: "Local", localHint: "Tout reste sur cet ordinateur",
       folder: "Dossier des audios", folderHint: "Dossier de sauvegarde des audios", folderChange: "Changer", folderSaved: "Dossier enregistré", folderType: "Chemin du dossier",
+      pocketKey: "Clé de session Pocket", pocketKeyHint: "Optionnel. Avec ta propre clé, Cairn lit aussi le firmware, l'état et le stockage du Pocket, en lecture uniquement.",
+      pocketKeyNone: "Non configurée", pocketKeyOn: "Configurée", pocketKeyRejected: "Clé refusée par le Pocket", pocketKeyType: "16 caractères",
+      pocketKeySaved: "Clé enregistrée", pocketKeyCleared: "Clé supprimée", pocketKeyInvalid: "La clé doit comporter exactement 16 caractères",
+      pocketInfo: "État du Pocket", pocketInfoHint: "Lecture uniquement, rafraîchi automatiquement quand le Pocket est à proximité et non connecté à l'app iPhone.",
+      pocketFirmware: "Firmware", pocketState: "État", pocketIdle: "Inactif", pocketStorage: "Stockage utilisé", pocketBatteryLbl: "Batterie", pocketUnknown: "Inconnu",
       exportLabel: "Exporter", exportHint: "Copier ou exporter la fiche", copyRich: "Copier", copyRichHint: "Copier, prêt à coller dans un courriel",
       copiedRich: "Copié", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exporté en ",
       importLabel: "Importer et transcrire", importHint: "Importer et traiter les enregistrements", count: "Enregistrements sur le Pocket",
@@ -34,7 +43,7 @@
       ready: "Prêt", waiting: "En attente", failed: "Échec : relancer le résumé", done: "Terminé", modelDown: "Moteur local arrêté : relancez Cairn",
       privAuto: "Contrôle automatique", privOk: "aucune connexion vers l’extérieur", privBad: "connexions détectées, voir docs/PRIVACY.md", privNone: "en attente", autoCheck: "Vérifier les mises à jour", autoHint: "Une requête à GitHub par jour", autoProcess: "Traiter automatiquement", autoProcessHint: "Transcrit et résume les enregistrements en attente sans attendre votre clic. Stop met en pause.", autoImport: "Importer au branchement", autoImportHint: "Copie les nouveaux enregistrements dès que le Pocket est branché, sans les traiter", queueTip: "{n} en attente de traitement",
       processNow: "Traiter maintenant", skipIt: "Ignorer", skipped: "Ignoré", putBack: "Remettre dans la file", stopJob: "Arrêter",
-      steps: { copying: "Copie depuis le Pocket", transcribing: "Transcription", summarizing: "Rédaction de la note", privacy: "Vérification de la confidentialité" },
+      steps: { copying: "Copie depuis le Pocket", transcribing: "Transcription", diarizing: "Identification des interlocuteurs", summarizing: "Rédaction de la note", privacy: "Vérification de la confidentialité" },
       none: "Aucun enregistrement.", tldr: "En bref", actions: "Actions", points: "Points clés", noSpeech: "Aucune parole détectée.",
       months: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."], error: "Erreur : "
     },
@@ -46,7 +55,11 @@
       aboutLegal: "v{v} · © 2026 Yanick Imhof · MIT license · Not affiliated with Pocket.", uiLang: "Interface language",
       off: "Off", on: "On",
       processedIn: "processed in", notInstalled: "Not installed", getIt: "Install", refText: "Get a Pocket: 10 % off", refNote: "Optional referral link. The offer is set by Pocket alone and may change.",
-      models: "Models", modelsHint: "Choose or add models", modelsSpeech: "Transcription", modelsLlm: "Summaries",
+      models: "Models", modelsHint: "Choose or add models", modelsSpeech: "Transcription", modelsLlm: "Summaries", modelsDiar: "Speaker identification",
+      hfToken: "Hugging Face token", hfTokenHint: "Needed once to download the diarization model (free, a Hugging Face account is required). Never used anywhere else.",
+      hfTokenNone: "Not configured", hfTokenOn: "Configured", hfTokenSaved: "Token saved", hfTokenCleared: "Token removed", hfTokenInvalid: "Invalid token",
+      diarizeLabel: "Identify speakers", diarizeHint: "Adds who's speaking to the transcript and the note. Needs the diarization model below. Runs fully locally.",
+      diarNeedsToken: "Set a Hugging Face token first", diarNeedsModel: "Install the diarization model first",
       tagline: "Your Pocket. Your computer. Your data.", mUse: "Use", mRemove: "Remove this model", mRemoveConfirm: "Remove {name} from this computer? You can download it again later.", mInUse: "In use", mInstall: "Install", mTier: { light: "Light", standard: "Standard", high: "High" },
       mRam: "{n} GB of memory advised", mConfirm: "Download {name} ({size})? An internet connection is used for this download only.",
       mDownloading: "Downloading {pct}%", mFailed: "Download failed: ", mDone: "Model installed", mDown: "Local engine stopped", mBusy: "A job is running",
@@ -56,6 +69,11 @@
       cancel: "Cancel", confirmLabel: "Confirm",
       connected: "Pocket connected", disconnected: "Pocket not detected", local: "Local", localHint: "Everything stays on this computer",
       folder: "Audio folder", folderHint: "Audio backup folder", folderChange: "Change", folderSaved: "Folder saved", folderType: "Folder path",
+      pocketKey: "Pocket session key", pocketKeyHint: "Optional. With your own key, Cairn also reads the Pocket's firmware, state and storage, read only.",
+      pocketKeyNone: "Not configured", pocketKeyOn: "Configured", pocketKeyRejected: "Key rejected by the Pocket", pocketKeyType: "16 characters",
+      pocketKeySaved: "Key saved", pocketKeyCleared: "Key removed", pocketKeyInvalid: "The key must be exactly 16 characters",
+      pocketInfo: "Pocket status", pocketInfoHint: "Read only, refreshed automatically while the Pocket is nearby and not connected to the iPhone app.",
+      pocketFirmware: "Firmware", pocketState: "State", pocketIdle: "Idle", pocketStorage: "Storage used", pocketBatteryLbl: "Battery", pocketUnknown: "Unknown",
       exportLabel: "Export", exportHint: "Copy or export the note", copyRich: "Copy", copyRichHint: "Copy, ready to paste in an email",
       copiedRich: "Copied", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exported as ",
       importLabel: "Import and transcribe", importHint: "Import and process the recordings", count: "Recordings on the Pocket",
@@ -70,7 +88,7 @@
       ready: "Ready", waiting: "Waiting", failed: "Failed: rerun the summary", done: "Done", modelDown: "Local engine stopped: restart Cairn",
       privAuto: "Automatic check", privOk: "no connection to the outside", privBad: "connections detected, see docs/PRIVACY.md", privNone: "pending", autoCheck: "Check for updates", autoHint: "One request to GitHub per day", autoProcess: "Process automatically", autoProcessHint: "Transcribes and summarizes waiting recordings without waiting for your click. Stop pauses it.", autoImport: "Import on connect", autoImportHint: "Copies new recordings as soon as the Pocket is connected, without processing them", queueTip: "{n} waiting to be processed",
       processNow: "Process now", skipIt: "Skip", skipped: "Skipped", putBack: "Put back in the queue", stopJob: "Stop",
-      steps: { copying: "Copying from the Pocket", transcribing: "Transcribing", summarizing: "Writing the note", privacy: "Checking privacy" },
+      steps: { copying: "Copying from the Pocket", transcribing: "Transcribing", diarizing: "Identifying speakers", summarizing: "Writing the note", privacy: "Checking privacy" },
       none: "No recordings.", tldr: "TL;DR", actions: "Actions", points: "Key points", noSpeech: "No speech detected.",
       months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], error: "Error: "
     }
@@ -82,6 +100,8 @@
     doc: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v4h4"></path><path d="M10 12h5"></path><path d="M10 16h5"></path></svg>',
     folder: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>',
     pencil: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="m13.5 6.5 4 4"></path></svg>',
+    key: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l9-9"></path><path d="M17 6l2 2"></path><path d="M14 9l2 2"></path></svg>',
+    plus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>',
     trash: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4271B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="M6 7l1 13h10l1-13"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>',
     x: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>',
     checkW: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"></path></svg>',
@@ -112,7 +132,7 @@
   var S = {
     ui: null, hidden: true, settingsOpen: false, aboutOpen: false, open: null, edit: null, draft: "", exp: null,
     delConfirm: false, rr: "mid", rl: "en", sp: "auto", server: null, full: {}, about: null, upd: null,
-    folderEdit: false, folderDraft: "", wasRunning: false
+    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: ""
   };
   var lastView = "";
   var toastTimer = null;
@@ -222,6 +242,37 @@
     return svg + "</svg>";
   }
 
+  function pocketInfoPanel(t, st) {
+    var bat = st.battery || {}, ps = st.pocket_status || {}, d = ps.data || {};
+    var chip = function (label, value) {
+      return '<div class="chip"><div class="v">' + esc(value) + '</div><div class="l">' + esc(label) + "</div></div>";
+    };
+    var h = '<div class="hr"></div><div style="padding:14px 0 18px">';
+    h += '<div class="small" style="font-weight:600;margin-bottom:10px">' + esc(t.pocketInfo) + "</div>";
+    h += '<div class="pgrid">';
+    h += chip(t.pocketBatteryLbl, bat.level != null ? bat.level + " %" : "…");
+    h += chip(t.pocketFirmware, d.firmware || (ps.state === "rejected" ? t.pocketKeyRejected : "…"));
+    h += chip(t.pocketState, d.state === 0 ? t.pocketIdle : (d.state != null ? String(d.state) : "…"));
+    h += chip(t.pocketStorage, d.total_kb ? Math.round(100 * d.used_kb / d.total_kb) + " %" : "…");
+    h += "</div>";
+    if (ps.state === "rejected") { h += '<div class="small" style="margin-top:8px">' + esc(t.pocketKeyRejected) + "</div>"; }
+    h += '<div class="small" style="margin-top:8px">' + esc(t.pocketInfoHint) + "</div></div>";
+    return h;
+  }
+
+  function diarRow(m, t, job) {
+    var running = job && job.state === "running" && job.kind === "diar" && job.id === m.id;
+    var h = '<div class="mrow"><div class="minfo"><div class="mname">' + esc(m.label) + "</div>";
+    h += '<div class="small">' + esc(t.mTier[m.tier] + " · " + gb(m.bytes) + " · " + t.mRam.replace("{n}", m.ram)) + "</div></div>";
+    if (running) { h += '<span class="small">' + esc(t.mDownloading.replace("{pct}", job.pct)) + "</span>"; }
+    else if (m.installed) {
+      h += '<button type="button" class="ib" data-a="mDel" data-v="diar" data-id="' + esc(m.id) + '"' + tip(t.mRemove) + ">" + I.trash + "</button>";
+    } else {
+      h += '<button type="button" class="mbtn" data-a="mAsk" data-v="diar" data-id="' + esc(m.id) + '"' + (job && job.state === "running" ? " disabled" : "") + ">" + esc(t.mInstall) + "</button>";
+    }
+    return h + "</div>";
+  }
+
   function viewModels(t) {
     var M = S.models;
     if (!M) { return ""; }
@@ -229,6 +280,10 @@
     M.speech.forEach(function (m) { h += modelRow("speech", m, t, M.job); });
     h += '<div class="mgroup">' + esc(t.modelsLlm) + "</div>";
     M.llm.forEach(function (m) { h += modelRow("llm", m, t, M.job); });
+    if (M.diar) {
+      h += '<div class="mgroup">' + esc(t.modelsDiar) + "</div>";
+      M.diar.forEach(function (m) { h += diarRow(m, t, M.job); });
+    }
     if (S.mAsk) {
       var list = S.mAsk.kind === "llm" ? M.llm : M.speech;
       var m = list.filter(function (x) { return x.id === S.mAsk.id; })[0];
@@ -266,6 +321,37 @@
     }
     h += '<div class="hr"></div><div class="setrow"' + tip(t.modelsHint) + "><span class=\"text\" style=\"font-size:14px\">" + esc(t.models) + '</span><button type="button" class="mbtn" data-a="models">' + esc(S.modelsOpen ? "−" : "+") + "</button></div>";
     if (S.modelsOpen) { h += viewModels(t); }
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.pocketKeyHint) + ">" + I.key + '<span class="text" style="font-size:14px">' + esc(t.pocketKey) + "</span>";
+    if (st.settings.pocket_key) {
+      h += '<span class="small" style="color:var(--green-ink);white-space:nowrap">' + esc(t.pocketKeyOn) + "</span>" +
+        '<button type="button" class="ib" data-a="keyAsk"' + tip(t.folderChange) + ">" + I.pencil + "</button></div>";
+    } else {
+      h += '<span class="small" style="white-space:nowrap">' + esc(t.pocketKeyNone) + "</span>" +
+        '<button type="button" class="ib" data-a="keyAsk"' + tip(t.folderChange) + '>' + I.plus + "</button></div>";
+    }
+    if (S.keyEdit) {
+      h += '<div class="name" style="margin:0 0 6px"><input id="keyInput" type="text" value="' + esc(S.keyDraft) + '" placeholder="' + esc(t.pocketKeyType) + '" aria-label="' + esc(t.pocketKey) + '">' +
+        '<button type="button" class="ib blue" data-a="keySave"' + tip(t.saveName) + ">" + I.checkW + "</button>" +
+        (st.settings.pocket_key ? '<button type="button" class="ib" data-a="keyClear"' + tip(t.pocketKeyCleared) + ">" + I.trash + "</button>" : "") + "</div>";
+    }
+    if (st.settings.pocket_key) { h += pocketInfoPanel(t, st); }
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.diarizeHint) + '><span class="text" style="font-size:14px">' + esc(t.diarizeLabel) + '</span><div class="seg s38">' +
+      [["0", t.off, false], ["1", t.on, true]].map(function (o) {
+        return '<button type="button" data-a="diarize" data-v="' + o[0] + '" class="' + bg(!!st.settings.diarize === o[2]).trim() + '">' + esc(o[1]) + "</button>";
+      }).join("") + "</div></div>";
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.hfTokenHint) + ">" + I.key + '<span class="text" style="font-size:14px">' + esc(t.hfToken) + "</span>";
+    if (st.settings.hf_token) {
+      h += '<span class="small" style="color:var(--green-ink);white-space:nowrap">' + esc(t.hfTokenOn) + "</span>" +
+        '<button type="button" class="ib" data-a="hfAsk"' + tip(t.folderChange) + ">" + I.pencil + "</button></div>";
+    } else {
+      h += '<span class="small" style="white-space:nowrap">' + esc(t.hfTokenNone) + "</span>" +
+        '<button type="button" class="ib" data-a="hfAsk"' + tip(t.folderChange) + ">" + I.plus + "</button></div>";
+    }
+    if (S.hfEdit) {
+      h += '<div class="name" style="margin:0 0 6px"><input id="hfInput" type="text" value="' + esc(S.hfDraft) + '" placeholder="hf_…" aria-label="' + esc(t.hfToken) + '">' +
+        '<button type="button" class="ib blue" data-a="hfSave"' + tip(t.saveName) + ">" + I.checkW + "</button>" +
+        (st.settings.hf_token ? '<button type="button" class="ib" data-a="hfClear"' + tip(t.hfTokenCleared) + ">" + I.trash + "</button>" : "") + "</div>";
+    }
     return h + "</div>";
   }
 
@@ -418,8 +504,8 @@
     if (!st) { return ""; }
     var t = T(), job = st.job, ring = 0;
     if (job.running && job.total) {
-      var part = job.pct != null ? job.pct / 100 : 0.5;  // transcription fills the first 60 % of a recording, the note the rest
-      if (job.step === "transcribing") { part = (job.pct || 0) / 100 * 0.6; } else if (job.step === "summarizing") { part = 0.6 + 0.4 * part; }
+      var part = job.pct != null ? job.pct / 100 : 0.5;  // transcription fills the first part of a recording, diarizing a thin slice, the note the rest
+      if (job.step === "transcribing") { part = (job.pct || 0) / 100 * 0.55; } else if (job.step === "diarizing") { part = 0.6; } else if (job.step === "summarizing") { part = 0.65 + 0.35 * part; }
       ring = Math.min(1, (job.done + part) / job.total);
     }
     else if (st.totals.notes) { ring = st.totals.done / st.totals.notes; }
@@ -645,6 +731,39 @@
       api("POST", "/api/settings", { audio_dir: S.folderDraft }).then(function () { S.folderEdit = false; flash(T().folderSaved); refresh(); })
         .catch(function (e) { flash(T().error + e.message); });
     },
+    keyAsk: function () {
+      S.keyEdit = !S.keyEdit;
+      S.keyDraft = S.keyEdit ? (S.server.settings.pocket_key || "") : "";
+    },
+    keySave: function () {
+      var t = T(), key = S.keyDraft.trim();
+      if (key.length !== 16) { flash(t.pocketKeyInvalid); return; }
+      api("POST", "/api/settings", { pocket_key: key }).then(function () { S.keyEdit = false; flash(t.pocketKeySaved); refresh(); })
+        .catch(function (e) { flash(t.error + e.message); });
+    },
+    keyClear: function () {
+      var t = T();
+      api("POST", "/api/settings", { pocket_key: "" }).then(function () { S.keyEdit = false; flash(t.pocketKeyCleared); refresh(); })
+        .catch(function (e) { flash(t.error + e.message); });
+    },
+    diarize: function (v) {
+      api("POST", "/api/settings", { diarize: v === "1" }).then(refresh).catch(function (e) { flash(T().error + e.message); });
+    },
+    hfAsk: function () {
+      S.hfEdit = !S.hfEdit;
+      S.hfDraft = S.hfEdit ? (S.server.settings.hf_token || "") : "";
+    },
+    hfSave: function () {
+      var t = T(), token = S.hfDraft.trim();
+      if (!token) { flash(t.hfTokenInvalid); return; }
+      api("POST", "/api/settings", { hf_token: token }).then(function () { S.hfEdit = false; flash(t.hfTokenSaved); refresh(); })
+        .catch(function (e) { flash(t.error + e.message); });
+    },
+    hfClear: function () {
+      var t = T();
+      api("POST", "/api/settings", { hf_token: "" }).then(function () { S.hfEdit = false; flash(t.hfTokenCleared); refresh(); })
+        .catch(function (e) { flash(t.error + e.message); });
+    },
     models: function () {
       S.modelsOpen = !S.modelsOpen; S.mAsk = null;
       if (S.modelsOpen) { loadModels(); }
@@ -659,12 +778,12 @@
     mDelGo: function () {
       var a = S.mDel; S.mDel = null;
       api("POST", "/api/models/remove", { kind: a.kind, id: a.id, confirm: true }).then(function () { return loadModels(); }).then(refresh)
-        .catch(function (e) { flash(T().error + (e.message === "busy" ? T().mBusy : e.message)); });
+        .catch(function (e) { var t = T(); flash(t.error + (e.message === "busy" ? t.mBusy : e.message === "in_use" && a.kind === "diar" ? t.diarizeLabel : e.message)); });
     },
     mGo: function () {
       var a = S.mAsk; S.mAsk = null;
       api("POST", "/api/models/install", { kind: a.kind, id: a.id, confirm: true }).then(loadModels)
-        .catch(function (e) { flash(T().error + (e.message === "busy" ? T().mBusy : e.message)); });
+        .catch(function (e) { var t = T(); flash(t.error + (e.message === "busy" ? t.mBusy : e.message === "token_required" ? t.diarNeedsToken : e.message)); });
     },
     mUse: function (kind, id) {
       api("POST", "/api/models/select", { kind: kind, id: id }).then(function () { return loadModels(); }).then(refresh)
@@ -682,11 +801,15 @@
   document.addEventListener("input", function (ev) {
     if (ev.target.id === "nameInput") { S.draft = ev.target.value; }
     if (ev.target.id === "folderInput") { S.folderDraft = ev.target.value; }
+    if (ev.target.id === "keyInput") { S.keyDraft = ev.target.value; }
+    if (ev.target.id === "hfInput") { S.hfDraft = ev.target.value; }
   });
   document.addEventListener("keydown", function (ev) {
     if (ev.key === "Escape") { closeText(); if (S.exp) { S.exp = null; render(); } }
     if (ev.key === "Enter" && ev.target.id === "nameInput") { A.saveName(); }
     if (ev.key === "Enter" && ev.target.id === "folderInput") { A.folderSave(); }
+    if (ev.key === "Enter" && ev.target.id === "keyInput") { A.keySave(); }
+    if (ev.key === "Enter" && ev.target.id === "hfInput") { A.hfSave(); }
   });
 
   function fitWindow() {  // the installed web app opens at a size that fits its content, once; the person's own resizing is kept after that

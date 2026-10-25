@@ -129,3 +129,7 @@ h1.brand{margin:0;font-weight:700}.bw{display:flex;flex-direction:column;line-he
 .veil svg{width:20px;height:20px;opacity:.7}
 .side .err{margin-top:10px;text-align:center}
 .bat{display:inline-flex;align-items:center;margin-left:2px}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chip{background:var(--soft);border-radius:14px;padding:10px 12px}
+.chip .v{font-size:15px;font-weight:600;color:var(--ink)}
+.chip .l{font-size:12px;color:var(--mute)}

@@ -7,6 +7,8 @@ One rule: **your recordings never leave your computer.**
 - Reads the audio files from your Pocket over USB and copies them to a folder you choose. It deletes on the Pocket only what you ask it to delete.
 - Transcribes, titles and summarizes them on your computer, with models that run offline.
 - On macOS, shows the Pocket battery when it can be read: about every two minutes Cairn looks for a nearby Pocket and reads the battery level it publishes over Bluetooth. It is read only: Cairn sends no command, pairs with nothing, changes nothing on the Pocket, and keeps no history. Bluetooth is a local radio link, not an internet connection. macOS asks for Bluetooth access the first time; if you refuse, nothing is shown and nothing else changes.
+- Optionally, if you enter your own Pocket session key in Settings (Cairn never captures or asks for one on its own), also reads the firmware version, device state and storage used, the same way: three documented read commands, no write command, no pairing, nothing sent anywhere. Clearing the field removes the key for good.
+- Optionally, if you turn on speaker identification and install its model, runs it fully offline on your computer: your own Hugging Face token is used only once, to download the model, and never sent anywhere afterward. The recording's audio is never sent anywhere either.
 - Stores everything in that folder: audio, transcripts, summaries, exports.
 
 ## What Cairn never does
