@@ -22,7 +22,7 @@ No cloud, no account, no telemetry. Nothing leaves your machine.
 
 ## Install
 
-Paste one command in a terminal. It detects your system and installs everything in your own folder: no administrator rights, no system change. Not sure which one? The [install page](https://yanickimhof.github.io/cairn_pocket_ai/) shows the right command, the minimum version and the download sizes.
+Paste one command in a terminal. It detects your system and installs everything in your own folder: no administrator rights, no system change. Not sure which one? The [install page](https://yanickimhof.github.io/cairn_pocket_ai/) shows the right command and the download sizes.
 
 bash or zsh:
 
@@ -42,40 +42,37 @@ irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/main/install.p
 | Memory | 8 GB | 16 GB or more (larger models) |
 | Disk space | 12 GB free | 20 GB free |
 | System | macOS 14, Windows 10 22H2 | Latest version |
-| Graphics card | Not required | Not required |
 | Internet | Installation only: about 5.5 GB (Mac) or 7 GB (Windows), about 2.5 GB if Ollama and a Qwen3 model are already installed | |
-| Pocket | USB-C data port. In the Pocket app: USB mode on, automatic and cloud sync off ([details](docs/INSTALL.md)) | |
 
-A faster machine means faster notes. Everything works offline once installed. Pocket setup and troubleshooting: [docs/INSTALL.md](docs/INSTALL.md). Every download, with versions and sizes: [SECURITY.md](SECURITY.md).
+No graphics card needed. Everything works offline once installed.
 
-## How it works
+## Set up your Pocket (once)
 
-1. Start Cairn: open `~/Cairn/Cairn.app` (macOS), the Start menu shortcut or `Cairn.cmd` (Windows), or run `~/Cairn/bin/cairn`. A page opens, served only by your computer (`127.0.0.1`) and protected by a session key.
-2. Plug in your Pocket (USB mode) and click **Import**. Cairn copies and verifies every recording.
+In the Pocket mobile app, open the device settings, then:
+
+1. Turn **on** USB Mode (Pocket Web Sync). It is off by default, and the USB-C port then only charges.
+2. Turn **off** every automatic or cloud sync option (auto-sync, Wi-Fi or online sync, cloud backup and the like). Otherwise the Pocket sends recordings to Pocket's online service on its own, and the phone app then removes them from the drive, so Cairn never sees them. Option names vary between app versions.
+3. Connect the Pocket with a USB-C **data** cable. A drive named `Pocket` appears, and the dot in Cairn turns green. Close the Pocket desktop app if you use it, so that only one program reads the device.
+
+You need neither the Pocket desktop app nor a Pocket account on the computer.
+
+## Use it
+
+1. Start Cairn: open `~/Cairn/Cairn.app` (macOS), the Start menu shortcut or `Cairn.cmd` (Windows), or run `~/Cairn/bin/cairn`. A page opens, served only by your computer and protected by a session key.
+2. Click **Import**. Cairn copies and verifies every recording.
 3. It transcribes each one with Whisper, then cleans, titles and summarizes it with a local model (Qwen3 through Ollama), at a short, standard or detailed level. Each note carries a reliability score and flags the passages worth checking.
 4. Rename, copy or export a note (Markdown, HTML). Exports go to `~/Cairn/Exports`.
 5. Optionally empty the Pocket, only after every copy is verified.
 
-Secure mode hides the list of notes until you reveal it. Tap a waiting recording to process it now, or skip it (it can be restored). Newest recordings come first, and Stop interrupts the current job.
-
-## Good to know
-
-**Models.** The default install is the smallest that gives good results: Whisper large-v3-turbo (1.6 GB) and Qwen3 4B (2.5 GB). On a French recording, smaller speech models misheard names and produced wrong actions, so Cairn does not offer them. If Qwen3 8B is already in your Ollama, Cairn uses it. It never modifies your existing Ollama or models. For sharper notes, open **Settings, Models**, pick a larger model (Qwen3 8B or 14B, Whisper large-v3), confirm the download, then press **Use**. Nothing downloads without your click, and a model can be removed from the same screen to free disk space.
-
-**Speed.** The speech model stays loaded between recordings and is released after five idle minutes. **Polish the transcript** (Settings) rewrites the raw transcript for readability. It is off by default because it is the slowest step, and summaries do not depend on it.
-
-**Background mode and web app (macOS).** Cairn runs as a small background service that starts at login and restarts if it stops. If the page does not answer, open `Cairn.app` again, or run `~/Cairn/bin/cairn service restart` (`service uninstall` removes the background mode). It is also an installable web app: Chrome, Install Cairn; Safari, File, Add to Dock. It then opens in its own window, still served from your computer.
-
-**"Not secure" in the address bar?** Cairn is served over plain `http` on `127.0.0.1`, an address that exists only inside your computer. Nothing travels over a network, so there is nothing to intercept, and browsers treat it as trustworthy. Chrome still labels any `http` page "not secure". Switching to `https` would mean installing a certificate authority on your computer, which weakens your security far more than this label does, so Cairn does not do it. The installed web app has no address bar.
+Models, speed, background mode, web app and other details: [docs/GUIDE.md](docs/GUIDE.md). Install options, update and troubleshooting: [docs/INSTALL.md](docs/INSTALL.md).
 
 ## Why sovereign
 
-- Audio, transcripts and summaries stay on your computer.
-- No outgoing connection once installed. A network guard refuses any outside connection in the app and the speech engine, and a privacy check runs by itself once a day. The shield next to **Local** shows the result. The automated tests run the same check on macOS and Windows.
-- The model server answers only on `127.0.0.1` (your computer talking to itself), so no other device on your network can reach it.
-- Open models you can swap.
+- Audio, transcripts and summaries stay on your computer, and the models are open and swappable.
+- No outgoing connection in everyday use, apart from an optional daily look for a new version. A network guard blocks the rest, and a privacy check runs by itself every day: the shield next to **Local** shows the result.
+- Nothing is reachable from the network: the app and the model server answer only on `127.0.0.1`, your computer talking to itself.
 
-How to verify it yourself: [docs/PRIVACY.md](docs/PRIVACY.md).
+How to verify it yourself: [docs/PRIVACY.md](docs/PRIVACY.md). Every download, with versions and sizes: [SECURITY.md](SECURITY.md).
 
 ## Buying a Pocket
 

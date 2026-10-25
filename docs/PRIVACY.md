@@ -13,7 +13,7 @@ One rule: **your recordings never leave your computer.**
 - No cloud service, no account, no sign-in.
 - No telemetry, analytics or crash reports.
 - No call to a hosted AI service.
-- No listening on the network. The interface is a local page on `127.0.0.1` only (this computer), with a private session key in a file only you can read, a Host check and a strict content policy. The local model server is bound to `127.0.0.1` too, so no other device can reach it.
+- No listening on the network. The interface and the model server answer on `127.0.0.1` only (this computer), so no other device can reach them. Technical safeguards: [SECURITY.md](../SECURITY.md).
 
 ## Network use
 
