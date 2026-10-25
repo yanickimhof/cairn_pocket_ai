@@ -86,14 +86,41 @@ class Jobs:
         self._start("import", self._one, note_id)
 
     def _one(self, note_id):
+        """Process the chosen recording first, then carry on with the others that are waiting."""
+        settings = config.load_settings()
+        attempted = {note_id}
         self._set(total=1, done=0, id=note_id)
+        if self._try(note_id, settings):
+            self._drain(settings, attempted)
+
+    def _try(self, note_id, settings):
+        """Process one recording and keep going if it fails. Returns False when the job was cancelled."""
         try:
-            self._process(note_id, config.load_settings())
+            self._process(note_id, settings)
         except Exception as error:
             if self.cancelled:
                 self._reset(note_id)
-            else:
-                raise error
+                return False
+            note = self.store.get(note_id)
+            self._fail("%s: %s" % (note.get("title") or note_id, error))
+        return not self.cancelled
+
+    def _drain(self, settings, attempted=None):
+        """Process the waiting recordings, newest first. The queue is read again after each one,
+        so recordings put back while the job runs are picked up too."""
+        attempted = set() if attempted is None else attempted
+        while not self.cancelled:
+            pending = [n for n in self.store.all()
+                       if n.get("status") in ("waiting", "error") and n["id"] not in attempted and os.path.exists(n.get("audio", ""))]
+            if not pending:
+                break
+            pending.sort(key=lambda n: n.get("date") or "", reverse=True)
+            note = pending[0]
+            done = len(attempted)
+            attempted.add(note["id"])
+            self._set(id=note["id"], done=done, total=done + len(pending))
+            if not self._try(note["id"], settings):
+                break
 
     def _reset(self, note_id):
         note = self.store.get(note_id)
@@ -118,20 +145,8 @@ class Jobs:
                     self._copy_one(source, path, audio_dir)
                 except OSError as error:
                     self._fail("%s: %s" % (path.name, error))
-        pending = [n for n in self.store.all() if n.get("status") in ("waiting", "error") and os.path.exists(n.get("audio", ""))]
-        pending.sort(key=lambda n: n.get("date") or "", reverse=True)  # newest first
-        self._set(step="", done=0, total=len(pending))
-        for index, note in enumerate(pending):
-            if self.cancelled:
-                break
-            self._set(done=index, id=note["id"])
-            try:
-                self._process(note["id"], settings)
-            except Exception as error:  # keep going with the next recording
-                if self.cancelled:
-                    self._reset(note["id"])
-                    break
-                self._fail("%s: %s" % (note.get("title") or note["id"], error))
+        self._set(step="", done=0, total=0)
+        self._drain(settings)
 
     def _copy_one(self, source, path, audio_dir):
         rel = path.relative_to(source).as_posix()
