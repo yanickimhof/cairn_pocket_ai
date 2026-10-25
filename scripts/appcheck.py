@@ -1,7 +1,7 @@
 """End-to-end check of an installed Cairn, with the real speech engine and the real local model.
 
 It simulates a Pocket (a temporary folder with one recording), starts the app the way a user does,
-then drives it through its API: import, transcribe, summarize, export, rename, empty the Pocket, delete.
+then drives it through its API: import, transcribe, summarize, export, rename, delete everywhere.
 
     python scripts/appcheck.py --audio speech.mp3 --expect launch,march
 """
@@ -145,14 +145,14 @@ def main():
             fail("rename")
         if not any((home / "Audio").rglob("*" + Path(args.audio).suffix)):
             fail("the audio copy is missing")
-        verify = client.call("GET", "/api/pocket/verify")[1]
-        if (verify["total"], verify["verified"]) != (1, 1):
-            fail("verify: %s" % verify)
-        if client.call("POST", "/api/pocket/empty", {"confirm": True})[1].get("deleted") != 1:
-            fail("empty the Pocket")
-        if client.call("POST", "/api/note/%s/delete" % note["id"])[0] != 200:
+        out = client.call("POST", "/api/note/%s/delete" % note["id"])
+        if out[0] != 200 or out[1].get("pocket") is not True:
             fail("delete")
-        print("OK: export, rename, verified copy, emptied the simulated Pocket, delete", flush=True)
+        if list(pocket.rglob("*" + Path(args.audio).suffix)):
+            fail("the recording is still on the simulated Pocket")
+        if any((home / "Audio").rglob("*" + Path(args.audio).suffix)):
+            fail("the audio copy is still on the computer")
+        print("OK: export, rename, delete everywhere (simulated Pocket and computer)", flush=True)
 
         if client.call("POST", "/api/privacy/check")[0] != 202:
             fail("the privacy check was not accepted")
