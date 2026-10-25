@@ -14,7 +14,7 @@ Cairn looks for a new version once a day (switch in **Settings, Check for update
 
 | Symptom | Answer |
 |---|---|
-| The Pocket drive does not appear | Check that USB Mode is on in the Pocket app. Allow USB storage on the computer, replug, switch USB mode off and on, try another cable |
+| The Pocket drive does not appear | The Pocket must show up as an external drive (named `Pocket` in the Finder or File Explorer). That is done by the Pocket and your computer, before Cairn is involved: without the drive, Cairn cannot see the device. A blinking light without a drive means the computer has not detected it. In the Pocket app, switch USB Mode (Web Sync) off, then on again, then unplug and replug the Pocket. Also try a USB-C data cable, another port, without a hub |
 | Recordings are missing | Recordings already synced by the phone app are no longer on the drive: turn off automatic sync before you record |
 | The Pocket disconnects during import | USB mode can drop under load. Replug: Cairn copies file by file, verifies each copy and resumes |
 | Ollama is blocked at launch | Allow it in your system security settings |
