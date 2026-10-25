@@ -14,7 +14,7 @@
       tagline: "Votre Pocket. Votre ordinateur. Vos données.", mUse: "Utiliser", mRemove: "Supprimer ce modèle", mRemoveConfirm: "Supprimer {name} de cet ordinateur ? Vous pourrez le télécharger à nouveau.", mInUse: "Utilisé", mInstall: "Installer", mTier: { light: "Léger", standard: "Standard", high: "Élevé" },
       mRam: "{n} Go de mémoire conseillés", mConfirm: "Télécharger {name} ({size}) ? Une connexion internet est utilisée pour ce seul téléchargement.",
       mDownloading: "Téléchargement {pct} %", mFailed: "Échec du téléchargement : ", mDone: "Modèle installé", mDown: "Moteur local arrêté", mBusy: "Un traitement est en cours",
-      settings: "Réglages", langHint: "Langue de la note",
+      settings: "Réglages", langHint: "Langue de la note", levelHint: "Niveau de détail",
       short: "Court", mid: "Normal", full: "Complet",
       shortHint: "Court : TL;DR et actions", midHint: "Normal : + contexte et points clés", fullHint: "Complet : + détail par sujet",
       emptyPocket: "Vider le Pocket", emptyHint: "Vider le Pocket (copies vérifiées)",
@@ -52,7 +52,7 @@
       tagline: "Your Pocket. Your computer. Your data.", mUse: "Use", mRemove: "Remove this model", mRemoveConfirm: "Remove {name} from this computer? You can download it again later.", mInUse: "In use", mInstall: "Install", mTier: { light: "Light", standard: "Standard", high: "High" },
       mRam: "{n} GB of memory advised", mConfirm: "Download {name} ({size})? An internet connection is used for this download only.",
       mDownloading: "Downloading {pct}%", mFailed: "Download failed: ", mDone: "Model installed", mDown: "Local engine stopped", mBusy: "A job is running",
-      settings: "Settings", langHint: "Note language",
+      settings: "Settings", langHint: "Note language", levelHint: "Level of detail",
       short: "Short", mid: "Standard", full: "Detailed",
       shortHint: "Short: TL;DR and actions", midHint: "Standard: + context, key points", fullHint: "Detailed: + detail per topic",
       emptyPocket: "Empty the Pocket", emptyHint: "Empty the Pocket (copies verified)",
@@ -83,6 +83,7 @@
   var I = {
     info: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path></svg>',
     gear: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg>',
+    chev: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>',
     doc: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v4h4"></path><path d="M10 12h5"></path><path d="M10 16h5"></path></svg>',
     folder: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>',
     mic: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path></svg>',
@@ -116,7 +117,7 @@
 
   var S = {
     ui: null, hidden: true, settingsOpen: false, aboutOpen: false, open: null, edit: null, draft: "", exp: null,
-    delConfirm: false, emptyConfirm: false, verify: null, rr: "mid", server: null, full: {}, about: null, upd: null,
+    delConfirm: false, emptyConfirm: false, verify: null, rr: "mid", rl: "en", menu: null, server: null, full: {}, about: null, upd: null,
     folderEdit: false, folderDraft: "", wasRunning: false
   };
   var lastView = "";
@@ -132,7 +133,22 @@
   function findNote(id) { return S.server && S.server.notes ? S.server.notes.filter(function (x) { return x.id === id; })[0] : null; }
   function noteLevel(id) { var n = findNote(id); return (n && n.level) || "mid"; }
   function noteLang(id) { var n = findNote(id); return (n && n.lang) || ui(); }
-  function optionBar(t) { return seg3("rr", S.rr, "s36", t) + segLang("rl", S.rl, "s36", t, t.langHint); }
+  function lvlIcon(k) { return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" aria-hidden="true">' + I.lvl[k] + "</svg>"; }
+  var LANG_NAME = { fr: "Français", en: "English" };
+  function menuBtn(key, icon, label, hint) {
+    return '<button type="button" class="mbtn menu' + (S.menu === key ? " open" : "") + '" data-a="menu" data-v="' + key + '"' + tip(hint) + ">" + icon + "<span>" + esc(label) + "</span>" + I.chev + "</button>";
+  }
+  function optionBar(t) {
+    return menuBtn("lvl", lvlIcon(S.rr), t[S.rr], t.levelHint) + menuBtn("lang", "", LANG_NAME[S.rl] || S.rl, t.langHint);
+  }
+  function optionList(t) {
+    if (!S.menu) { return ""; }
+    var isLevel = S.menu === "lvl", items = isLevel ? ["short", "mid", "full"] : ["fr", "en"], cur = isLevel ? S.rr : S.rl;
+    return '<div class="opts">' + items.map(function (k) {
+      return '<button type="button" class="opt' + (k === cur ? " on" : "") + '" data-a="' + (isLevel ? "rr" : "rl") + '" data-v="' + k + '"' + (isLevel ? tip(t[k + "Hint"]) : "") + ">" +
+        (isLevel ? lvlIcon(k) : "") + "<span>" + esc(isLevel ? t[k] : LANG_NAME[k]) + "</span></button>";
+    }).join("") + "</div>";
+  }
 
   function api(method, path, body) {
     var opt = { method: method, headers: {} };
@@ -173,11 +189,6 @@
   function bg(on) { return on ? " on" : ""; }
   function tip(text) { return text ? ' data-tip="' + esc(text) + '" aria-label="' + esc(text) + '"' : ""; }
 
-  function seg3(prefix, current, size, t) {
-    return '<div class="seg ' + size + '">' + ["short", "mid", "full"].map(function (k) {
-      return '<button type="button" class="' + (current === k ? "on" : "") + '" data-a="' + prefix + '" data-v="' + k + '"' + tip(t[k + "Hint"]) + '><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" aria-hidden="true">' + I.lvl[k] + "</svg></button>";
-    }).join("") + "</div>";
-  }
   function segLang(prefix, current, size, t, hint) {
     return '<div class="seg ' + size + '">' + ["fr", "en"].map(function (k) {
       return '<button type="button" class="' + (current === k ? "on" : "") + '" data-a="' + prefix + '" data-v="' + k + '"' + tip(hint) + ">" + k.toUpperCase() + "</button>";
@@ -302,12 +313,12 @@
     var passInk = n.quality != null && n.quality < 85 ? "var(--warn)" : "var(--mute)";
     h += '<div class="bar"><div class="row gap8" style="flex-wrap:wrap">' + optionBar(t) +
       '<button type="button" class="mbtn blue" data-a="rerun"' + (S.server && S.server.job && S.server.job.running ? " disabled" : "") + tip(t.redoHint) + ">" + esc(t.redo) + "</button></div>";
-    h += '<div class="row" style="gap:4px">';
+    h += '<div class="row" style="gap:4px;order:2">';
     h += '<button type="button" class="ib" data-a="viewText" data-id="' + esc(n.id) + '"' + tip(t.viewText) + ">" + I.doc.replace("#6E6E73", "#1D1D1F") + "</button>";
     h += '<button type="button" class="warn" data-a="copyDoubtful" style="color:' + passInk + '"' + tip(n.passages + t.passages + " · " + t.copilotHint) + ">" + (passInk === "var(--orange)" ? I.warnB.replace('width="16" height="16"', 'width="18" height="18"') : I.warnB.replace("#C86D51", "#6E6E73").replace('width="16" height="16"', 'width="18" height="18"')) + (n.passages || 0) + "</button>";
     h += '<button type="button" class="ib" data-a="startRename"' + tip(t.rename) + ">" + I.pencil + "</button>";
     h += '<button type="button" class="ib" data-a="toggleExport"' + tip(t.exportHint) + ">" + I.down + "</button>";
-    h += '<button type="button" class="ib" data-a="askDelete"' + tip(t.deleteHint) + ">" + I.trash + "</button></div></div>";
+    h += '<button type="button" class="ib" data-a="askDelete"' + tip(t.deleteHint) + ">" + I.trash + "</button></div>" + optionList(t) + "</div>";
     if (S.exp === n.id) {
       h += '<div class="exp"><button type="button" class="main" data-a="expCopy"' + tip(t.copyRichHint) + ">" + I.copy + '</button><button type="button" data-a="expMd"' + tip(t.expMdHint) + '>MD</button><button type="button" data-a="expHtml"' + tip(t.expHtmlHint) + ">HTML</button></div>";
     }
@@ -347,7 +358,7 @@
         ? '<button type="button" class="mbtn" data-a="restoreOne" data-id="' + esc(n.id) + '">' + esc(t.putBack) + "</button>"
         : '<button type="button" class="mbtn" data-a="skipOne" data-id="' + esc(n.id) + '">' + esc(t.skipIt) + "</button>";
     }
-    return h + "</div></div>";
+    return h + "</div>" + optionList(t) + "</div>";
   }
 
   function viewList(t, st) {
@@ -530,14 +541,15 @@
     import: function () {
       api("POST", "/api/import").then(refresh).catch(function (e) { flash(T().error + e.message); });
     },
-    row: function (v, id) { S.open = S.open === id ? null : id; S.delConfirm = false; S.edit = null; S.exp = null; S.rr = noteLevel(id); S.rl = noteLang(id); if (S.open) { loadFull(id); } },
+    row: function (v, id) { S.open = S.open === id ? null : id; S.delConfirm = false; S.edit = null; S.exp = null; S.menu = null; S.rr = noteLevel(id); S.rl = noteLang(id); if (S.open) { loadFull(id); } },
+    menu: function (v) { S.menu = S.menu === v ? null : v; },
     rr: function (v) {
-      S.rr = v;
+      S.rr = v; S.menu = null;
       var id = S.open, n = findNote(id);
       if (n && n.status !== "done") { api("POST", "/api/note/" + encodeURIComponent(id) + "/options", { level: v }).then(refresh); }
     },
     rl: function (v) {
-      S.rl = v;
+      S.rl = v; S.menu = null;
       var id = S.open, n = findNote(id);
       if (n && n.status !== "done") { api("POST", "/api/note/" + encodeURIComponent(id) + "/options", { lang: v }).then(refresh); }
     },
