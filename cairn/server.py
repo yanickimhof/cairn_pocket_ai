@@ -115,35 +115,6 @@ class App:
         """Recordings copied and waiting to be processed (a failed one is not retried by itself)."""
         return sum(1 for n in self.store.slim() if n.get("status") == "waiting" and os.path.exists(n.get("audio", "")))
 
-    def verify_pocket(self):
-        folder = pocket.find_pocket()
-        if not folder:
-            raise ApiError(409, "pocket_not_found")
-        files = pocket.list_recordings(folder)
-        good, skip = [], self.store.ignored()
-        for path in files:
-            if path.relative_to(folder).as_posix() in skip:  # deleted by the person on this computer: nothing to protect
-                good.append(path)
-                continue
-            note = self.store.find_source(path.relative_to(folder).as_posix())
-            audio = (note or {}).get("audio")
-            try:
-                if audio and os.path.getsize(audio) == path.stat().st_size and pocket.sha256(audio) == pocket.sha256(path):
-                    good.append(path)
-            except OSError:
-                continue
-        return files, good
-
-    def empty_pocket(self):
-        files, good = self.verify_pocket()
-        if len(good) != len(files):
-            raise ApiError(409, "not_all_verified")
-        folder = pocket.find_pocket()
-        for path in good:
-            path.unlink()
-            self.store.ignore(path.relative_to(folder).as_posix(), on=False)
-        return len(good)
-
     # State
 
     def state(self, with_list):
@@ -464,13 +435,6 @@ def make_handler(app):
                     raise ApiError(400, str(error))
             if method == "POST" and path == "/api/pick-folder":
                 return self._json(200, app.pick_folder())
-            if method == "GET" and path == "/api/pocket/verify":
-                files, good = app.verify_pocket()
-                return self._json(200, {"total": len(files), "verified": len(good)})
-            if method == "POST" and path == "/api/pocket/empty":
-                if body.get("confirm") is not True:
-                    raise ApiError(400, "confirm_required")
-                return self._json(200, {"deleted": app.empty_pocket()})
             match = re.fullmatch(r"/api/note/([A-Za-z0-9._-]+)(?:/(\w+))?", path)
             if match:
                 return self._note(method, match.group(1), match.group(2), body, query)

@@ -319,18 +319,9 @@ class AppTest(unittest.TestCase):
         _, st = self.c.call("GET", "/api/state")
         self.assertFalse([n for n in st["notes"] if n["id"] in (now_id, later_id)])  # nothing comes back
 
-    def test_08_empty_pocket_needs_verified_copies(self):
-        _, v = self.c.call("GET", "/api/pocket/verify")
-        self.assertEqual((v["total"], v["verified"]), (2, 2))
-        self.assertEqual(self.c.call("POST", "/api/pocket/empty", {})[0], 400)
-        extra = self.pocket / "unverified.wav"
-        tone(extra)
-        self.assertEqual(self.c.call("POST", "/api/pocket/empty", {"confirm": True})[0], 409)
-        self.assertTrue(extra.exists())
-        extra.unlink()
-        status, out = self.c.call("POST", "/api/pocket/empty", {"confirm": True})
-        self.assertEqual((status, out["deleted"]), (200, 2))
-        self.assertEqual(list(self.pocket.rglob("*.wav")), [])
+    def test_08_pocket_is_never_emptied_in_bulk(self):
+        for method, path in (("GET", "/api/pocket/verify"), ("POST", "/api/pocket/empty")):
+            self.assertEqual(self.c.call(method, path, {"confirm": True})[0], 404)
 
     def test_09_delete_note(self):
         _, st = self.c.call("GET", "/api/state")

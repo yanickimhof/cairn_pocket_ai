@@ -30,7 +30,7 @@ Both scores appear in the exports (Markdown, HTML, copy). Secure mode hides the 
 
 ## Deleting
 
-The trash icon on a note deletes it everywhere, for good: the file on the Pocket, and the audio, transcript and summary on this computer. If the Pocket is not connected, its file is erased the next time it is. Exports already saved in `~/Cairn/Exports` are not touched. The Pocket has no protection of its own, which is why deleting there matters. Settings also offers to empty the Pocket once every copy is verified.
+The trash icon on a note deletes it everywhere, for good: the file on the Pocket, and the audio, transcript and summary on this computer. If the Pocket is not connected, its file is erased the next time it is. Exports already saved in `~/Cairn/Exports` are not touched. The Pocket has no protection of its own, which is why deleting there matters.
 
 ## Models
 

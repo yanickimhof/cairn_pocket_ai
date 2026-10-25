@@ -13,7 +13,6 @@
 - Light default install, larger models on demand, removable from the app
 - Process one recording, skip or restore, stop, newest first
 - Secure mode (list hidden by default), FR/EN interface
-- Empty the Pocket only after verification, with double confirmation
 - One delete everywhere: Pocket (at its next connection if needed) and this computer, irreversible
 - Automatic copy of new recordings when the Pocket is connected (on by default, no processing), and an optional automatic processing of the queue (off by default)
 - Component list and daily update check (one request to GitHub, can be turned off)
@@ -23,7 +22,7 @@
 ## Later
 
 - Linux
-- Raise the minimum to macOS 14 and update the speech engine (MLX) to its latest version
+- Update the speech engine (MLX) to its latest version: the pinned package list has to be rebuilt for macOS 14
 - Test with a screen reader
 - A list of components (SBOM) with each release
 - Offline installation for computers without Internet access
