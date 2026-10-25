@@ -32,7 +32,7 @@ Both scores appear in the exports (Markdown, HTML, copy). Secure mode hides the 
 
 ## Deleting
 
-The trash icon on a note deletes it everywhere, for good: the file on the Pocket, and the audio, transcript and summary on this computer. If the Pocket is not connected, its file is erased the next time it is. Exports already saved in `~/Cairn/Exports` are not touched. The Pocket has no protection of its own, which is why deleting there matters.
+The trash icon on a note deletes it for good, on the Pocket and on this computer: the file on the Pocket, and the audio, transcript and summary here. Cairn never reaches the Pocket cloud account or its apps: a recording kept there is yours to delete there. If the Pocket is not connected, its file is erased the next time it is. Exports already saved in `~/Cairn/Exports` are not touched. The Pocket has no protection of its own, which is why deleting there matters.
 
 ## Models
 

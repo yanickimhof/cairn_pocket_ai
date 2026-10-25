@@ -311,6 +311,8 @@ class AppTest(unittest.TestCase):
             self.assertEqual((code, out["pocket"]), (200, False))
         self.assertTrue(later.exists())
         self.assertFalse(os.path.exists(audio_later))
+        self.assertFalse(Path(audio_later).parent.exists())  # the dated folder goes with its last recording
+        self.assertTrue(Path(audio_now).parent.parent.is_dir())  # the Audio folder itself stays
         self.assertEqual(self.app.purge_pocket(), 1)  # the Pocket is connected again
         self.assertFalse(later.exists())
         self.assertEqual(self.app.store.ignored(), set())
