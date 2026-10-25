@@ -72,7 +72,8 @@ def list_recordings(folder):
     found = []
     for path in Path(folder).rglob("*"):
         try:
-            if path.is_file() and path.suffix.lower() in AUDIO_EXT and not path.name.startswith("."):
+            # a link is never followed: a drive must not be able to make Cairn copy a file of this computer
+            if path.is_file() and not path.is_symlink() and path.suffix.lower() in AUDIO_EXT and not path.name.startswith("."):
                 found.append(path)
         except OSError:
             continue
@@ -94,6 +95,8 @@ def copy_verified(src, dst, retries=5):
     Raises OSError if no attempt produced an identical copy.
     """
     src, dst = Path(src), Path(dst)
+    if not src.exists():  # unplugged or deleted: waiting and trying again would only make the person wait
+        raise FileNotFoundError("the file is no longer there (Pocket disconnected?)")
     dst.parent.mkdir(parents=True, exist_ok=True)
     last = "unknown error"
     for attempt in range(retries):

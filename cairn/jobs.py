@@ -14,6 +14,10 @@ class Busy(RuntimeError):
     pass
 
 
+class Gone(RuntimeError):
+    """The recording was deleted while it was being processed."""
+
+
 class Jobs:
     def __init__(self, store):
         self.store = store
@@ -126,6 +130,8 @@ class Jobs:
         """Process one recording and keep going if it fails. Returns False when the job was cancelled."""
         try:
             self._process(note_id, settings)
+        except Gone:
+            return not self.cancelled
         except Exception as error:
             if self.cancelled:
                 self._reset(note_id)
@@ -139,7 +145,7 @@ class Jobs:
         so recordings put back while the job runs are picked up too."""
         attempted = set() if attempted is None else attempted
         while not self.cancelled:
-            pending = [n for n in self.store.all()
+            pending = [n for n in self.store.slim()
                        if n.get("status") in ("waiting", "error") and n["id"] not in attempted and os.path.exists(n.get("audio", ""))]
             if not pending:
                 break
@@ -186,6 +192,8 @@ class Jobs:
                     self._copy_one(source, path, audio_dir)
                 except OSError as error:
                     self._fail("%s: %s" % (path.name, error))
+                    if not source.exists():  # the Pocket was unplugged: the rest will be copied at the next connection
+                        break
         self._set(step="", done=0, total=0)
         if process:
             self._drain(settings)
@@ -219,9 +227,15 @@ class Jobs:
         lang = self._lang(note, settings)
         level = note.get("level") if note.get("level") in config.LEVELS else "mid"  # chosen per recording
 
+        def keep():
+            """Save the note, unless the person deleted it meanwhile: a deleted recording must not come back."""
+            if not self.store.exists(note_id):
+                raise Gone(note_id)
+            self.store.save(note)
+
         def step(name):
             note["status"], note["step"] = name, name
-            self.store.save(note)
+            keep()
             self._set(step=name, pct=0 if name == "transcribing" else None, part=0, parts=0, call=None)
 
         def pct(value):
@@ -236,7 +250,7 @@ class Jobs:
                 segments=result["segments"], quality=quality, doubtful=doubtful, passages=len(doubtful),
                 duration=result["duration"] or note.get("duration"), lang=lang, heard=result.get("language"), error="",
             )
-            self.store.save(note)
+            keep()
             note["clean"] = "\n\n".join(speech.raw_lines(result["segments"]))  # the recognized text is already punctuated
             step("summarizing")
             self._summarize(note, level, lang)
@@ -245,8 +259,12 @@ class Jobs:
                 status="done", step="", level=level, processed=time.strftime("%Y-%m-%dT%H:%M:%S"),
                 elapsed=int(time.time() - started), models={"speech": speech.model_name(), "llm": cfg["llm"]},
             )
-            self.store.save(note)
+            keep()
+        except Gone:
+            raise
         except Exception as error:
+            if not self.store.exists(note_id):  # deleted while it was being processed
+                raise Gone(note_id) from error
             note.update(status="error", step="", error=str(error))
             self.store.save(note)
             raise

@@ -6,13 +6,11 @@
 
 import argparse
 import os
-import shutil
 import subprocess
 import sys
 import threading
 import time
 import webbrowser
-from pathlib import Path
 
 from . import config, llm, netguard, server, service, speech, watch
 
