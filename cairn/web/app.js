@@ -27,7 +27,7 @@
       copiedRich: "Copié", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exporté en ",
       importLabel: "Importer et transcrire", importHint: "Importer et traiter les enregistrements", count: "Enregistrements sur le Pocket",
       eyeShow: "Afficher la liste", eyeHide: "Masquer la liste", hiddenNote: "Mode sécurisé",
-      rowHint: "Ouvrir", dateDur: "Date · durée", qualityHint: "Fiabilité estimée",
+      rowHint: "Ouvrir", actionsHint: "Afficher les actions", durHint: "Durée", dateDur: "Date · durée", qualityHint: "Fiabilité estimée",
       rename: "Renommer", saveName: "Enregistrer", rerun: "Relancer le résumé", rerunHint: "Relancer au niveau choisi",
       copilot: "Copier les passages douteux", passages: " à vérifier", copilotHint: "clic pour copier",
       deleteLocal: "Supprimer de cet ordinateur", deleteHint: "Supprimer audio et textes",
@@ -65,7 +65,7 @@
       copiedRich: "Copied", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exported as ",
       importLabel: "Import and transcribe", importHint: "Import and process the recordings", count: "Recordings on the Pocket",
       eyeShow: "Show the list", eyeHide: "Hide the list", hiddenNote: "Secure mode",
-      rowHint: "Open", dateDur: "Date · length", qualityHint: "Estimated reliability",
+      rowHint: "Open", actionsHint: "Show actions", durHint: "Length", dateDur: "Date · length", qualityHint: "Estimated reliability",
       rename: "Rename", saveName: "Save", rerun: "Rerun the summary", rerunHint: "Rerun at the chosen level",
       copilot: "Copy doubtful passages", passages: " to check", copilotHint: "click to copy",
       deleteLocal: "Delete from this computer", deleteHint: "Delete audio and texts",
@@ -362,10 +362,12 @@
       var main = done ? n.title : fmtDate(n.date) || n.id;
       var sub = done ? [fmtDate(n.date), fmtDur(n.duration)].filter(Boolean).join(" · ") : (running ? stepText(st.job, t) : (n.status === "skipped" ? t.skipped + " · " : "") + fmtDur(n.duration));
       var open = S.open === n.id;
+      var rowTip = running ? stepText(st.job, t) : (done || n.status === "error" ? t.rowHint : t.actionsHint);
+      var subTip = done ? t.dateDur : (running ? "" : t.durHint);
       var bar = running && st.job.pct != null ? '<span class="pbar"><span style="width:' + st.job.pct + '%"></span></span>' : "";
       var q = done && n.quality != null ? '<span class="q" style="color:' + (n.quality < 85 ? "var(--warn)" : "var(--mute)") + '"' + tip(t.qualityHint) + ">" + n.quality + " %</span>" : "";
-      return '<div class="item"><button type="button" class="rowbtn" data-a="row" data-id="' + esc(n.id) + '" aria-expanded="' + open + '"' + tip(t.rowHint) + '><span class="st">' + statusIcon(n, st.job) +
-        '</span><span class="mid"><span class="main">' + esc(main) + '</span><span class="sub"' + tip(t.dateDur) + ">" + esc(sub) + "</span>" + bar + '</span><span style="min-width:54px;display:inline-flex;justify-content:flex-end">' + q + "</span></button>" +
+      return '<div class="item"><button type="button" class="rowbtn" data-a="row" data-id="' + esc(n.id) + '" aria-expanded="' + open + '"' + tip(rowTip) + '><span class="st">' + statusIcon(n, st.job) +
+        '</span><span class="mid"><span class="main">' + esc(main) + '</span><span class="sub"' + tip(subTip) + ">" + esc(sub) + "</span>" + bar + '</span><span style="min-width:54px;display:inline-flex;justify-content:flex-end">' + q + "</span></button>" +
         (open && (done || n.status === "error") ? viewDetail(n, t) : "") +
         (open && !done ? queueActions(n, st.job, t) : "") + "</div>";
     }).join("") + "</div>";
