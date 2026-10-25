@@ -83,7 +83,6 @@
   var I = {
     info: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path></svg>',
     gear: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg>',
-    chev: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>',
     doc: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v4h4"></path><path d="M10 12h5"></path><path d="M10 16h5"></path></svg>',
     folder: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>',
     mic: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path></svg>',
@@ -117,7 +116,7 @@
 
   var S = {
     ui: null, hidden: true, settingsOpen: false, aboutOpen: false, open: null, edit: null, draft: "", exp: null,
-    delConfirm: false, emptyConfirm: false, verify: null, rr: "mid", rl: "en", menu: null, server: null, full: {}, about: null, upd: null,
+    delConfirm: false, emptyConfirm: false, verify: null, rr: "mid", rl: "en", server: null, full: {}, about: null, upd: null,
     folderEdit: false, folderDraft: "", wasRunning: false
   };
   var lastView = "";
@@ -135,26 +134,22 @@
   function noteLang(id) { var n = findNote(id); return (n && n.lang) || ui(); }
   function lvlIcon(k) { return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" aria-hidden="true">' + I.lvl[k] + "</svg>"; }
   var LANG_NAME = { fr: "Français", en: "English" };
-  function menuBtn(key, icon, label, hint) {
-    return '<button type="button" class="mbtn menu' + (S.menu === key ? " open" : "") + '" data-a="menu" data-v="' + key + '"' + tip(hint) + ">" + icon + (label ? "<span>" + esc(label) + "</span>" : "") + I.chev + "</button>";
+  function cycleBtn(key, icon, label, hint) {
+    return '<button type="button" class="mbtn menu" data-a="cycle" data-v="' + key + '"' + tip(hint) + ">" + icon + (label ? "<span>" + esc(label) + "</span>" : "") + "</button>";
   }
+  // One tap changes the choice and moves on to the next one: nothing opens, nothing moves.
   function optionBar(t) {
-    return menuBtn("lvl", lvlIcon(S.rr), "", t[S.rr] + " · " + t.levelHint) + menuBtn("lang", "", String(S.rl).toUpperCase(), t.langHint);
+    return cycleBtn("lvl", lvlIcon(S.rr), "", t.levelHint + " : " + t[S.rr]) + cycleBtn("lang", "", String(S.rl).toUpperCase(), t.langHint + " : " + (LANG_NAME[S.rl] || S.rl));
   }
   function exportList(n, t) {
     if (S.exp !== n.id) { return ""; }
-    return '<div class="opts" style="order:3"><button type="button" class="opt" data-a="expCopy"' + tip(t.copyRichHint) + ">" + I.copy.replace("#FFFFFF", "#1D1D1F") + '</button><button type="button" class="opt" data-a="expMd"' + tip(t.expMdHint) + '><span>MD</span></button><button type="button" class="opt" data-a="expHtml"' + tip(t.expHtmlHint) + "><span>HTML</span></button></div>";
+    return '<div class="pop-list"><button type="button" class="opt" data-a="expCopy"' + tip(t.copyRichHint) + ">" + I.copy.replace("#FFFFFF", "#1D1D1F") + '</button><button type="button" class="opt" data-a="expMd"' + tip(t.expMdHint) + '><span>MD</span></button><button type="button" class="opt" data-a="expHtml"' + tip(t.expHtmlHint) + "><span>HTML</span></button></div>";
   }
-  function optionList(t, which) {
-    if (!S.menu || (S.menu === "ui") !== (which === "ui")) { return ""; }
-    var isLevel = S.menu === "lvl", items = isLevel ? ["short", "mid", "full"] : ["fr", "en"];
-    var cur = isLevel ? S.rr : (S.menu === "ui" ? ui() : S.rl), act = isLevel ? "rr" : (S.menu === "ui" ? "ui" : "rl");
-    return '<div class="opts">' + items.map(function (k) {
-      return '<button type="button" class="opt' + (k === cur ? " on" : "") + '" data-a="' + act + '" data-v="' + k + '"' + tip(isLevel ? t[k + "Hint"] : LANG_NAME[k]) + ">" +
-        (isLevel ? lvlIcon(k) : "<span>" + k.toUpperCase() + "</span>") + "</button>";
+  function segLang(prefix, current, size, t, hint) {
+    return '<div class="seg ' + size + '">' + ["fr", "en"].map(function (k) {
+      return '<button type="button" class="' + (current === k ? "on" : "") + '" data-a="' + prefix + '" data-v="' + k + '"' + tip(hint) + ">" + k.toUpperCase() + "</button>";
     }).join("") + "</div>";
   }
-
   function api(method, path, body) {
     var opt = { method: method, headers: {} };
     if (method === "POST") { opt.headers["Content-Type"] = "application/json"; opt.headers["X-Cairn"] = "1"; opt.body = JSON.stringify(body || {}); }
@@ -313,12 +308,12 @@
     var passInk = n.quality != null && n.quality < 85 ? "var(--warn)" : "var(--mute)";
     h += '<div class="bar"><div class="row gap8" style="flex-wrap:wrap">' + optionBar(t) +
       '<button type="button" class="ib blue" data-a="rerun"' + (S.server && S.server.job && S.server.job.running ? " disabled" : "") + tip(t.redoHint) + ">" + I.refreshW + "</button></div>";
-    h += '<div class="row" style="gap:4px;order:2">';
+    h += '<div class="row" style="gap:4px">';
     h += '<button type="button" class="ib" data-a="viewText" data-id="' + esc(n.id) + '"' + tip(t.viewText) + ">" + I.doc.replace("#6E6E73", "#1D1D1F") + "</button>";
     h += '<button type="button" class="warn" data-a="copyDoubtful" style="color:' + passInk + '"' + tip(n.passages + t.passages + " · " + t.copilotHint) + ">" + (passInk === "var(--orange)" ? I.warnB.replace('width="16" height="16"', 'width="18" height="18"') : I.warnB.replace("#C86D51", "#6E6E73").replace('width="16" height="16"', 'width="18" height="18"')) + (n.passages || 0) + "</button>";
     h += '<button type="button" class="ib" data-a="startRename"' + tip(t.rename) + ">" + I.pencil + "</button>";
-    h += '<button type="button" class="ib' + (S.exp === n.id ? " on" : "") + '" data-a="toggleExport"' + tip(t.exportHint) + ">" + I.down + "</button>";
-    h += '<button type="button" class="ib" data-a="askDelete"' + tip(t.deleteHint) + ">" + I.trash + "</button></div>" + optionList(t) + exportList(n, t) + "</div>";
+    h += '<span class="pop"><button type="button" class="ib' + (S.exp === n.id ? " on" : "") + '" data-a="toggleExport"' + tip(t.exportHint) + ">" + I.down + "</button>" + exportList(n, t) + "</span>";
+    h += '<button type="button" class="ib" data-a="askDelete"' + tip(t.deleteHint) + ">" + I.trash + "</button></div></div>";
     if (S.delConfirm) { h += confirmBox(t.deleteConfirm, "confirmDelete", t); }
     if (n.error) { h += '<div class="err">' + esc(t.error + n.error) + "</div>"; }
     if (full && full.summary) {
@@ -355,7 +350,7 @@
         ? '<button type="button" class="mbtn" data-a="restoreOne" data-id="' + esc(n.id) + '">' + esc(t.putBack) + "</button>"
         : '<button type="button" class="mbtn" data-a="skipOne" data-id="' + esc(n.id) + '">' + esc(t.skipIt) + "</button>";
     }
-    return h + "</div>" + optionList(t) + "</div>";
+    return h + "</div></div>";
   }
 
   function viewList(t, st) {
@@ -390,10 +385,9 @@
     var pv = st.privacy, sc = !pv ? "#86868B" : (pv.ok ? "#1E8E3E" : "#A4452A");
     var pt = t.localHint + ". " + t.privAuto + ": " + (!pv ? t.privNone : (pv.ok ? t.privOk + " · " + fmtDate(pv.when) : t.privBad));
     h += '<span class="pill"' + tip(pt) + ">" + I.shield(sc, 18) + esc(t.local) + "</span></div>";
-    h += '<div class="row" style="gap:2px"><div style="margin-right:6px">' + menuBtn("ui", "", ui().toUpperCase(), t.uiLang) + "</div>";
+    h += '<div class="row" style="gap:2px"><div style="margin-right:6px"' + tip(t.uiLang) + ">" + segLang("ui", ui(), "s34", t, "") + "</div>";
     h += '<button type="button" class="ib plain' + bg(S.aboutOpen) + (st.update && st.update.available ? " upd" : "") + '" data-a="about"' + tip(t.about) + ">" + I.info + "</button>";
     h += '<button type="button" class="ib plain' + bg(S.settingsOpen) + '" data-a="settings"' + tip(t.settings) + ">" + I.gear + "</button></div></div>";
-    if (S.menu === "ui") { h += '<div style="margin:0 0 12px">' + optionList(t, "ui") + "</div>"; }
     if (S.settingsOpen) { h += viewSettings(t, st); }
     if (S.aboutOpen) { h += viewAbout(t); }
     h += '<div class="hero"><div class="ring"' + (job.running ? tip(stepText(job, t)) : "") + '><svg class="arc" width="156" height="156" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="#E5E5EA" stroke-width="3"></circle>' +
@@ -524,7 +518,7 @@
   }
 
   var A = {
-    ui: function (v) { S.ui = v; S.menu = null; api("POST", "/api/settings", { ui: v }).then(refresh); },
+    ui: function (v) { S.ui = v; api("POST", "/api/settings", { ui: v }).then(refresh); },
     autocheck: function (v) { api("POST", "/api/settings", { autocheck: v === "1" }).then(refresh); },
     settings: function () { S.settingsOpen = !S.settingsOpen; S.emptyConfirm = false; },
     about: function () {
@@ -539,15 +533,18 @@
     import: function () {
       api("POST", "/api/import").then(refresh).catch(function (e) { flash(T().error + e.message); });
     },
-    row: function (v, id) { S.open = S.open === id ? null : id; S.delConfirm = false; S.edit = null; S.exp = null; S.menu = null; S.rr = noteLevel(id); S.rl = noteLang(id); if (S.open) { loadFull(id); } },
-    menu: function (v) { S.menu = S.menu === v ? null : v; S.exp = null; },
+    row: function (v, id) { S.open = S.open === id ? null : id; S.delConfirm = false; S.edit = null; S.exp = null; S.rr = noteLevel(id); S.rl = noteLang(id); if (S.open) { loadFull(id); } },
+    cycle: function (v) {
+      var order = v === "lvl" ? ["short", "mid", "full"] : ["fr", "en"], cur = v === "lvl" ? S.rr : S.rl;
+      (v === "lvl" ? A.rr : A.rl)(order[(order.indexOf(cur) + 1) % order.length]);
+    },
     rr: function (v) {
-      S.rr = v; S.menu = null;
+      S.rr = v;
       var id = S.open, n = findNote(id);
       if (n && n.status !== "done") { api("POST", "/api/note/" + encodeURIComponent(id) + "/options", { level: v }).then(refresh); }
     },
     rl: function (v) {
-      S.rl = v; S.menu = null;
+      S.rl = v;
       var id = S.open, n = findNote(id);
       if (n && n.status !== "done") { api("POST", "/api/note/" + encodeURIComponent(id) + "/options", { lang: v }).then(refresh); }
     },
@@ -569,10 +566,10 @@
       if (!title) { return; }
       api("POST", "/api/note/" + encodeURIComponent(id) + "/rename", { title: title }).then(function () { S.edit = null; flash(T().renamed); delete S.full[id]; refresh(); });
     },
-    toggleExport: function () { S.exp = S.exp === S.open ? null : S.open; S.menu = null; },
-    expMd: function () { download(S.open, "md"); },
-    expHtml: function () { download(S.open, "html"); },
-    expCopy: function () { copyRich(S.open).catch(function () { flash(T().error + "clipboard"); }); },
+    toggleExport: function () { S.exp = S.exp === S.open ? null : S.open; },
+    expMd: function () { S.exp = null; download(S.open, "md"); },
+    expHtml: function () { S.exp = null; download(S.open, "html"); },
+    expCopy: function () { S.exp = null; copyRich(S.open).catch(function () { flash(T().error + "clipboard"); }); },
     viewText: function (v, id) { showText(id); },
     askDelete: function () { S.delConfirm = true; },
     confirmDelete: function () {
@@ -625,6 +622,7 @@
   };
 
   document.addEventListener("click", function (ev) {
+    if (S.exp && !ev.target.closest(".pop")) { S.exp = null; render(); }
     var el = ev.target.closest("[data-a]");
     if (!el || el.disabled) { return; }
     var fn = A[el.getAttribute("data-a")];
@@ -635,7 +633,7 @@
     if (ev.target.id === "folderInput") { S.folderDraft = ev.target.value; }
   });
   document.addEventListener("keydown", function (ev) {
-    if (ev.key === "Escape") { closeText(); }
+    if (ev.key === "Escape") { closeText(); if (S.exp) { S.exp = null; render(); } }
     if (ev.key === "Enter" && ev.target.id === "nameInput") { A.saveName(); }
     if (ev.key === "Enter" && ev.target.id === "folderInput") { A.folderSave(); }
   });
