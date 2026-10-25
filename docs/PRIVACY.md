@@ -5,7 +5,7 @@ One rule: **your recordings never leave your computer.**
 ## What Cairn does
 
 - Reads the audio files from your Pocket over USB and copies them to a folder you choose.
-- Transcribes, cleans, titles and summarizes them on your computer, with models that run offline.
+- Transcribes, titles and summarizes them on your computer, with models that run offline.
 - Stores everything in that folder: audio, transcripts, summaries, exports.
 
 ## What Cairn never does

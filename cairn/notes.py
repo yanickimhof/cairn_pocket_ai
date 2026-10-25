@@ -9,7 +9,7 @@ from pathlib import Path
 from . import config
 
 ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,150}")
-LIGHT = ("id", "title", "date", "duration", "status", "quality", "passages", "level", "error", "step")
+LIGHT = ("id", "title", "date", "duration", "status", "quality", "passages", "level", "lang", "error", "step")
 
 
 def make_id(rel):

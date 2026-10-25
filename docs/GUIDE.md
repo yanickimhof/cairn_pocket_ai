@@ -2,7 +2,7 @@
 
 ## Choosing what to process
 
-Tap a waiting recording to process it now: Cairn does that one first, then carries on with every other waiting recording, newest first. Recordings you put back while it runs are picked up too. Each recording has its own level of detail (short, standard, detailed; standard by default): choose it before processing, in the same panel. Skip a recording to leave it out of the queue (it can be restored). Stop interrupts the current job. On a finished note, the circular arrow rewrites the summary at the chosen level, and **Transcribe again** redoes the transcription and the summary (your chosen name is kept; the previous text stays until the new one is ready). Secure mode hides the list of notes until you reveal it.
+Tap a waiting recording to process it now: Cairn does that one first, then carries on with every other waiting recording, newest first. Recordings you put back while it runs are picked up too. Each recording has its own level of detail (short, standard, detailed; standard by default) and its own language (FR or EN, the interface language by default): choose them before processing, in the same panel. Skip a recording to leave it out of the queue (it can be restored). Stop interrupts the current job. On a finished note, choose a level and press **Redo**: Cairn rewrites the note at that level and keeps your chosen name. The audio is transcribed again only if you changed the speech model since the note was made; otherwise the transcript is reused, which takes seconds. Secure mode hides the list of notes until you reveal it.
 
 ## Models
 
@@ -12,7 +12,7 @@ For sharper notes, open **Settings, Models**, pick a larger model (Qwen3 8B or 1
 
 ## Speed
 
-The speech model stays loaded between recordings and is released after five idle minutes. **Polish the transcript** (Settings) rewrites the raw transcript for readability. It is off by default because it is the slowest step, and summaries do not depend on it.
+The speech model stays loaded between recordings and is released after five idle minutes.
 
 ## Background mode and web app (macOS)
 

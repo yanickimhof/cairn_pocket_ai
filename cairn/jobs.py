@@ -78,22 +78,28 @@ class Jobs:
             note["status"] = "waiting"
             self.store.save(note)
 
-    def set_level(self, note_id, level):
-        """Choose the level of detail of one recording (standard until chosen otherwise)."""
-        if level not in config.LEVELS:
-            raise ValueError("bad_level")
+    def set_options(self, note_id, level=None, lang=None):
+        """Choose the level of detail and the language of one recording (the interface language until chosen)."""
+        if (level is not None and level not in config.LEVELS) or (lang is not None and lang not in config.LANGS):
+            raise ValueError("bad_option")
         note = self.store.get(note_id)
-        note["level"] = level
+        if level is not None:
+            note["level"] = level
+        if lang is not None:
+            note["lang"] = lang
         self.store.save(note)
 
-    def start_process(self, note_id, level=None, again=False):
-        """Process one chosen recording now. With again=True a finished recording is transcribed anew
-        (the previous text stays in place until the new one is ready)."""
+    @staticmethod
+    def _lang(note, settings):
+        if note.get("lang") in config.LANGS:
+            return note["lang"]
+        return settings["ui"] if settings.get("ui") in config.LANGS else "en"
+
+    def start_process(self, note_id):
+        """Process one chosen recording now."""
         note = self.store.get(note_id)
-        if (note.get("status") == "done" and not again) or not os.path.exists(note.get("audio", "")):
+        if note.get("status") == "done" or not os.path.exists(note.get("audio", "")):
             raise ValueError("not_processable")
-        if level is not None:
-            self.set_level(note_id, level)
         self._start("import", self._one, note_id)
 
     def _one(self, note_id):
@@ -185,13 +191,13 @@ class Jobs:
 
     def _process(self, note_id, settings):
         note = self.store.get(note_id)
-        lang = settings["tr"] or "en"
+        lang = self._lang(note, settings)
         level = note.get("level") if note.get("level") in config.LEVELS else "mid"  # chosen per recording
 
         def step(name):
             note["status"], note["step"] = name, name
             self.store.save(note)
-            self._set(step=name, pct=0 if name in ("transcribing", "cleaning") else None)
+            self._set(step=name, pct=0 if name == "transcribing" else None)
 
         def pct(value):
             self._set(pct=value)
@@ -206,13 +212,7 @@ class Jobs:
                 duration=result["duration"] or note.get("duration"), lang=lang, heard=result.get("language"), error="",
             )
             self.store.save(note)
-            if settings.get("polish"):
-                step("cleaning")
-            lines = speech.raw_lines(result["segments"])
-            if settings.get("polish") and lines:
-                note["clean"] = llm.clean(lines, lang, progress=pct)
-            else:  # fast path: the recognized text is already punctuated, skip the slow rewriting pass
-                note["clean"] = "\n\n".join(lines)
+            note["clean"] = "\n\n".join(speech.raw_lines(result["segments"]))  # the recognized text is already punctuated
             step("summarizing")
             self._summarize(note, level, lang)
             cfg = config.install_config()
@@ -235,21 +235,30 @@ class Jobs:
         if not note.get("title"):
             note["title"] = note["date"].replace("T", " ")[:16] if note.get("date") else note["id"]
 
-    # Rerun the summary at another level (no new transcription)
+    # Redo a finished recording at the chosen level
 
-    def start_rerun(self, note_id, level):
-        self.store.get(note_id)
-        self._start("rerun", self._rerun, note_id, level)
+    def start_rerun(self, note_id, level, lang=None):
+        """Redo a finished note at the chosen level. The audio is transcribed again only when the speech
+        model has changed since the note was made; otherwise the transcript is kept and only the summary
+        is rewritten. Returns True when the audio is transcribed again."""
+        note = self.store.get(note_id)
+        made_with = (note.get("models") or {}).get("speech")
+        again = bool(made_with) and made_with != speech.model_name() and os.path.exists(note.get("audio", ""))
+        self.set_options(note_id, level, lang)
+        if again:
+            self._start("import", self._one, note_id)
+        else:
+            self._start("rerun", self._rerun, note_id, level)
+        return again
 
     def _rerun(self, note_id, level):
         settings = config.load_settings()
         note = self.store.get(note_id)
         self._set(id=note_id, step="summarizing", total=1)
-        lang = settings["tr"] or note.get("lang") or "en"
+        lang = self._lang(note, settings)
         try:
             if not note.get("clean") and note.get("segments"):
-                lines = speech.raw_lines(note["segments"])
-                note["clean"] = llm.clean(lines, lang) if settings.get("polish") else "\n\n".join(lines)
+                note["clean"] = "\n\n".join(speech.raw_lines(note["segments"]))
             self._summarize(note, level, lang)
             note.update(status="done", level=level, error="", step="")
             self.store.save(note)

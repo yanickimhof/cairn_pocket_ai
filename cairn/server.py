@@ -446,26 +446,26 @@ def make_handler(app):
                 app.store.save(note)
                 return self._json(200, {"ok": True})
             if method == "POST" and action == "rerun":
-                level = body.get("level")
-                if level not in config.LEVELS:
+                level, lang = body.get("level"), body.get("lang")
+                if level not in config.LEVELS or (lang is not None and lang not in config.LANGS):
                     raise ApiError(400, "bad_level")
                 app.get_note(note_id)
                 try:
-                    app.jobs.start_rerun(note_id, level)
+                    transcribe = app.jobs.start_rerun(note_id, level, lang)
                 except jobs.Busy:
                     raise ApiError(409, "busy")
-                return self._json(202, {"ok": True})
-            if method == "POST" and action == "level":
+                return self._json(202, {"ok": True, "transcribe": transcribe})
+            if method == "POST" and action == "options":
                 app.get_note(note_id)
                 try:
-                    app.jobs.set_level(note_id, body.get("level"))
+                    app.jobs.set_options(note_id, body.get("level"), body.get("lang"))
                 except ValueError as error:
                     raise ApiError(400, str(error))
                 return self._json(200, {"ok": True})
             if method == "POST" and action == "process":
                 app.get_note(note_id)
                 try:
-                    app.jobs.start_process(note_id, body.get("level"), body.get("again") is True)
+                    app.jobs.start_process(note_id)
                 except jobs.Busy:
                     raise ApiError(409, "busy")
                 except ValueError as error:

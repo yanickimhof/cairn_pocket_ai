@@ -62,7 +62,7 @@ You need neither the Pocket desktop app nor a Pocket account on the computer.
 
 1. Start Cairn: open `~/Cairn/Cairn.app` (macOS), the Start menu shortcut or `Cairn.cmd` (Windows), or run `~/Cairn/bin/cairn`. A page opens, served only by your computer and protected by a session key.
 2. Click **Import**. Cairn copies and verifies every recording.
-3. It transcribes each one with Whisper, then cleans, titles and summarizes it with a local model (Qwen3 through Ollama), at a short, standard or detailed level that you choose for each recording. Each note carries a reliability score and flags the passages worth checking.
+3. It transcribes each one with Whisper, then titles and summarizes it with a local model (Qwen3 through Ollama), at a level of detail and in a language that you choose for each recording. Each note carries a reliability score and flags the passages worth checking.
 4. Rename, copy or export a note (Markdown, HTML). Exports go to `~/Cairn/Exports`.
 5. Optionally empty the Pocket, only after every copy is verified.
 

@@ -1,4 +1,4 @@
-"""Local language model (Ollama on 127.0.0.1): clean, title and summarize."""
+"""Local language model (Ollama on 127.0.0.1): title and summarize."""
 
 import json
 import os
@@ -109,32 +109,6 @@ def chat(system, user, schema=None, num_ctx=8192):
 
 def _ctx(text):
     return 8192 if len(text.split()) < 3500 else 16384
-
-
-def clean(lines, lang, progress=None):
-    """Rewrite raw recognized speech into readable text, chunk by chunk."""
-    chunks, current, count = [], [], 0
-    for line in lines:
-        words = len(line.split())
-        if count + words > CHUNK_WORDS and current:
-            chunks.append(current)
-            current, count = [], 0
-        current.append(line)
-        count += words
-    if current:
-        chunks.append(current)
-    system = (
-        "You correct raw speech-recognition transcripts of recorded conversations. Rewrite the excerpt in clean, "
-        "readable %s: fix punctuation, obviously misrecognized words and filler repetitions. Do not invent anything, "
-        "do not summarize, do not remove information. Translate passages in another language into %s. "
-        "Keep the [mm:ss] markers at the start of paragraphs. Reply with the corrected text only." % (NAMES[lang], NAMES[lang])
-    )
-    out = []
-    for index, chunk in enumerate(chunks):
-        if progress:
-            progress(int(100 * index / len(chunks)))
-        out.append(chat(system, "\n".join(chunk)))
-    return "\n\n".join(out)
 
 
 def _schema(level):
