@@ -421,21 +421,20 @@
     var pt = t.localHint + ". " + t.privAuto + ": " + (!pv ? t.privNone : (pv.ok ? t.privOk + " · " + fmtDate(pv.when) : t.privBad));
     h += '<span class="pill"' + tip(pt) + ">" + I.shield(sc, 18) + esc(t.local) + "</span></div>";
     h += '<div class="row" style="gap:2px"><div style="margin-right:6px"' + tip(t.uiLang) + ">" + segLang("ui", ui(), "s34", t, "") + "</div>";
+    h += '<button type="button" class="ib plain' + (S.hidden ? " hiddenon" : "") + '" data-a="eye" aria-pressed="' + S.hidden + '"' + tip(S.hidden ? t.eyeShow : t.eyeHide) + ">" + (S.hidden ? I.eyeOff : I.eye) + "</button>";
     h += '<button type="button" class="ib plain' + bg(S.aboutOpen) + (st.update && st.update.available ? " upd" : "") + '" data-a="about"' + tip(t.about) + ">" + I.info + "</button>";
     h += '<button type="button" class="ib plain' + bg(S.settingsOpen) + '" data-a="settings"' + tip(t.settings) + ">" + I.gear + "</button></div></div>";
     if (S.settingsOpen) { h += viewSettings(t, st); }
     if (S.aboutOpen) { h += viewAbout(t); }
-    h += '<div class="hero"><div class="ring"' + (job.running ? tip(stepText(job, t)) : "") + '><svg class="arc" width="156" height="156" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="#E5E5EA" stroke-width="3"></circle>' +
+    h += '<div class="side"><div class="hero"><div class="ring"' + (job.running ? tip(stepText(job, t)) : "") + '><svg class="arc" width="156" height="156" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="#E5E5EA" stroke-width="3"></circle>' +
       '<circle cx="50" cy="50" r="46" fill="none" stroke="#3368A0" stroke-width="3" stroke-linecap="round" stroke-dasharray="' + (ring * 289).toFixed(1) + ' 289" transform="rotate(-90 50 50)"></circle></svg>';
     h += '<button type="button" class="import' + (job.running ? " busy" : "") + '" data-a="import"' + (canImport ? "" : " disabled") + tip(t.importHint) + ">" + I.downBig + "</button>";
     var todo = (st.pocket.new || 0) + (st.totals.waiting || 0);
     if (todo > 0) { h += '<span class="badge"' + tip(t.queueTip.replace("{n}", todo)) + ">" + todo + "</span>"; }
     h += "</div></div>";
-    h += '<div class="eye"><button type="button" class="ib' + (S.hidden ? " hiddenon" : "") + '" data-a="eye" aria-pressed="' + S.hidden + '"' + tip(S.hidden ? t.eyeShow : t.eyeHide) + ">" + (S.hidden ? I.eyeOff : I.eye) + "</button>";
-    if (S.hidden) { h += '<div class="note">' + esc(t.hiddenNote) + "</div>"; }
     if (!st.ollama) { h += '<div class="err">' + esc(t.modelDown) + "</div>"; }
     h += "</div>";
-    if (!S.hidden) { h += viewList(t, st); }
+    h += S.hidden ? '<div class="list veil">' + I.eyeOff + "<span>" + esc(t.hiddenNote) + "</span></div>" : viewList(t, st);
     h += '<footer class="foot"><b>Cairn</b> · ' + esc(t.tagline) + "</footer>";
     return h + "</main>";
   }
@@ -677,8 +676,18 @@
     if (ev.key === "Enter" && ev.target.id === "folderInput") { A.folderSave(); }
   });
 
+  function fitWindow() {  // the installed web app opens at a size that fits its content, once; the person's own resizing is kept after that
+    try {
+      if (!window.matchMedia("(display-mode: standalone)").matches || localStorage.getItem("cairn.fitted")) { return; }
+      localStorage.setItem("cairn.fitted", "1");
+      var w = Math.min(window.innerWidth, 980), h = Math.max(520, Math.min(window.innerHeight, document.documentElement.scrollHeight + 24, 760));
+      window.resizeTo(w + (window.outerWidth - window.innerWidth), h + (window.outerHeight - window.innerHeight));
+    } catch (e) { /* not allowed here: the window keeps its size */ }
+  }
+
   function loop() {
     refresh().then(function () {
+      if (S.server && !S.fitted) { S.fitted = true; setTimeout(fitWindow, 300); }
       if (!S.uiSaved && S.server) {  // the note language defaults to the interface language, so the server must know it
         S.uiSaved = true;
         if (!S.server.settings.ui) { api("POST", "/api/settings", { ui: ui() }); }
