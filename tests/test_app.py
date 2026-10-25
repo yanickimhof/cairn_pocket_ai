@@ -300,6 +300,28 @@ class AppTest(unittest.TestCase):
         self.assertEqual(self.c.call("POST", "/api/cancel")[0], 200)
         self.app.store.delete("w-test")
 
+    def test_99_web_page_boots_and_reacts(self):
+        """The page is loaded in Node and driven with fake clicks, so a broken script fails here."""
+        import shutil
+        import subprocess
+
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("Node is not installed")
+        _, state = self.c.call("GET", "/api/state")
+        done = [n for n in state["notes"] if n["status"] == "done"]
+        self.assertTrue(done)
+        _, note = self.c.call("GET", "/api/note/" + done[0]["id"])
+        state["notes"].append({"id": "w1", "status": "waiting", "title": "", "date": "2026-10-08T07:00:00", "duration": 61, "level": None, "lang": None})
+        fixture = Path(self.tmp.name) / "web_fixture.json"
+        fixture.write_text(json.dumps({"state": state, "note": note}), encoding="utf-8")
+        root = Path(__file__).resolve().parent
+        result = subprocess.run(
+            [node, str(root / "web_boot.js"), str(root.parent / "cairn" / "web" / "app.js"), str(fixture)],
+            capture_output=True, text=True, timeout=60,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_13_web_app_files(self):
         status, _ = self.c.call("GET", "/manifest.webmanifest", cookie=False)
         self.assertEqual(status, 200)
