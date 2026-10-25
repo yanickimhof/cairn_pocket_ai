@@ -44,6 +44,7 @@ async def _read(key):
         lines.append(bytes(data).decode(errors="replace"))
 
     async with BleakClient(device, timeout=15) as client:
+        await asyncio.sleep(0.3)  # macOS sometimes reports connected just before service discovery has settled
         await client.start_notify(RSP, on_response)
         await client.write_gatt_char(CMD, ("APP&SK&" + key).encode(), response=True)
         await asyncio.sleep(1.2)

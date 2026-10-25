@@ -134,7 +134,7 @@ class Downloader:
                         self._set(pct=int(100 * line.get("completed", 0) / line["total"]))
             self._set(state="done", pct=100)
         except Exception as error:  # reported to the page, never raised
-            self._set(state="error", error=str(error)[:200])
+            self._set(state="error", error=str(error)[:400])
 
     def _fetch_speech(self, entry):
         target = speech_dir(entry["id"])
@@ -162,7 +162,7 @@ class Downloader:
             self._set(state="done", pct=100)
         except Exception as error:  # reported to the page, never raised
             shutil.rmtree(part, ignore_errors=True)
-            self._set(state="error", error=str(error)[:200])
+            self._set(state="error", error=str(error)[:400])
 
     def _fetch_diar(self, entry):
         """Installs the diarization package (pyannote.audio) if needed, then downloads its gated model
@@ -178,19 +178,35 @@ class Downloader:
             try:
                 import pyannote.audio  # noqa: F401
             except ImportError:
-                pip = subprocess.run(  # nosec B603
-                    [sys.executable, "-m", "pip", "install", "--quiet", "pyannote.audio"],
-                    capture_output=True, text=True, timeout=1800, check=False,
-                )
+                uv = shutil.which("uv") or str(config.home() / "bin" / "uv")
+                if Path(uv).exists() or shutil.which(uv):
+                    pip = subprocess.run(  # nosec B603
+                        [uv, "pip", "install", "--python", sys.executable, "--quiet", "pyannote.audio"],
+                        capture_output=True, text=True, timeout=1800, check=False,
+                    )
+                else:
+                    # No pip inside this venv (installed with uv) and no uv on hand: bootstrap pip itself first.
+                    subprocess.run(  # nosec B603
+                        [sys.executable, "-m", "ensurepip", "--upgrade"],
+                        capture_output=True, text=True, timeout=120, check=False,
+                    )
+                    pip = subprocess.run(  # nosec B603
+                        [sys.executable, "-m", "pip", "install", "--quiet", "pyannote.audio"],
+                        capture_output=True, text=True, timeout=1800, check=False,
+                    )
                 if pip.returncode != 0:
                     tail = (pip.stderr or "").strip().splitlines()[-1:]
                     raise RuntimeError("Could not install pyannote.audio. " + " ".join(tail))
             self._set(pct=40)
-            env = dict(os.environ, HF_HUB_DISABLE_TELEMETRY="1", DO_NOT_TRACK="1", HF_HOME=str(part / "hf_cache"), HF_TOKEN=token)
+            env = dict(os.environ, HF_HUB_OFFLINE="0", HF_HUB_DISABLE_TELEMETRY="1", DO_NOT_TRACK="1", HF_HOME=str(part / "hf_cache"), HF_TOKEN=token)
             code = (
                 "import os, sys\n"
                 "from pyannote.audio import Pipeline\n"
-                "Pipeline.from_pretrained(sys.argv[1], use_auth_token=os.environ.get('HF_TOKEN') or None)\n"
+                "tok = os.environ.get('HF_TOKEN') or None\n"
+                "try:\n"
+                "    Pipeline.from_pretrained(sys.argv[1], token=tok)\n"
+                "except TypeError:\n"
+                "    Pipeline.from_pretrained(sys.argv[1], use_auth_token=tok)\n"
             )
             flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
             proc = subprocess.run(  # nosec B603
@@ -206,7 +222,7 @@ class Downloader:
             self._set(state="done", pct=100)
         except Exception as error:  # reported to the page, never raised; the token itself is never included
             shutil.rmtree(part, ignore_errors=True)
-            self._set(state="error", error=str(error)[:200])
+            self._set(state="error", error=str(error)[:400])
 
 
 def select(kind, model_id):

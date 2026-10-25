@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
-from . import battery, catalog, config, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, speech
+from . import battery, catalog, config, diarize, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, speech
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -133,6 +133,7 @@ class App:
             "pocket_status": self.status.snapshot(),
             "update": self.update_info,
             "privacy": _privacy_summary(),
+            "diar_installed": models.diar_installed(),
             "totals": {"notes": len(everything), "done": sum(1 for n in everything if n.get("status") == "done"),
                        "waiting": sum(1 for n in everything if n.get("status") in ("waiting", "error"))},
         }
@@ -156,6 +157,10 @@ class App:
                 r"^(faster-)?whisper-|-ct2$|-mlx$", "", (cfg.get("whisper_repo") or model_dir.name).split("/")[-1]),
              "size": _size(model_dir) if model_dir.is_dir() else 0, "ok": model_dir.is_dir(), "fix": "speech"},
         ]
+        if models.diar_installed():
+            diar_entry = catalog.DIAR[0]
+            comps.append({"name": "Diarization", "ver": diar_entry["label"].split("(")[-1].rstrip(")"),
+             "size": _size(models.diar_dir()), "ok": True, "fix": "diar"})
         ffmpeg = shutil.which("ffmpeg", path=str(config.home() / "bin") + os.pathsep + os.environ.get("PATH", ""))
         if ffmpeg:
             version = "-"
@@ -512,6 +517,31 @@ def make_handler(app):
                 except ValueError as error:
                     raise ApiError(400, str(error))
                 return self._json(202, {"ok": True})
+            if method == "POST" and action == "rediarize":
+                app.get_note(note_id)
+                try:
+                    app.jobs.start_rediarize(note_id)
+                except jobs.Busy:
+                    raise ApiError(409, "busy")
+                except ValueError as error:
+                    raise ApiError(400, str(error))
+                return self._json(202, {"ok": True})
+            if method == "POST" and action == "speaker":
+                raw = str(body.get("from") or "").strip()[:60]
+                name = str(body.get("name") or "").strip()[:60]
+                if not raw:
+                    raise ApiError(400, "bad_speaker")
+                note = app.get_note(note_id)
+                names = dict(note.get("speaker_names") or {})
+                if name:
+                    names[raw] = name
+                else:
+                    names.pop(raw, None)
+                note["speaker_names"] = names
+                if note.get("segments"):
+                    note["clean"] = "\n\n".join(speech.raw_lines(diarize.renamed(note["segments"], names)))
+                app.store.save(note)
+                return self._json(200, {"ok": True})
             if method == "POST" and action in ("skip", "restore"):
                 app.get_note(note_id)
                 getattr(app.jobs, action)(note_id)

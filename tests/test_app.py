@@ -7,6 +7,7 @@ import http.client
 import json
 import math
 import os
+import shutil
 import struct
 import sys
 import tempfile
@@ -428,6 +429,23 @@ class AppTest(unittest.TestCase):
         self.assertTrue(all({"name", "ver", "size", "ok"} <= set(c) for c in data["components"]))
         self.assertTrue(data["referral"].startswith("https://referral.heypocketai.com/"))
         self.assertEqual(self.c.call("GET", "/referral-qr.svg")[0], 404)
+        self.assertNotIn("Diarization", names)  # not installed in this fixture
+
+    def test_12_about_lists_diarization_once_its_model_is_installed(self):
+        from cairn import models
+
+        diar_dir = models.diar_dir()
+        diar_dir.mkdir(parents=True, exist_ok=True)
+        (diar_dir / models.MARK).write_text("ok", encoding="utf-8")
+        try:
+            status, data = self.c.call("GET", "/api/about")
+            self.assertEqual(status, 200)
+            diar = next((c for c in data["components"] if c["name"] == "Diarization"), None)
+            self.assertIsNotNone(diar, "the installed diarization model must be visible in About")
+            self.assertTrue(diar["ok"])
+            self.assertEqual(diar["ver"], "pyannote 3.1")
+        finally:
+            shutil.rmtree(diar_dir, ignore_errors=True)
 
 
 class HardeningTest(unittest.TestCase):
@@ -828,6 +846,23 @@ class DiarizationTest(unittest.TestCase):
         self.assertEqual([s["speaker"] for s in out], ["Speaker 1", "Speaker 2", "Speaker 1"])
         self.assertEqual(diarize.assign(list(segments), [], "en"), segments)  # no turns: nothing added, no crash
 
+    def test_assign_clears_a_label_left_over_from_an_earlier_pass(self):
+        from cairn import diarize
+
+        segments = [{"start": 0.0, "end": 2.0, "speaker": "Speaker 1"}, {"start": 10.0, "end": 12.0, "speaker": "Speaker 2"}]
+        out = diarize.assign(segments, [{"start": 0.0, "end": 2.0, "speaker": "SPEAKER_00"}], "en")
+        self.assertEqual(out[0]["speaker"], "Speaker 1")  # re-matched
+        self.assertNotIn("speaker", out[1])  # no turn covers it any more: the stale label is gone, not kept
+
+    def test_renamed_segments_swap_the_label_only_where_a_name_was_given(self):
+        from cairn import diarize
+
+        segments = [{"start": 0.0, "end": 1.0, "text": "Hi", "speaker": "Speaker 1"}, {"start": 1.0, "end": 2.0, "text": "Yo", "speaker": "Speaker 2"}]
+        out = diarize.renamed(segments, {"Speaker 1": "Sophie"})
+        self.assertEqual([s["speaker"] for s in out], ["Sophie", "Speaker 2"])
+        self.assertEqual(segments[0]["speaker"], "Speaker 1")  # the original segments are untouched
+        self.assertEqual(diarize.renamed(segments, {}), segments)
+
     def test_raw_lines_carries_the_speaker_label_only_when_one_was_assigned(self):
         from cairn import speech
 
@@ -859,6 +894,79 @@ class DiarizationTest(unittest.TestCase):
         self.assertEqual(len(catalog.DIAR), 1)
         self.assertTrue(catalog.DIAR[0]["gated"])
         self.assertEqual(catalog.DIAR_IDS, ("pyannote-3.1",))
+
+    def test_rediarize_redoes_only_the_speakers_and_clears_any_custom_names(self):
+        import tempfile
+        from unittest import mock
+
+        from cairn import diarize, jobs, notes
+
+        folder = Path(tempfile.mkdtemp())
+        store = notes.Store(folder / "Texts")
+        audio = folder / "a.wav"
+        audio.write_bytes(b"x")
+        note = {
+            "id": "n1", "status": "done", "audio": str(audio), "lang": "en", "title": "T",
+            "segments": [{"start": 0.0, "end": 2.0, "text": "Hi there.", "speaker": "Speaker 1"}],
+            "clean": "[00:00] Speaker 1: Hi there.", "speaker_names": {"Speaker 1": "Marc"},
+        }
+        store.save(note)
+        queue = jobs.Jobs(store)
+
+        # not processable: no segments, no audio, still waiting
+        store.save({"id": "n0", "status": "waiting", "title": ""})
+        with self.assertRaises(ValueError):
+            queue.start_rediarize("n0")
+        # the model is not installed: refused before any job starts
+        with mock.patch.object(diarize, "available", return_value=False):
+            with self.assertRaises(ValueError):
+                queue.start_rediarize("n1")
+
+        turns = [{"start": 0.0, "end": 2.0, "speaker": "SPEAKER_03"}]
+        with mock.patch.object(diarize, "available", return_value=True), mock.patch.object(diarize, "run", return_value=("ok", turns)):
+            queue._rediarize("n1")
+        saved = store.get("n1")
+        self.assertEqual(saved["segments"][0]["speaker"], "Speaker 1")  # re-numbered from scratch, same order
+        self.assertEqual(saved["speaker_names"], {})  # a custom name from the previous pass does not survive
+        self.assertEqual(saved["clean"], "[00:00] Speaker 1: Hi there.")
+        self.assertEqual(saved["status"], "done")
+
+        # no turns found: the note is marked with an error, not silently left as if nothing happened
+        with mock.patch.object(diarize, "available", return_value=True), mock.patch.object(diarize, "run", return_value=("none", None)):
+            with self.assertRaises(RuntimeError):
+                queue._rediarize("n1")
+        self.assertTrue(store.get("n1")["error"])
+
+    def test_renaming_a_speaker_regenerates_the_clean_transcript(self):
+        import tempfile
+        import threading
+
+        from cairn import server
+
+        root = Path(tempfile.mkdtemp())
+        os.environ["CAIRN_HOME"] = str(root / "Cairn")
+        app, httpd = server.make_server(18791)
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        client = Client(app, httpd)
+        try:
+            app.store.save({
+                "id": "n1", "status": "done", "title": "T", "lang": "en",
+                "segments": [{"start": 0.0, "end": 2.0, "text": "Hi there.", "speaker": "Speaker 1"}],
+                "clean": "[00:00] Speaker 1: Hi there.",
+            })
+            status, data = client.call("POST", "/api/note/n1/speaker", {"from": "Speaker 1", "name": "Marc"})
+            self.assertEqual((status, data), (200, {"ok": True}))
+            saved = app.store.get("n1")
+            self.assertEqual(saved["speaker_names"], {"Speaker 1": "Marc"})
+            self.assertEqual(saved["clean"], "[00:00] Marc: Hi there.")
+            self.assertEqual(saved["segments"][0]["speaker"], "Speaker 1")  # the stable key is kept on the segment itself
+            # clearing the name falls back to the generated label again
+            client.call("POST", "/api/note/n1/speaker", {"from": "Speaker 1", "name": ""})
+            self.assertEqual(app.store.get("n1")["speaker_names"], {})
+            self.assertEqual(app.store.get("n1")["clean"], "[00:00] Speaker 1: Hi there.")
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
 
     def test_install_requires_a_token_and_removal_is_blocked_while_the_feature_is_on(self):
         import tempfile

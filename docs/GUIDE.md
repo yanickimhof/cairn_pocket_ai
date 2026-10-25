@@ -7,7 +7,7 @@
 
 ### Pocket status (macOS, optional)
 
-The battery above needs nothing from you. If you also want to see the Pocket's **firmware version**, **device state** and **storage used**, Settings has an optional field, **Pocket session key**, that unlocks this.
+The battery above needs nothing from you. If you also want to see the Pocket's **firmware version**, **device state** and **storage used**, Settings has an optional Pocket session key (the Bluetooth icon, right under Process automatically) that unlocks this: a plus to add one, a green check once it is set (hover it for the details), a warning if it is rejected.
 
 - **What the key is:** a 16-character key the Pocket's own vendor app uses to authenticate itself over Bluetooth. Cairn does not capture it, does not know how to, and will not try to: you obtain your own key yourself, with your own tools, outside Cairn (for example with the open-source [pocket-libre](https://github.com/shahcolate/pocket-libre) project, which documents how). Cairn only accepts a key you paste in, 16 characters, nothing more.
 - **What Cairn does with it:** once set, Cairn sends your key once per reading, then exactly three documented read commands (firmware, device state, storage). Nothing else, ever: no clock is set, no Wi-Fi command is sent, no other command exists in this code path. You can check this yourself; `cairn/pocket_status_worker.py` is short and has no write command in it.
@@ -16,13 +16,15 @@ The battery above needs nothing from you. If you also want to see the Pocket's *
 
 ### Speaker identification (diarization, optional)
 
-Off by default. Settings has **Identify speakers**, plus **Hugging Face token** and a model under Models to turn it on.
+Off by default. Settings has the Hugging Face token (right above the Pocket session key): a plus to add one, and once set, a pencil to edit it next to an On/Off toggle that turns speaker identification on or off.
 
 - **What it adds:** each transcript line and the note itself can say who is speaking ("Speaker 1", "Speaker 2", …), from the local [pyannote](https://github.com/pyannote/pyannote-audio) model. Speakers are numbered by the order they first speak, not identified by name.
-- **Setup, once:** install the diarization model from Settings > Models. It is gated on Hugging Face, so you need your own free account and a token (a **read-only, fine-grained** token is enough; paste it in Settings). The token is used only for this one download, never logged, and clearing the field removes it.
+- **Setup, once:** paste your Hugging Face token in Settings, then install the diarization model from Settings > Models (a **read-only, fine-grained** token is enough). The model is gated: on huggingface.co, while signed in with the account the token belongs to, accept the access conditions on both [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1) and [pyannote/segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0) (the pipeline loads the second one as a dependency; skipping it fails the install with the same "restricted" error). The token is used only for this one download, never logged, and clearing the field removes it.
 - **Afterward:** diarization runs fully on your computer, offline (the model is read from Cairn's own folder, with `HF_HUB_OFFLINE` set). Turning the feature off at any time stops it being used; the model stays installed until you remove it from Settings > Models.
 - **Cost:** the first install pulls `pyannote.audio` (and PyTorch) into Cairn's own environment, a sizeable download done only when you turn this on, not part of the base install.
 - **A failure here never fails the recording:** if diarization cannot run for any reason, the note is written exactly as before, without speaker labels.
+- **Naming speakers:** open a note's transcript (the document icon) to see **Speakers detected**, one chip per speaker; tap its pencil to give it a real name. The name replaces the label everywhere for that note: the transcript, the HTML export and the copy for an email.
+- **Older recordings:** a note made before this feature was installed, or before it was turned on, keeps no speaker labels — redoing the note only rewrites the summary, it does not retranscribe or diarize. Open such a note and press **Rediarize** (next to Refaire, shown once the model is installed) to add speaker labels to its existing transcript, without a new transcription or a new summary. Rediarizing clears any names already given, since a fresh pass may not number the speakers the same way.
 
 - **Process:** the badge on the central button counts the recordings waiting. Press the button to process them all, newest first, or tap one recording to process it first. Settings, **Process automatically** (off by default), does it without your click; **Stop** then pauses it until new recordings arrive or you start a job yourself.
 - **Skip:** leave a recording out of the queue; it can be put back.

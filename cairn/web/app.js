@@ -11,10 +11,14 @@
       off: "Non", on: "Oui",
       processedIn: "traité en", notInstalled: "Non installé", getIt: "Installer", refText: "Acheter un Pocket : 10 % de réduction", refNote: "Lien de parrainage facultatif. L’offre dépend uniquement de Pocket et peut changer.",
       models: "Modèles", modelsHint: "Choisir ou ajouter des modèles", modelsSpeech: "Transcription", modelsLlm: "Résumés", modelsDiar: "Identification des interlocuteurs",
-      hfToken: "Jeton HuggingFace", hfTokenHint: "Nécessaire une seule fois pour télécharger le modèle de diarisation (gratuit, compte HuggingFace requis). Jamais utilisé ailleurs.",
+      hfToken: "Jeton Hugging Face", hfTokenHint: "Nécessaire une seule fois pour télécharger le modèle de diarisation (gratuit, compte Hugging Face requis ; il faut aussi accepter l'accès au modèle sur huggingface.co). Jamais utilisé ailleurs.",
       hfTokenNone: "Non configuré", hfTokenOn: "Configuré", hfTokenSaved: "Jeton enregistré", hfTokenCleared: "Jeton supprimé", hfTokenInvalid: "Jeton invalide",
-      diarizeLabel: "Identifier les interlocuteurs", diarizeHint: "Ajoute qui parle dans le transcript et la note. Nécessite le modèle de diarisation (ci-dessous). Tourne entièrement en local.",
-      diarNeedsToken: "Configure d'abord un jeton HuggingFace", diarNeedsModel: "Installe d'abord le modèle de diarisation",
+      diarizeLabel: "Identifier les interlocuteurs", diarizeHint: "Ajoute qui parle dans le transcript et la note. Nécessite le modèle de diarisation (dans Modèles, ci-dessus). Tourne entièrement en local.",
+      diarNeedsToken: "Configurez d'abord un jeton Hugging Face",
+      rediarize: "Rediariser", rediarizeHint: "Réidentifier les interlocuteurs sur cette note, sans retoucher le résumé. Reprend l'audio déjà transcrit.",
+      rediarizeConfirm: "Réidentifier les interlocuteurs ? Les noms déjà donnés seront perdus.", rediarizeGoing: "Identification des interlocuteurs relancée", rediarizeMissing: "Modèle de diarisation non installé",
+      participants: "Interlocuteurs détectés", participantsHint: "Touchez le crayon pour nommer un interlocuteur",
+      spkPlaceholder: "Nom de l'interlocuteur", spkSaved: "Nom enregistré", spkNone: "Aucun interlocuteur identifié dans cette transcription.", spkUseRediarize: "Utilisez Rediariser pour les ajouter.",
       tagline: "Votre Pocket. Votre ordinateur. Vos données.", mUse: "Utiliser", mRemove: "Supprimer ce modèle", mRemoveConfirm: "Supprimer {name} de cet ordinateur ? Vous pourrez le télécharger à nouveau.", mInUse: "Utilisé", mInstall: "Installer", mTier: { light: "Léger", standard: "Standard", high: "Élevé" },
       mRam: "{n} Go de mémoire conseillés", mConfirm: "Télécharger {name} ({size}) ? Une connexion internet est utilisée pour ce seul téléchargement.",
       mDownloading: "Téléchargement {pct} %", mFailed: "Échec du téléchargement : ", mDone: "Modèle installé", mDown: "Moteur local arrêté", mBusy: "Un traitement est en cours",
@@ -24,11 +28,10 @@
       cancel: "Annuler", confirmLabel: "Confirmer",
       connected: "Pocket connecté", disconnected: "Pocket non détecté", local: "Local", localHint: "Tout reste sur cet ordinateur",
       folder: "Dossier des audios", folderHint: "Dossier de sauvegarde des audios", folderChange: "Changer", folderSaved: "Dossier enregistré", folderType: "Chemin du dossier",
-      pocketKey: "Clé de session Pocket", pocketKeyHint: "Optionnel. Avec ta propre clé, Cairn lit aussi le firmware, l'état et le stockage du Pocket, en lecture uniquement.",
+      pocketKey: "Clé de session Pocket", pocketKeyHint: "Optionnel. Avec votre propre clé, Cairn lit aussi le firmware, l'état et le stockage du Pocket, en lecture uniquement.",
       pocketKeyNone: "Non configurée", pocketKeyOn: "Configurée", pocketKeyRejected: "Clé refusée par le Pocket", pocketKeyType: "16 caractères",
       pocketKeySaved: "Clé enregistrée", pocketKeyCleared: "Clé supprimée", pocketKeyInvalid: "La clé doit comporter exactement 16 caractères",
-      pocketInfo: "État du Pocket", pocketInfoHint: "Lecture uniquement, rafraîchi automatiquement quand le Pocket est à proximité et non connecté à l'app iPhone.",
-      pocketFirmware: "Firmware", pocketState: "État", pocketIdle: "Inactif", pocketStorage: "Stockage utilisé", pocketBatteryLbl: "Batterie", pocketUnknown: "Inconnu",
+      pocketIdle: "Inactif",
       exportLabel: "Exporter", exportHint: "Copier ou exporter la fiche", copyRich: "Copier", copyRichHint: "Copier, prêt à coller dans un courriel",
       copiedRich: "Copié", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exporté en ",
       importLabel: "Importer et transcrire", importHint: "Importer et traiter les enregistrements", count: "Enregistrements sur le Pocket",
@@ -56,10 +59,14 @@
       off: "Off", on: "On",
       processedIn: "processed in", notInstalled: "Not installed", getIt: "Install", refText: "Get a Pocket: 10 % off", refNote: "Optional referral link. The offer is set by Pocket alone and may change.",
       models: "Models", modelsHint: "Choose or add models", modelsSpeech: "Transcription", modelsLlm: "Summaries", modelsDiar: "Speaker identification",
-      hfToken: "Hugging Face token", hfTokenHint: "Needed once to download the diarization model (free, a Hugging Face account is required). Never used anywhere else.",
+      hfToken: "Hugging Face token", hfTokenHint: "Needed once to download the diarization model (free, a Hugging Face account is required, and you must accept access to the model on huggingface.co). Never used anywhere else.",
       hfTokenNone: "Not configured", hfTokenOn: "Configured", hfTokenSaved: "Token saved", hfTokenCleared: "Token removed", hfTokenInvalid: "Invalid token",
-      diarizeLabel: "Identify speakers", diarizeHint: "Adds who's speaking to the transcript and the note. Needs the diarization model below. Runs fully locally.",
-      diarNeedsToken: "Set a Hugging Face token first", diarNeedsModel: "Install the diarization model first",
+      diarizeLabel: "Identify speakers", diarizeHint: "Adds who's speaking to the transcript and the note. Needs the diarization model, in Models above. Runs fully locally.",
+      diarNeedsToken: "Set a Hugging Face token first",
+      rediarize: "Rediarize", rediarizeHint: "Identify speakers again on this note, without touching the summary. Reuses the transcript already made.",
+      rediarizeConfirm: "Identify speakers again? Any names already given will be lost.", rediarizeGoing: "Speaker identification started again", rediarizeMissing: "Diarization model not installed",
+      participants: "Speakers detected", participantsHint: "Tap the pencil to name a speaker",
+      spkPlaceholder: "Speaker's name", spkSaved: "Name saved", spkNone: "No speaker identified in this transcript.", spkUseRediarize: "Use Rediarize to add them.",
       tagline: "Your Pocket. Your computer. Your data.", mUse: "Use", mRemove: "Remove this model", mRemoveConfirm: "Remove {name} from this computer? You can download it again later.", mInUse: "In use", mInstall: "Install", mTier: { light: "Light", standard: "Standard", high: "High" },
       mRam: "{n} GB of memory advised", mConfirm: "Download {name} ({size})? An internet connection is used for this download only.",
       mDownloading: "Downloading {pct}%", mFailed: "Download failed: ", mDone: "Model installed", mDown: "Local engine stopped", mBusy: "A job is running",
@@ -72,8 +79,7 @@
       pocketKey: "Pocket session key", pocketKeyHint: "Optional. With your own key, Cairn also reads the Pocket's firmware, state and storage, read only.",
       pocketKeyNone: "Not configured", pocketKeyOn: "Configured", pocketKeyRejected: "Key rejected by the Pocket", pocketKeyType: "16 characters",
       pocketKeySaved: "Key saved", pocketKeyCleared: "Key removed", pocketKeyInvalid: "The key must be exactly 16 characters",
-      pocketInfo: "Pocket status", pocketInfoHint: "Read only, refreshed automatically while the Pocket is nearby and not connected to the iPhone app.",
-      pocketFirmware: "Firmware", pocketState: "State", pocketIdle: "Idle", pocketStorage: "Storage used", pocketBatteryLbl: "Battery", pocketUnknown: "Unknown",
+      pocketIdle: "Idle",
       exportLabel: "Export", exportHint: "Copy or export the note", copyRich: "Copy", copyRichHint: "Copy, ready to paste in an email",
       copiedRich: "Copied", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exported as ",
       importLabel: "Import and transcribe", importHint: "Import and process the recordings", count: "Recordings on the Pocket",
@@ -100,7 +106,9 @@
     doc: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v4h4"></path><path d="M10 12h5"></path><path d="M10 16h5"></path></svg>',
     folder: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>',
     pencil: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="m13.5 6.5 4 4"></path></svg>',
-    key: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="3.5"></circle><path d="M10 13l9.5-9.5"></path><path d="M16 7l2.5 2.5"></path></svg>',
+    bluetooth: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5L6.5 17.5"></path></svg>',
+    hf: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="13" height="10" rx="3"></rect><rect x="8" y="10" width="13" height="10" rx="3"></rect></svg>',
+    okGreen: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m8 12.5 2.8 2.8L16 9.5"></path></svg>',
     plus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>',
     trash: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4271B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="M6 7l1 13h10l1-13"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>',
     x: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>',
@@ -231,7 +239,10 @@
         '<button type="button" class="ib" data-a="mDel" data-v="' + kind + '" data-id="' + esc(m.id) + '"' + tip(t.mRemove) + ">" + I.trash + "</button></span>";
     }
     else { h += '<button type="button" class="mbtn" data-a="mAsk" data-v="' + kind + '" data-id="' + esc(m.id) + '"' + (job && job.state === "running" ? " disabled" : "") + ">" + esc(t.mInstall) + "</button>"; }
-    return h + "</div>";
+    h += "</div>";
+    if (S.mAsk && S.mAsk.kind === kind && S.mAsk.id === m.id) { h += confirmBox(t.mConfirm.replace("{name}", m.label).replace("{size}", gb(m.bytes)), "mGo", t); }
+    if (S.mDel && S.mDel.kind === kind && S.mDel.id === m.id) { h += confirmBox(t.mRemoveConfirm.replace("{name}", m.label), "mDelGo", t); }
+    return h;
   }
 
   function batteryIcon(level, charging) {  // the fill follows the level: green from 50 %, orange from 20 %, red below; a bolt while the Pocket is plugged in
@@ -242,22 +253,14 @@
     return svg + "</svg>";
   }
 
-  function pocketInfoPanel(t, st) {
-    var bat = st.battery || {}, ps = st.pocket_status || {}, d = ps.data || {};
-    var chip = function (label, value) {
-      return '<div class="chip"><div class="v">' + esc(value) + '</div><div class="l">' + esc(label) + "</div></div>";
-    };
-    var h = '<div class="hr"></div><div style="padding:14px 0 18px">';
-    h += '<div class="small" style="font-weight:600;margin-bottom:10px">' + esc(t.pocketInfo) + "</div>";
-    h += '<div class="pgrid">';
-    h += chip(t.pocketBatteryLbl, bat.level != null ? bat.level + " %" : "…");
-    h += chip(t.pocketFirmware, d.firmware || (ps.state === "rejected" ? t.pocketKeyRejected : "…"));
-    h += chip(t.pocketState, d.state === 0 ? t.pocketIdle : (d.state != null ? String(d.state) : "…"));
-    h += chip(t.pocketStorage, d.total_kb ? Math.round(100 * d.used_kb / d.total_kb) + " %" : "…");
-    h += "</div>";
-    if (ps.state === "rejected") { h += '<div class="small" style="margin-top:8px">' + esc(t.pocketKeyRejected) + "</div>"; }
-    h += '<div class="small" style="margin-top:8px">' + esc(t.pocketInfoHint) + "</div></div>";
-    return h;
+  function pocketStatusDetails(t, st) {
+    var ps = st.pocket_status || {}, d = ps.data || {};
+    if (ps.state === "rejected") { return t.pocketKeyRejected; }
+    var parts = [];
+    if (d.firmware) { parts.push("FW " + d.firmware); }
+    if (d.state != null) { parts.push(d.state === 0 ? t.pocketIdle : String(d.state)); }
+    if (d.total_kb) { parts.push(Math.round(100 * d.used_kb / d.total_kb) + "%"); }
+    return parts.join(" · ");
   }
 
   function diarRow(m, t, job) {
@@ -270,7 +273,10 @@
     } else {
       h += '<button type="button" class="mbtn" data-a="mAsk" data-v="diar" data-id="' + esc(m.id) + '"' + (job && job.state === "running" ? " disabled" : "") + ">" + esc(t.mInstall) + "</button>";
     }
-    return h + "</div>";
+    h += "</div>";
+    if (S.mAsk && S.mAsk.kind === "diar" && S.mAsk.id === m.id) { h += confirmBox(t.mConfirm.replace("{name}", m.label).replace("{size}", gb(m.bytes)), "mGo", t); }
+    if (S.mDel && S.mDel.kind === "diar" && S.mDel.id === m.id) { h += confirmBox(t.mRemoveConfirm.replace("{name}", m.label), "mDelGo", t); }
+    return h;
   }
 
   function viewModels(t) {
@@ -283,16 +289,6 @@
     if (M.diar) {
       h += '<div class="mgroup">' + esc(t.modelsDiar) + "</div>";
       M.diar.forEach(function (m) { h += diarRow(m, t, M.job); });
-    }
-    if (S.mAsk) {
-      var list = S.mAsk.kind === "llm" ? M.llm : M.speech;
-      var m = list.filter(function (x) { return x.id === S.mAsk.id; })[0];
-      if (m) { h += confirmBox(t.mConfirm.replace("{name}", m.label).replace("{size}", gb(m.bytes)), "mGo", t); }
-    }
-    if (S.mDel) {
-      var dl = S.mDel.kind === "llm" ? M.llm : M.speech;
-      var dm = dl.filter(function (x) { return x.id === S.mDel.id; })[0];
-      if (dm) { h += confirmBox(t.mRemoveConfirm.replace("{name}", dm.label), "mDelGo", t); }
     }
     if (M.job && M.job.state === "error") { h += '<div class="small" style="color:#C0392B">' + esc(t.mFailed + M.job.error) + "</div>"; }
     return h + "</div>";
@@ -312,6 +308,32 @@
       [["0", t.off, false], ["1", t.on, true]].map(function (o) {
         return '<button type="button" data-a="autoprocess" data-v="' + o[0] + '" class="' + bg((st.settings.autoprocess === true) === o[2]).trim() + '">' + esc(o[1]) + "</button>";
       }).join("") + "</div></div>";
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.hfTokenHint) + ">" + I.hf;
+    if (st.settings.hf_token) {
+      h += '<span class="row gap8"><button type="button" class="ib" data-a="hfAsk"' + tip(t.hfTokenOn) + ">" + I.pencil + '</button><div class="seg s38"' + tip(t.diarizeHint) + ">" +
+        [["0", t.off, false], ["1", t.on, true]].map(function (o) {
+          return '<button type="button" data-a="diarize" data-v="' + o[0] + '" class="' + bg(!!st.settings.diarize === o[2]).trim() + '">' + esc(o[1]) + "</button>";
+        }).join("") + "</div></span></div>";
+    } else {
+      h += '<button type="button" class="ib" data-a="hfAsk"' + tip(t.hfTokenNone) + ">" + I.plus + "</button></div>";
+    }
+    if (S.hfEdit) {
+      h += '<div class="name" style="margin:0 0 6px"><input id="hfInput" type="text" value="' + esc(S.hfDraft) + '" placeholder="hf_…" aria-label="' + esc(t.hfToken) + '">' +
+        '<button type="button" class="ib blue" data-a="hfSave"' + tip(t.saveName) + ">" + I.checkW + "</button>" +
+        (st.settings.hf_token ? '<button type="button" class="ib" data-a="hfClear"' + tip(t.hfTokenCleared) + ">" + I.trash + "</button>" : "") + "</div>";
+    }
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.pocketKeyHint) + ">" + I.bluetooth;
+    if (st.settings.pocket_key) {
+      var keyWarn = (st.pocket_status || {}).state === "rejected";
+      h += '<button type="button" class="ib" data-a="keyAsk"' + tip(keyWarn ? t.pocketKeyRejected : t.pocketKeyOn) + ">" + (keyWarn ? I.warnB : I.okGreen) + "</button></div>";
+    } else {
+      h += '<button type="button" class="ib" data-a="keyAsk"' + tip(t.pocketKeyNone) + '>' + I.plus + "</button></div>";
+    }
+    if (S.keyEdit) {
+      h += '<div class="name" style="margin:0 0 6px"><input id="keyInput" type="text" value="' + esc(S.keyDraft) + '" placeholder="' + esc(t.pocketKeyType) + '" aria-label="' + esc(t.pocketKey) + '">' +
+        '<button type="button" class="ib blue" data-a="keySave"' + tip(t.saveName) + ">" + I.checkW + "</button>" +
+        (st.settings.pocket_key ? '<button type="button" class="ib" data-a="keyClear"' + tip(t.pocketKeyCleared) + ">" + I.trash + "</button>" : "") + "</div>";
+    }
     h += '<div class="hr"></div><div class="setrow"' + tip(t.folderHint) + ">" + I.folder;
     h += '<div class="row gap8" style="min-width:0"><span class="text" style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(shortPath(st.settings.audio_dir)) + "</span>";
     h += '<button type="button" class="ib" data-a="folder"' + tip(t.folderChange) + ">" + I.pencil + "</button></div></div>";
@@ -321,37 +343,6 @@
     }
     h += '<div class="hr"></div><div class="setrow"' + tip(t.modelsHint) + "><span class=\"text\" style=\"font-size:14px\">" + esc(t.models) + '</span><button type="button" class="mbtn" data-a="models">' + esc(S.modelsOpen ? "−" : "+") + "</button></div>";
     if (S.modelsOpen) { h += viewModels(t); }
-    h += '<div class="hr"></div><div class="setrow"' + tip(t.pocketKeyHint) + ">" + I.key + '<span class="text" style="font-size:14px">' + esc(t.pocketKey) + "</span>";
-    if (st.settings.pocket_key) {
-      h += '<span class="small" style="color:var(--green-ink);white-space:nowrap">' + esc(t.pocketKeyOn) + "</span>" +
-        '<button type="button" class="ib" data-a="keyAsk"' + tip(t.folderChange) + ">" + I.pencil + "</button></div>";
-    } else {
-      h += '<span class="small" style="white-space:nowrap">' + esc(t.pocketKeyNone) + "</span>" +
-        '<button type="button" class="ib" data-a="keyAsk"' + tip(t.folderChange) + '>' + I.plus + "</button></div>";
-    }
-    if (S.keyEdit) {
-      h += '<div class="name" style="margin:0 0 6px"><input id="keyInput" type="text" value="' + esc(S.keyDraft) + '" placeholder="' + esc(t.pocketKeyType) + '" aria-label="' + esc(t.pocketKey) + '">' +
-        '<button type="button" class="ib blue" data-a="keySave"' + tip(t.saveName) + ">" + I.checkW + "</button>" +
-        (st.settings.pocket_key ? '<button type="button" class="ib" data-a="keyClear"' + tip(t.pocketKeyCleared) + ">" + I.trash + "</button>" : "") + "</div>";
-    }
-    if (st.settings.pocket_key) { h += pocketInfoPanel(t, st); }
-    h += '<div class="hr"></div><div class="setrow"' + tip(t.diarizeHint) + '><span class="text" style="font-size:14px">' + esc(t.diarizeLabel) + '</span><div class="seg s38">' +
-      [["0", t.off, false], ["1", t.on, true]].map(function (o) {
-        return '<button type="button" data-a="diarize" data-v="' + o[0] + '" class="' + bg(!!st.settings.diarize === o[2]).trim() + '">' + esc(o[1]) + "</button>";
-      }).join("") + "</div></div>";
-    h += '<div class="hr"></div><div class="setrow"' + tip(t.hfTokenHint) + ">" + I.key + '<span class="text" style="font-size:14px">' + esc(t.hfToken) + "</span>";
-    if (st.settings.hf_token) {
-      h += '<span class="small" style="color:var(--green-ink);white-space:nowrap">' + esc(t.hfTokenOn) + "</span>" +
-        '<button type="button" class="ib" data-a="hfAsk"' + tip(t.folderChange) + ">" + I.pencil + "</button></div>";
-    } else {
-      h += '<span class="small" style="white-space:nowrap">' + esc(t.hfTokenNone) + "</span>" +
-        '<button type="button" class="ib" data-a="hfAsk"' + tip(t.folderChange) + ">" + I.plus + "</button></div>";
-    }
-    if (S.hfEdit) {
-      h += '<div class="name" style="margin:0 0 6px"><input id="hfInput" type="text" value="' + esc(S.hfDraft) + '" placeholder="hf_…" aria-label="' + esc(t.hfToken) + '">' +
-        '<button type="button" class="ib blue" data-a="hfSave"' + tip(t.saveName) + ">" + I.checkW + "</button>" +
-        (st.settings.hf_token ? '<button type="button" class="ib" data-a="hfClear"' + tip(t.hfTokenCleared) + ">" + I.trash + "</button>" : "") + "</div>";
-    }
     return h + "</div>";
   }
 
@@ -435,13 +426,19 @@
     if (S.edit === n.id) {
       h += '<div class="name"><input id="nameInput" type="text" value="' + esc(S.draft) + '" aria-label="' + esc(t.rename) + '"><button type="button" class="ib blue" data-a="saveName"' + tip(t.saveName) + ">" + I.checkW + "</button></div>";
     }
-    h += '<div class="bar"><div class="row gap8" style="flex-wrap:wrap">' + optionBar(t) +
-      '<button type="button" class="ib blue" data-a="rerun"' + (S.server && S.server.job && S.server.job.running ? " disabled" : "") + tip(t.redoHint) + ">" + I.refreshW + "</button></div>";
+    var jobBusy = S.server && S.server.job && S.server.job.running;
+    var canRediarize = n.status === "done" && S.server && S.server.diar_installed;
+    h += '<div class="bar"><div class="row gap8" style="flex-wrap:wrap">' + optionBar(t);
+    if (canRediarize) {
+      h += '<button type="button" class="ib outline" data-a="askRediarize" data-id="' + esc(n.id) + '"' + (jobBusy ? " disabled" : "") + tip(t.rediarizeHint) + '><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3368A0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="2.6"></circle><path d="M3.5 19c0-2.9 2.4-5.2 5.5-5.2"></path><circle cx="17" cy="8" r="2.2"></circle><path d="M12.8 13.6c2.7.1 4.7 2.3 4.7 5.2"></path><path d="M19.5 10.5a3.2 3.2 0 1 0-.9 2.3"></path><path d="M19.5 7.3v3h-3"></path></svg></button>';
+    }
+    h += '<button type="button" class="ib blue" data-a="rerun"' + (jobBusy ? " disabled" : "") + tip(t.redoHint) + ">" + I.refreshW + "</button></div>";
     h += '<div class="row" style="gap:4px">' + tplButton(full, t);
     h += '<button type="button" class="ib" data-a="viewText" data-id="' + esc(n.id) + '"' + tip(t.viewText) + ">" + I.doc.replace("#6E6E73", "#1D1D1F") + "</button>";
     h += '<button type="button" class="ib" data-a="startRename"' + tip(t.rename) + ">" + I.pencil + "</button>";
     h += '<span class="pop"><button type="button" class="ib' + (S.exp === n.id ? " on" : "") + '" data-a="toggleExport"' + tip(t.exportHint) + ">" + I.down + "</button>" + exportList(n, t) + "</span>";
     h += '<button type="button" class="ib" data-a="askDelete"' + tip(t.deleteHint) + ">" + I.trash + "</button></div></div>";
+    if (S.rediarConfirm === n.id) { h += confirmBox(t.rediarizeConfirm, "rediarizeGo", t); }
     if (S.delConfirm) { h += confirmBox(S.server && S.server.pocket && S.server.pocket.connected ? t.deleteConfirm : t.deleteConfirmOff, "confirmDelete", t); }
     if (n.error) { h += '<div class="err">' + esc(t.error + n.error) + "</div>"; }
     if (full && full.summary) {
@@ -512,7 +509,12 @@
     var connected = st.pocket.connected;
     var canImport = !job.running && (connected || st.totals.waiting > 0);
     var h = '<main class="wrap"><div class="head"><div class="row gap12"><div class="bw"><h1 class="brand"' + tip(t.brand) + '>Cairn</h1><div class="sub">' + esc(t.aboutTagline) + "</div></div>";
-    h += '<button type="button" class="dotbtn"' + tip(connected ? t.connected : t.disconnected) + '><span class="dot" style="background:' + (connected ? "var(--green)" : "var(--orange)") + ";box-shadow:0 0 0 4px " + (connected ? "rgba(31,157,85,.18)" : "rgba(200,109,81,.24)") + '"></span></button>';
+    var dotTip = connected ? t.connected : t.disconnected;
+    if (st.settings.pocket_key) {
+      var pd = pocketStatusDetails(t, st);
+      if (pd) { dotTip += " · " + pd; }
+    }
+    h += '<button type="button" class="dotbtn"' + tip(dotTip) + '><span class="dot" style="background:' + (connected ? "var(--green)" : "var(--orange)") + ";box-shadow:0 0 0 4px " + (connected ? "rgba(31,157,85,.18)" : "rgba(200,109,81,.24)") + '"></span></button>';
     var pv = st.privacy, sc = !pv ? "#86868B" : (pv.ok ? "#1E8E3E" : "#A4452A");
     var pt = t.localHint + ". " + t.privAuto + ": " + (!pv ? t.privNone : (pv.ok ? t.privOk + " · " + fmtDate(pv.when) : t.privBad));
     h += '<span class="pill"' + tip(pt) + ">" + I.shield(sc, 18) + esc(t.local) + "</span>";
@@ -563,16 +565,58 @@
     if (box) { box.parentNode.removeChild(box); document.body.style.overflow = ""; }
   }
 
+  function speakersOf(full) {
+    var names = full.speaker_names || {};
+    var seen = [], out = [];
+    (full.segments || []).forEach(function (s) {
+      if (s.speaker && seen.indexOf(s.speaker) === -1) {
+        seen.push(s.speaker);
+        out.push({ raw: s.speaker, disp: names[s.speaker] || s.speaker });
+      }
+    });
+    return out;
+  }
+
+  function saveSpeaker(id, raw) {
+    var name = (S.spkDraft || "").trim();
+    api("POST", "/api/note/" + encodeURIComponent(id) + "/speaker", { from: raw, name: name }).then(function () {
+      S.spkEdit = null; delete S.full[id]; flash(T().spkSaved); showText(id);
+    }).catch(function (e) { flash(T().error + e.message); });
+  }
+
+  function speakerPanel(id, full, t) {
+    var speakers = speakersOf(full);
+    if (!speakers.length) {
+      return S.server && S.server.diar_installed
+        ? '<div class="spk"><div class="small">' + esc(t.spkNone) + " " + esc(t.spkUseRediarize) + "</div></div>"
+        : "";
+    }
+    var rows = speakers.map(function (sp) {
+      if (S.spkEdit && S.spkEdit.id === id && S.spkEdit.raw === sp.raw) {
+        return '<div class="spkrow"><input id="spkInput" type="text" value="' + esc(S.spkDraft) + '" placeholder="' + esc(t.spkPlaceholder) + '" aria-label="' + esc(t.spkPlaceholder) + '">' +
+          '<button type="button" class="sv" data-tx="saveSpk" data-raw="' + esc(sp.raw) + '"' + tip(t.saveName) + ">" + I.checkW + "</button></div>";
+      }
+      return '<span class="chip"><span class="nm">' + esc(sp.disp) + '</span><button type="button" class="pen" data-tx="editSpk" data-raw="' + esc(sp.raw) + '"' + tip(t.rename + " : " + sp.disp) + ">" + I.pencil.replace("20", "14").replace("20", "14") + "</button></span>";
+    }).join("");
+    return '<div class="spk"><div class="lbl">' + esc(t.participants) + '</div><div class="rows">' + rows + "</div></div>";
+  }
+
   function showText(id) {
     var t = T();
     api("GET", "/api/note/" + encodeURIComponent(id)).then(function (full) {
       var text = full.clean || "";
       var weak = (full.doubtful || []).map(function (p) { return String(p.text || "").trim(); }).filter(Boolean);
+      var speakers = speakersOf(full);
+      var names = speakers.map(function (sp) { return sp.disp; }).sort(function (a, b) { return b.length - a.length; });
+      var reNames = names.length ? new RegExp("^(" + names.map(function (n) { return n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|") + "): ") : null;
       var body = text.split(/\n+/).filter(function (x) { return x.trim(); }).map(function (line) {
         var hit = weak.some(function (w) { return line.indexOf(w) !== -1; });
         var m = line.match(/^\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*/);
         var stamp = m ? '<span class="ts">' + esc(m[1]) + "</span>" : "";
-        return "<p" + (hit ? ' class="dbt"' : "") + ">" + stamp + esc(m ? line.slice(m[0].length) : line) + "</p>";
+        var rest = m ? line.slice(m[0].length) : line;
+        var sm = reNames && rest.match(reNames);
+        var who = sm ? "<b>" + esc(sm[1]) + ": </b>" : "";
+        return "<p" + (hit ? ' class="dbt"' : "") + ">" + stamp + who + esc(sm ? rest.slice(sm[0].length) : rest) + "</p>";
       }).join("") || '<p class="small">' + esc(t.noText) + "</p>";
       closeText();
       var box = document.createElement("div");
@@ -581,15 +625,29 @@
         '<div class="mhead"><div class="mtitle">' + esc(full.title || id) + '</div><div class="row gap8">' +
         '<button type="button" class="ib" data-tx="copy"' + tip(t.copyText) + ">" + I.copy.replace("#FFFFFF", "#1D1D1F") + "</button>" +
         '<button type="button" class="ib grey2" data-tx="close"' + tip(t.closeLbl) + ">" + I.x + "</button></div></div>" +
+        speakerPanel(id, full, t) +
         (full.quality != null ? '<div class="mleg">' + esc(t.rawLegend) + " : " + full.quality + " %</div>" : "") + (weak.length ? '<div class="mleg">' + esc(t.textLegend) + "</div>" : "") + '<div class="mbody">' + body + "</div></div>";
       box.addEventListener("click", function (ev) {
         var el = ev.target.closest("[data-tx]");
         if (!el) { return; }
-        if (el.getAttribute("data-tx") === "close") { closeText(); return; }
-        navigator.clipboard.writeText(text).then(function () { flash(T().copied); });
+        var tx = el.getAttribute("data-tx");
+        if (tx === "close") { closeText(); return; }
+        if (tx === "copy") { navigator.clipboard.writeText(text).then(function () { flash(T().copied); }); return; }
+        if (tx === "editSpk") {
+          var raw = el.getAttribute("data-raw");
+          S.spkEdit = { id: id, raw: raw };
+          S.spkDraft = (full.speaker_names && full.speaker_names[raw]) || "";
+          showText(id);
+          return;
+        }
+        if (tx === "saveSpk") { saveSpeaker(id, el.getAttribute("data-raw")); return; }
       });
       document.body.appendChild(box);
       document.body.style.overflow = "hidden";
+      if (S.spkEdit && S.spkEdit.id === id) {
+        var inp = document.getElementById("spkInput");
+        if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+      }
     }).catch(function (e) { flash(t.error + e.message); });
   }
 
@@ -602,7 +660,10 @@
     return api("GET", "/api/models").then(function (m) {
       var was = S.models && S.models.job && S.models.job.state === "running";
       S.models = m;
-      if (was && m.job && m.job.state === "done") { flash(T().mDone); }
+      if (was && m.job && m.job.state === "done") {
+        flash(T().mDone);
+        if (S.aboutOpen) { api("GET", "/api/about").then(function (a) { S.about = a; render(); }); }
+      }
       render();
     }).catch(function () { /* keep what is shown */ });
   }
@@ -721,7 +782,13 @@
       api("POST", "/api/note/" + encodeURIComponent(id) + "/delete").then(function (r) { S.open = null; S.delConfirm = false; flash(r.pocket ? T().deleted : T().deletedLater); refresh(); })
         .catch(function (e) { S.delConfirm = false; flash(T().error + e.message); });
     },
-    cancel: function () { S.delConfirm = false; S.mAsk = null; S.mDel = null; },
+    askRediarize: function (v, id) { S.rediarConfirm = id; },
+    rediarizeGo: function () {
+      var t = T(), id = S.rediarConfirm; S.rediarConfirm = null;
+      api("POST", "/api/note/" + encodeURIComponent(id) + "/rediarize").then(function () { delete S.full[id]; flash(t.rediarizeGoing); refresh(); })
+        .catch(function (e) { flash(t.error + (e.message === "busy" ? t.mBusy : e.message === "diar_unavailable" ? t.rediarizeMissing : e.message)); });
+    },
+    cancel: function () { S.delConfirm = false; S.rediarConfirm = null; S.mAsk = null; S.mDel = null; },
     folder: function () {
       api("POST", "/api/pick-folder").then(function (r) { return api("POST", "/api/settings", { audio_dir: r.path }); })
         .then(function () { flash(T().folderSaved); refresh(); })
@@ -803,6 +870,7 @@
     if (ev.target.id === "folderInput") { S.folderDraft = ev.target.value; }
     if (ev.target.id === "keyInput") { S.keyDraft = ev.target.value; }
     if (ev.target.id === "hfInput") { S.hfDraft = ev.target.value; }
+    if (ev.target.id === "spkInput") { S.spkDraft = ev.target.value; }
   });
   document.addEventListener("keydown", function (ev) {
     if (ev.key === "Escape") { closeText(); if (S.exp) { S.exp = null; render(); } }
@@ -810,6 +878,7 @@
     if (ev.key === "Enter" && ev.target.id === "folderInput") { A.folderSave(); }
     if (ev.key === "Enter" && ev.target.id === "keyInput") { A.keySave(); }
     if (ev.key === "Enter" && ev.target.id === "hfInput") { A.hfSave(); }
+    if (ev.key === "Enter" && ev.target.id === "spkInput" && S.spkEdit) { saveSpeaker(S.spkEdit.id, S.spkEdit.raw); }
   });
 
   function fitWindow() {  // the installed web app opens at a size that fits its content, once; the person's own resizing is kept after that

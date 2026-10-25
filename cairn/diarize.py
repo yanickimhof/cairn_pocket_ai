@@ -1,5 +1,6 @@
 """Speaker diarization: who spoke when, from the local pyannote model. Off by default, and only used once
-the model has been installed (Settings > Models) and the feature turned on (Settings > Identify speakers).
+the model has been installed (Settings > Models) and the feature turned on (the toggle next to the
+Hugging Face token in Settings).
 
 Runs fully offline once installed: inference reads only the model cached inside Cairn's own folder
 (HF_HUB_OFFLINE is set), nothing is sent anywhere. A failure here never fails the recording: the note is
@@ -51,7 +52,11 @@ def label(index, lang):
 
 def assign(segments, turns, lang):
     """Adds a readable "speaker" field to each segment, from the turn whose interval covers its midpoint.
-    Speakers are numbered in the order they first speak, not by pyannote's own internal label."""
+    Speakers are numbered in the order they first speak, not by pyannote's own internal label. Any label
+    left over from an earlier pass is cleared first, so a segment that no longer matches a turn stays unlabeled
+    rather than keeping a stale speaker."""
+    for segment in segments:
+        segment.pop("speaker", None)
     if not turns:
         return segments
     order = []
@@ -65,3 +70,12 @@ def assign(segments, turns, lang):
             order.append(raw)
         segment["speaker"] = label(order.index(raw), lang)
     return segments
+
+
+def renamed(segments, names):
+    """Segments with each one's speaker label swapped for its custom name, where the person set one.
+    Leaves the segments themselves untouched: the note keeps the generated label (e.g. "Speaker 1") as the
+    stable key, and only this rendered copy carries the name chosen for it."""
+    if not names:
+        return segments
+    return [dict(s, speaker=names[s["speaker"]]) if s.get("speaker") in names else s for s in segments]

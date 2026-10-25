@@ -338,3 +338,35 @@ class Jobs:
             note.update(error=str(error))
             self.store.save(note)
             raise
+
+    # Redo only the speaker identification on an already-processed recording
+
+    def start_rediarize(self, note_id):
+        """Redo speaker identification on a finished recording, keeping its transcript and summary.
+        Any names already given to speakers are cleared: a fresh pass may not number them the same way."""
+        note = self.store.get(note_id)
+        if note.get("status") != "done" or not note.get("segments") or not os.path.exists(note.get("audio", "")):
+            raise ValueError("not_processable")
+        if not diarize.available():
+            raise ValueError("diar_unavailable")
+        self._start("rerun", self._rediarize, note_id)
+
+    def _rediarize(self, note_id):
+        note = self.store.get(note_id)
+        self._set(id=note_id, step="diarizing", total=1)
+        lang = self._lang(note, config.load_settings())
+        try:
+            state, turns = diarize.run(note["audio"])
+            if state == "missing":
+                raise RuntimeError("Diarization model missing. Install it again from Settings > Models.")
+            if state != "ok":
+                raise RuntimeError("Speaker identification produced no result.")
+            diarize.assign(note["segments"], turns, lang)
+            note["speaker_names"] = {}
+            note["clean"] = "\n\n".join(speech.raw_lines(note["segments"]))
+            note.update(status="done", error="", step="")
+            self.store.save(note)
+        except Exception as error:
+            note.update(error=str(error))
+            self.store.save(note)
+            raise

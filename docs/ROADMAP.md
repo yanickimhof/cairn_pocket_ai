@@ -4,6 +4,7 @@
 
 - Optional Pocket status (firmware, device state, storage used), read only, from your own session key
 - Optional speaker identification (diarization), fully local, with the model installed on demand
+- Fixed the installer's default reference, still pinned to v0.1.0 right after v0.2.0 shipped, which made the standard install command reinstall the old version; the install page ([docs/index.html](index.html)) and SECURITY.md had the same stale pin and are fixed too
 
 ## v0.1: done
 
