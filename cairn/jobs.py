@@ -78,11 +78,22 @@ class Jobs:
             note["status"] = "waiting"
             self.store.save(note)
 
-    def start_process(self, note_id):
-        """Process one chosen recording now."""
+    def set_level(self, note_id, level):
+        """Choose the level of detail of one recording (standard until chosen otherwise)."""
+        if level not in config.LEVELS:
+            raise ValueError("bad_level")
         note = self.store.get(note_id)
-        if note.get("status") == "done" or not os.path.exists(note.get("audio", "")):
+        note["level"] = level
+        self.store.save(note)
+
+    def start_process(self, note_id, level=None, again=False):
+        """Process one chosen recording now. With again=True a finished recording is transcribed anew
+        (the previous text stays in place until the new one is ready)."""
+        note = self.store.get(note_id)
+        if (note.get("status") == "done" and not again) or not os.path.exists(note.get("audio", "")):
             raise ValueError("not_processable")
+        if level is not None:
+            self.set_level(note_id, level)
         self._start("import", self._one, note_id)
 
     def _one(self, note_id):
@@ -175,7 +186,7 @@ class Jobs:
     def _process(self, note_id, settings):
         note = self.store.get(note_id)
         lang = settings["tr"] or "en"
-        level = settings["level"]
+        level = note.get("level") if note.get("level") in config.LEVELS else "mid"  # chosen per recording
 
         def step(name):
             note["status"], note["step"] = name, name

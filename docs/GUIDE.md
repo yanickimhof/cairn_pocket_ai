@@ -2,7 +2,7 @@
 
 ## Choosing what to process
 
-Tap a waiting recording to process it now: Cairn does that one first, then carries on with every other waiting recording, newest first. Recordings you put back while it runs are picked up too. Skip a recording to leave it out of the queue (it can be restored). Stop interrupts the current job. Secure mode hides the list of notes until you reveal it.
+Tap a waiting recording to process it now: Cairn does that one first, then carries on with every other waiting recording, newest first. Recordings you put back while it runs are picked up too. Each recording has its own level of detail (short, standard, detailed; standard by default): choose it before processing, in the same panel. Skip a recording to leave it out of the queue (it can be restored). Stop interrupts the current job. On a finished note, the circular arrow rewrites the summary at the chosen level, and **Transcribe again** redoes the transcription and the summary (your chosen name is kept; the previous text stays until the new one is ready). Secure mode hides the list of notes until you reveal it.
 
 ## Models
 

@@ -15,7 +15,7 @@
       mRam: "{n} Go de mémoire conseillés", mConfirm: "Télécharger {name} ({size}) ? Une connexion internet est utilisée pour ce seul téléchargement.",
       mDownloading: "Téléchargement {pct} %", mFailed: "Échec du téléchargement : ", mDone: "Modèle installé", mDown: "Moteur local arrêté", mBusy: "Un traitement est en cours",
       settings: "Réglages", transcriptLang: "Langue du transcript", transcriptLangHint: "Langue des résumés",
-      detail: "Niveau de détail par défaut", short: "Court", mid: "Normal", full: "Complet",
+      detail: "Niveau de détail", reprocess: "Retranscrire", reprocessHint: "Refaire la transcription et le résumé au niveau choisi", reprocessConfirm: "Retranscrire cet enregistrement ? Le texte et le résumé seront remplacés (le nom que vous avez choisi est conservé). Comptez autant de temps que la première fois.", short: "Court", mid: "Normal", full: "Complet",
       shortHint: "Court : TL;DR et actions", midHint: "Normal : + contexte et points clés", fullHint: "Complet : + détail par sujet",
       emptyPocket: "Vider le Pocket", emptyHint: "Vider le Pocket (copies vérifiées)",
       emptyConfirm: "Vider le Pocket ? {n} copies vérifiées sur {m}.", emptyNone: "Le Pocket est vide.",
@@ -53,7 +53,7 @@
       mRam: "{n} GB of memory advised", mConfirm: "Download {name} ({size})? An internet connection is used for this download only.",
       mDownloading: "Downloading {pct}%", mFailed: "Download failed: ", mDone: "Model installed", mDown: "Local engine stopped", mBusy: "A job is running",
       settings: "Settings", transcriptLang: "Transcript language", transcriptLangHint: "Summary language",
-      detail: "Default level of detail", short: "Short", mid: "Standard", full: "Detailed",
+      detail: "Level of detail", reprocess: "Transcribe again", reprocessHint: "Redo the transcription and the summary at the chosen level", reprocessConfirm: "Transcribe this recording again? The text and the summary will be replaced (the name you chose is kept). Allow as much time as the first time.", short: "Short", mid: "Standard", full: "Detailed",
       shortHint: "Short: TL;DR and actions", midHint: "Standard: + context, key points", fullHint: "Detailed: + detail per topic",
       emptyPocket: "Empty the Pocket", emptyHint: "Empty the Pocket (copies verified)",
       emptyConfirm: "Empty the Pocket? {n} of {m} copies verified.", emptyNone: "The Pocket is empty.",
@@ -131,7 +131,10 @@
   function ui() { return S.ui || (S.server && S.server.settings.ui) || ((navigator.language || "en").slice(0, 2) === "fr" ? "fr" : "en"); }
   function T() { return D[ui()]; }
   function tr() { return (S.server && S.server.settings.tr) || ui(); }
-  function level() { return (S.server && S.server.settings.level) || "mid"; }
+  function noteLevel(id) {
+    var n = S.server && S.server.notes ? S.server.notes.filter(function (x) { return x.id === id; })[0] : null;
+    return (n && n.level) || "mid";
+  }
 
   function api(method, path, body) {
     var opt = { method: method, headers: {} };
@@ -228,7 +231,6 @@
   function viewSettings(t, st) {
     var h = '<div class="card panel">';
     h += '<div class="setrow"' + tip(t.transcriptLangHint) + ">" + I.doc + segLang("tr", tr(), "s38", t, t.transcriptLangHint) + "</div>";
-    h += '<div class="hr"></div><div class="setrow"' + tip(t.detail) + ">" + I.lines + seg3("lvl", level(), "s38", t) + "</div>";
     h += '<div class="hr"></div><div class="setrow"' + tip(t.polishHint) + '><span class="text" style="font-size:14px">' + esc(t.polish) + '</span><div class="seg s38">' +
       [["0", t.off, false], ["1", t.on, true]].map(function (o) {
         return '<button type="button" data-a="polish" data-v="' + o[0] + '" class="' + bg(!!st.settings.polish === o[2]).trim() + '">' + esc(o[1]) + "</button>";
@@ -315,6 +317,8 @@
     if (S.exp === n.id) {
       h += '<div class="exp"><button type="button" class="main" data-a="expCopy"' + tip(t.copyRichHint) + ">" + I.copy + '</button><button type="button" data-a="expMd"' + tip(t.expMdHint) + '>MD</button><button type="button" data-a="expHtml"' + tip(t.expHtmlHint) + ">HTML</button></div>";
     }
+    h += '<div class="row gap8" style="margin-top:8px"><button type="button" class="mbtn" data-a="askReprocess"' + (S.server && S.server.job && S.server.job.running ? " disabled" : "") + tip(t.reprocessHint) + ">" + esc(t.reprocess) + "</button></div>";
+    if (S.reConfirm) { h += confirmBox(t.reprocessConfirm, "confirmReprocess", t); }
     if (S.delConfirm) { h += confirmBox(t.deleteConfirm, "confirmDelete", t); }
     if (n.error) { h += '<div class="err">' + esc(t.error + n.error) + "</div>"; }
     if (full && full.summary) {
@@ -342,7 +346,7 @@
   }
 
   function queueActions(n, job, t) {
-    var h = '<div class="detail"><div class="row gap8">';
+    var h = '<div class="detail"><div class="row gap8">' + seg3("rr", S.rr, "s36", t);
     if (job.running && job.id === n.id) {
       h += '<button type="button" class="ib" data-a="stopJob"' + tip(t.stopJob) + ">" + I.stop + "</button>";
     } else {
@@ -487,7 +491,6 @@
     tr: function (v) { api("POST", "/api/settings", { tr: v }).then(refresh); },
     polish: function (v) { api("POST", "/api/settings", { polish: v === "1" }).then(refresh); },
     autocheck: function (v) { api("POST", "/api/settings", { autocheck: v === "1" }).then(refresh); },
-    lvl: function (v) { api("POST", "/api/settings", { level: v }).then(refresh); },
     settings: function () { S.settingsOpen = !S.settingsOpen; S.emptyConfirm = false; },
     about: function () {
       S.aboutOpen = !S.aboutOpen;
@@ -501,8 +504,19 @@
     import: function () {
       api("POST", "/api/import").then(refresh).catch(function (e) { flash(T().error + e.message); });
     },
-    row: function (v, id) { S.open = S.open === id ? null : id; S.delConfirm = false; S.edit = null; S.exp = null; S.rr = level(); if (S.open) { loadFull(id); } },
-    rr: function (v) { S.rr = v; },
+    row: function (v, id) { S.open = S.open === id ? null : id; S.delConfirm = false; S.edit = null; S.exp = null; S.reConfirm = false; S.rr = noteLevel(id); if (S.open) { loadFull(id); } },
+    rr: function (v) {
+      S.rr = v;
+      var id = S.open, n = S.server && S.server.notes ? S.server.notes.filter(function (x) { return x.id === id; })[0] : null;
+      if (n && n.status !== "done") { api("POST", "/api/note/" + encodeURIComponent(id) + "/level", { level: v }).then(refresh); }
+    },
+    askReprocess: function () { S.reConfirm = true; },
+    confirmReprocess: function () {
+      var t = T(), id = S.open;
+      S.reConfirm = false;
+      api("POST", "/api/note/" + encodeURIComponent(id) + "/process", { level: S.rr, again: true }).then(function () { delete S.full[id]; refresh(); })
+        .catch(function (e) { flash(t.error + e.message); });
+    },
     rerun: function () {
       var t = T(), id = S.open;
       api("POST", "/api/note/" + encodeURIComponent(id) + "/rerun", { level: S.rr }).then(function () { delete S.full[id]; flash(t.rerunning + t[S.rr].toLowerCase()); refresh(); })
@@ -530,7 +544,7 @@
       var id = S.open;
       api("POST", "/api/note/" + encodeURIComponent(id) + "/delete").then(function () { S.open = null; S.delConfirm = false; flash(T().deleted); refresh(); });
     },
-    cancel: function () { S.delConfirm = false; S.emptyConfirm = false; S.mAsk = null; S.mDel = null; },
+    cancel: function () { S.delConfirm = false; S.reConfirm = false; S.emptyConfirm = false; S.mAsk = null; S.mDel = null; },
     askEmpty: function () {
       S.emptyConfirm = true; S.verify = null;
       api("GET", "/api/pocket/verify").then(function (v) { S.verify = v; render(); }).catch(function () { S.verify = { total: 0, verified: 0 }; render(); });

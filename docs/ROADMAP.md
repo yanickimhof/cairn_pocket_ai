@@ -8,7 +8,7 @@
 - Local transcription with a reliability score per recording
 - Cleaning, title, TL;DR, actions, key points
 - Automatic templates (meeting, call, presentation, idea, other)
-- Short, standard and detailed levels, rerun on one recording
+- Level of detail chosen per recording (short, standard, detailed), summary rerun or new transcription on one recording
 - Rename, copy, export (Markdown, HTML)
 - Light default install, larger models on demand, removable from the app
 - Process one recording, skip or restore, stop, newest first

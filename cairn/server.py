@@ -455,10 +455,17 @@ def make_handler(app):
                 except jobs.Busy:
                     raise ApiError(409, "busy")
                 return self._json(202, {"ok": True})
+            if method == "POST" and action == "level":
+                app.get_note(note_id)
+                try:
+                    app.jobs.set_level(note_id, body.get("level"))
+                except ValueError as error:
+                    raise ApiError(400, str(error))
+                return self._json(200, {"ok": True})
             if method == "POST" and action == "process":
                 app.get_note(note_id)
                 try:
-                    app.jobs.start_process(note_id)
+                    app.jobs.start_process(note_id, body.get("level"), body.get("again") is True)
                 except jobs.Busy:
                     raise ApiError(409, "busy")
                 except ValueError as error:
