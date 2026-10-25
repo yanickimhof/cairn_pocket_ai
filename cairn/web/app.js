@@ -136,17 +136,22 @@
   function lvlIcon(k) { return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" aria-hidden="true">' + I.lvl[k] + "</svg>"; }
   var LANG_NAME = { fr: "Français", en: "English" };
   function menuBtn(key, icon, label, hint) {
-    return '<button type="button" class="mbtn menu' + (S.menu === key ? " open" : "") + '" data-a="menu" data-v="' + key + '"' + tip(hint) + ">" + icon + "<span>" + esc(label) + "</span>" + I.chev + "</button>";
+    return '<button type="button" class="mbtn menu' + (S.menu === key ? " open" : "") + '" data-a="menu" data-v="' + key + '"' + tip(hint) + ">" + icon + (label ? "<span>" + esc(label) + "</span>" : "") + I.chev + "</button>";
   }
   function optionBar(t) {
-    return menuBtn("lvl", lvlIcon(S.rr), t[S.rr], t.levelHint) + menuBtn("lang", "", LANG_NAME[S.rl] || S.rl, t.langHint);
+    return menuBtn("lvl", lvlIcon(S.rr), "", t[S.rr] + " · " + t.levelHint) + menuBtn("lang", "", String(S.rl).toUpperCase(), t.langHint);
   }
-  function optionList(t) {
-    if (!S.menu) { return ""; }
-    var isLevel = S.menu === "lvl", items = isLevel ? ["short", "mid", "full"] : ["fr", "en"], cur = isLevel ? S.rr : S.rl;
+  function exportList(n, t) {
+    if (S.exp !== n.id) { return ""; }
+    return '<div class="opts" style="order:3"><button type="button" class="opt" data-a="expCopy"' + tip(t.copyRichHint) + ">" + I.copy.replace("#FFFFFF", "#1D1D1F") + '</button><button type="button" class="opt" data-a="expMd"' + tip(t.expMdHint) + '><span>MD</span></button><button type="button" class="opt" data-a="expHtml"' + tip(t.expHtmlHint) + "><span>HTML</span></button></div>";
+  }
+  function optionList(t, which) {
+    if (!S.menu || (S.menu === "ui") !== (which === "ui")) { return ""; }
+    var isLevel = S.menu === "lvl", items = isLevel ? ["short", "mid", "full"] : ["fr", "en"];
+    var cur = isLevel ? S.rr : (S.menu === "ui" ? ui() : S.rl), act = isLevel ? "rr" : (S.menu === "ui" ? "ui" : "rl");
     return '<div class="opts">' + items.map(function (k) {
-      return '<button type="button" class="opt' + (k === cur ? " on" : "") + '" data-a="' + (isLevel ? "rr" : "rl") + '" data-v="' + k + '"' + (isLevel ? tip(t[k + "Hint"]) : "") + ">" +
-        (isLevel ? lvlIcon(k) : "") + "<span>" + esc(isLevel ? t[k] : LANG_NAME[k]) + "</span></button>";
+      return '<button type="button" class="opt' + (k === cur ? " on" : "") + '" data-a="' + act + '" data-v="' + k + '"' + tip(isLevel ? t[k + "Hint"] : LANG_NAME[k]) + ">" +
+        (isLevel ? lvlIcon(k) : "<span>" + k.toUpperCase() + "</span>") + "</button>";
     }).join("") + "</div>";
   }
 
@@ -189,11 +194,6 @@
   function bg(on) { return on ? " on" : ""; }
   function tip(text) { return text ? ' data-tip="' + esc(text) + '" aria-label="' + esc(text) + '"' : ""; }
 
-  function segLang(prefix, current, size, t, hint) {
-    return '<div class="seg ' + size + '">' + ["fr", "en"].map(function (k) {
-      return '<button type="button" class="' + (current === k ? "on" : "") + '" data-a="' + prefix + '" data-v="' + k + '"' + tip(hint) + ">" + k.toUpperCase() + "</button>";
-    }).join("") + "</div>";
-  }
   function confirmBox(text, yes, t) {
     return '<div class="confirm"><div>' + esc(text) + '</div><div class="row gap8">' +
       '<button type="button" class="ib grey2" data-a="cancel"' + tip(t.cancel) + ">" + I.x + "</button>" +
@@ -312,16 +312,13 @@
     }
     var passInk = n.quality != null && n.quality < 85 ? "var(--warn)" : "var(--mute)";
     h += '<div class="bar"><div class="row gap8" style="flex-wrap:wrap">' + optionBar(t) +
-      '<button type="button" class="mbtn blue" data-a="rerun"' + (S.server && S.server.job && S.server.job.running ? " disabled" : "") + tip(t.redoHint) + ">" + esc(t.redo) + "</button></div>";
+      '<button type="button" class="ib blue" data-a="rerun"' + (S.server && S.server.job && S.server.job.running ? " disabled" : "") + tip(t.redoHint) + ">" + I.refreshW + "</button></div>";
     h += '<div class="row" style="gap:4px;order:2">';
     h += '<button type="button" class="ib" data-a="viewText" data-id="' + esc(n.id) + '"' + tip(t.viewText) + ">" + I.doc.replace("#6E6E73", "#1D1D1F") + "</button>";
     h += '<button type="button" class="warn" data-a="copyDoubtful" style="color:' + passInk + '"' + tip(n.passages + t.passages + " · " + t.copilotHint) + ">" + (passInk === "var(--orange)" ? I.warnB.replace('width="16" height="16"', 'width="18" height="18"') : I.warnB.replace("#C86D51", "#6E6E73").replace('width="16" height="16"', 'width="18" height="18"')) + (n.passages || 0) + "</button>";
     h += '<button type="button" class="ib" data-a="startRename"' + tip(t.rename) + ">" + I.pencil + "</button>";
-    h += '<button type="button" class="ib" data-a="toggleExport"' + tip(t.exportHint) + ">" + I.down + "</button>";
-    h += '<button type="button" class="ib" data-a="askDelete"' + tip(t.deleteHint) + ">" + I.trash + "</button></div>" + optionList(t) + "</div>";
-    if (S.exp === n.id) {
-      h += '<div class="exp"><button type="button" class="main" data-a="expCopy"' + tip(t.copyRichHint) + ">" + I.copy + '</button><button type="button" data-a="expMd"' + tip(t.expMdHint) + '>MD</button><button type="button" data-a="expHtml"' + tip(t.expHtmlHint) + ">HTML</button></div>";
-    }
+    h += '<button type="button" class="ib' + (S.exp === n.id ? " on" : "") + '" data-a="toggleExport"' + tip(t.exportHint) + ">" + I.down + "</button>";
+    h += '<button type="button" class="ib" data-a="askDelete"' + tip(t.deleteHint) + ">" + I.trash + "</button></div>" + optionList(t) + exportList(n, t) + "</div>";
     if (S.delConfirm) { h += confirmBox(t.deleteConfirm, "confirmDelete", t); }
     if (n.error) { h += '<div class="err">' + esc(t.error + n.error) + "</div>"; }
     if (full && full.summary) {
@@ -393,9 +390,10 @@
     var pv = st.privacy, sc = !pv ? "#86868B" : (pv.ok ? "#1E8E3E" : "#A4452A");
     var pt = t.localHint + ". " + t.privAuto + ": " + (!pv ? t.privNone : (pv.ok ? t.privOk + " · " + fmtDate(pv.when) : t.privBad));
     h += '<span class="pill"' + tip(pt) + ">" + I.shield(sc, 18) + esc(t.local) + "</span></div>";
-    h += '<div class="row" style="gap:2px"><div style="margin-right:6px"' + tip(t.uiLang) + ">" + segLang("ui", ui(), "s34", t, "") + "</div>";
+    h += '<div class="row" style="gap:2px"><div style="margin-right:6px">' + menuBtn("ui", "", ui().toUpperCase(), t.uiLang) + "</div>";
     h += '<button type="button" class="ib plain' + bg(S.aboutOpen) + (st.update && st.update.available ? " upd" : "") + '" data-a="about"' + tip(t.about) + ">" + I.info + "</button>";
     h += '<button type="button" class="ib plain' + bg(S.settingsOpen) + '" data-a="settings"' + tip(t.settings) + ">" + I.gear + "</button></div></div>";
+    if (S.menu === "ui") { h += '<div style="margin:0 0 12px">' + optionList(t, "ui") + "</div>"; }
     if (S.settingsOpen) { h += viewSettings(t, st); }
     if (S.aboutOpen) { h += viewAbout(t); }
     h += '<div class="hero"><div class="ring"' + (job.running ? tip(stepText(job, t)) : "") + '><svg class="arc" width="156" height="156" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="#E5E5EA" stroke-width="3"></circle>' +
@@ -526,7 +524,7 @@
   }
 
   var A = {
-    ui: function (v) { S.ui = v; api("POST", "/api/settings", { ui: v }).then(refresh); },
+    ui: function (v) { S.ui = v; S.menu = null; api("POST", "/api/settings", { ui: v }).then(refresh); },
     autocheck: function (v) { api("POST", "/api/settings", { autocheck: v === "1" }).then(refresh); },
     settings: function () { S.settingsOpen = !S.settingsOpen; S.emptyConfirm = false; },
     about: function () {
@@ -542,7 +540,7 @@
       api("POST", "/api/import").then(refresh).catch(function (e) { flash(T().error + e.message); });
     },
     row: function (v, id) { S.open = S.open === id ? null : id; S.delConfirm = false; S.edit = null; S.exp = null; S.menu = null; S.rr = noteLevel(id); S.rl = noteLang(id); if (S.open) { loadFull(id); } },
-    menu: function (v) { S.menu = S.menu === v ? null : v; },
+    menu: function (v) { S.menu = S.menu === v ? null : v; S.exp = null; },
     rr: function (v) {
       S.rr = v; S.menu = null;
       var id = S.open, n = findNote(id);
@@ -571,7 +569,7 @@
       if (!title) { return; }
       api("POST", "/api/note/" + encodeURIComponent(id) + "/rename", { title: title }).then(function () { S.edit = null; flash(T().renamed); delete S.full[id]; refresh(); });
     },
-    toggleExport: function () { S.exp = S.exp === S.open ? null : S.open; },
+    toggleExport: function () { S.exp = S.exp === S.open ? null : S.open; S.menu = null; },
     expMd: function () { download(S.open, "md"); },
     expHtml: function () { download(S.open, "html"); },
     expCopy: function () { copyRich(S.open).catch(function () { flash(T().error + "clipboard"); }); },
