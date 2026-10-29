@@ -1,62 +1,36 @@
 # Release notes
 
-## 0.3.0: faster, steadier, and it learns your names
+## 0.3: faster, steadier, and it knows your names
 
-**Your names, finally spelled right**
-- Tell Cairn the people, places and terms Whisper keeps getting wrong. It fixes them in the transcript and in the summary, and lists every change so you can undo it.
-
-**Speed you feel**
-- **Speakers identified 4.5 times faster.** Your Mac's graphics chip does the work, same result. One button goes back to the processor.
-- **Starts the moment the copy ends.** No waiting, no clicking.
-- **Made for a 16 GB Mac.** The speaker pass takes 22 seconds instead of 82.
-
-**Walk away, it finishes**
-- **The Mac stays awake** until your notes are ready.
-- **A failed recording tries again by itself,** and never redoes what is already done.
-- **A problem shows in seconds, not after an hour.** The summary model is checked before any long job, and a frozen engine is cut off.
-- **Stop means stop,** and an interrupted recording goes back to waiting instead of spinning for ever.
-
-**Fix who said what, afterwards**
-- Redo the speakers of a finished note and rename them. Speaker identification also works with pyannote 4, where every pass used to fail at the very end.
-
-**Honest about your machine**
-- Models and About show what is really installed: real sizes, the Ollama version installed and running, the right names.
-- A model that cannot give structured output is named as such, and Qwen3.5 9B waits until Ollama supports it.
-- Each note keeps how long every step took, never its content.
-- Processing one recording no longer launches the whole queue when automatic processing is off.
-- Identifying speakers during the transcription saved 4 seconds and cost 1.4 GB of swap, so Cairn does not do it.
+- **Your names, spelled right.** Add the names and places Whisper misses. Cairn fixes them in the transcript and the summary, and shows every change.
+- **Speakers 4.5 times faster.** Your Mac's graphics chip does the work, same result.
+- **Who said what, fixed afterwards.** Redo the speakers of any note and rename them.
+- **Hands free.** It starts when the copy ends, keeps the Mac awake, and retries a failure by itself.
+- **No hour lost.** A problem shows in seconds, a frozen engine is cut off, Stop really stops.
+- **Light on memory.** A 16 GB Mac is enough: the speaker pass drops from 82 to 22 seconds.
+- **What you see is what you have.** Models and About show real sizes and versions.
 
 ## 0.2: who said what
 
-- **Know your Pocket.** Firmware, state and storage used, read only, from your own session key.
-- **Who said what.** Speakers told apart on your computer, with the model installed only when you want it.
-- **The install command installs the right version.** The default reference no longer points at the old release, on the command, the install page and SECURITY.md.
+- **Who said what.** Speakers told apart on your computer, installed only when you want it.
+- **Your Pocket at a glance.** Firmware, state and storage, read only.
+- **The right version, every install.**
 
 ## 0.1: the first stable release
 
-- **Install with one command** on macOS and Windows, with a self test.
-- **Plug in, see it.** A green dot when the Pocket is connected, orange when it is not detected.
-- **An import you can trust.** Resumable, verified byte for byte.
-- **Transcripts with two scores.** Raw confidence and note fidelity on every recording.
-- **Notes that get to the point.** Title, TL;DR, actions and key points, with the template (meeting, call, presentation, idea, other) chosen for you.
-- **Your level of detail, your language.** Set per recording, and redo a note at another level.
-- **Out in one click.** Rename, copy, export in Markdown or HTML.
-- **Battery level** of the Pocket over Bluetooth on macOS.
-- **Light to install, big when you want.** Larger models on demand, removable from the app.
-- **Full control of the queue.** Process one recording, skip, restore or stop, newest first.
-- **Secure mode and FR/EN.** The list is hidden by default.
-- **One delete, gone everywhere.** From the Pocket (at its next connection if needed) and from this computer.
-- **Copies by itself.** New recordings are copied when the Pocket connects. Automatic processing is optional and off by default.
-- **See what runs.** A component list and a daily update check, one request to GitHub, which you can turn off.
-- **A proof, not a promise.** A network guard and a daily privacy check.
-- **Always there.** Runs in the background and installs as a web app on macOS.
+- **One command to install** on macOS and Windows, self test included.
+- **Plug in, it imports.** Resumable, checked byte for byte.
+- **Notes that get to the point.** Title, TL;DR, actions, key points, the template chosen for you.
+- **Two scores per recording.** Transcript confidence and note fidelity.
+- **Your way.** Level of detail and language per recording, redo at will.
+- **Out in one click.** Copy, Markdown, HTML.
+- **Full control.** Process, skip, restore or stop any recording. One delete clears the Pocket and the computer.
+- **Light to install, big on demand.** Larger models added or removed from the app.
+- **Private, provably.** Network guard, daily privacy check, secure mode, no telemetry.
+- **Always there.** Background mode, installable web app, FR and EN, Pocket battery on macOS.
 
 ## Coming next
 
-- **Linux.**
-- **A faster speech engine.** Update MLX to its latest version; the pinned package list has to be rebuilt for macOS 14.
-- **Usable with a screen reader.** Tested, not assumed.
-- **A list of components (SBOM)** with every release.
-- **Install without Internet.** For computers that never go online.
-- **Import from any folder** of audio files.
-- **More languages** for the interface and the transcripts.
+- **Linux** and **install without Internet.**
+- **Any folder of audio**, and **more languages.**
+- **A faster speech engine**, a **screen reader test**, and a **component list** with every release.
