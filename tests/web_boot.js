@@ -27,7 +27,7 @@ const calls = [];
 function fetchStub(path, opt) {
   calls.push(((opt && opt.method) || "GET") + " " + path);
   let body = {};
-  if (path.split("?")[0] === "/api/state") { body = fx.state; }
+  if (path.split("?")[0] === "/api/state") { body = JSON.parse(JSON.stringify(fx.state)); }  // a copy: the page empties its list in secure mode
   else if (path.indexOf("/api/search") === 0) {
     body = { results: [{ id: "n1", title: "Call", date: "2026-10-08T08:06:00", score: 3, hits: [{ where: "transcript", start: 12, parts: [{ t: "see the ", m: false }, { t: "acme", m: true }] }] }] };
   }
@@ -129,6 +129,29 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   click({ "data-a": "tick", "data-v": "0" });
   await settle();
   check(calls.some((c) => c === "POST /api/note/n1/action"), "ticking an action is saved on its note");
+
+  // an action is corrected in place or deleted after a confirmation
+  click({ "data-a": "taskEdit", "data-v": "0" });
+  await settle();
+  check(page.innerHTML.indexOf('id="tkWhat"') !== -1 && page.innerHTML.indexOf('data-a="taskSave"') !== -1, "an action opens for editing");
+  (listeners.input || []).forEach((fn) => fn({ target: { id: "tkWhat", value: "Send the new plan" } }));
+  click({ "data-a": "taskSave" });
+  await settle();
+  check(calls.some((c) => c === "POST /api/note/n1/actionedit") && page.innerHTML.indexOf('id="tkWhat"') === -1, "the corrected action is saved");
+  click({ "data-a": "taskDel", "data-v": "0" });
+  await settle();
+  check(page.innerHTML.indexOf('data-a="taskDelGo"') !== -1, "deleting asks first");
+  click({ "data-a": "taskDelNo" });
+  await settle();
+  check(page.innerHTML.indexOf('data-a="taskDelGo"') === -1, "the confirmation can be dismissed");
+
+  // secure mode: the actions and the search show the same veil as the list
+  click({ "data-a": "eye" });
+  await settle();
+  check(page.innerHTML.indexOf("veil") !== -1 && page.innerHTML.indexOf('data-a="tick"') === -1, "secure mode hides the actions behind the same veil");
+  click({ "data-a": "eye" });
+  await settle();
+  await settle();
 
   // a finished note can write its follow-up email
   click({ "data-a": "tasksToggle" });

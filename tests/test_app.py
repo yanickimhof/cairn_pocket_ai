@@ -2029,6 +2029,28 @@ class LibraryTest(unittest.TestCase):
             self.app.jobs._vocab_batch(["a", "b"], force=True)  # chosen by hand: written again whatever happens
             self.assertEqual(calls, ["a", "b"])
 
+    def test_an_action_can_be_corrected_or_deleted_from_the_list(self):
+        actions = self.c.call("GET", "/api/actions")[1]["actions"]
+        first = [a for a in actions if a["note"] == "a" and a["what"] == "Envoyer le plan"][0]
+        self.assertEqual(first["index"], 0)
+        self.c.call("POST", "/api/note/a/action", {"what": "Envoyer le plan", "done": True})
+        edit = {"index": 0, "was": "Envoyer le plan", "what": "Envoyer le plan r\u00e9vis\u00e9", "who": " Sophie M. ", "when": "jeudi"}
+        self.assertEqual(self.c.call("POST", "/api/note/a/actionedit", edit)[0], 200)
+        note = self.app.store.get("a")
+        self.assertEqual(note["summary"]["actions"][0], {"what": "Envoyer le plan r\u00e9vis\u00e9", "who": "Sophie M.", "when": "jeudi"})
+        self.assertEqual(note["actions_done"], ["Envoyer le plan r\u00e9vis\u00e9"])  # a ticked action stays ticked under its new words
+        self.assertEqual(note["summary"]["actions"][1]["what"], "Appeler le fournisseur")
+        stale = dict(edit, was="Envoyer le plan")  # the list shown is out of date: nothing is touched
+        self.assertEqual(self.c.call("POST", "/api/note/a/actionedit", stale)[0], 409)
+        self.assertEqual(self.c.call("POST", "/api/note/a/actionedit", {"index": 0, "was": "Envoyer le plan r\u00e9vis\u00e9", "what": " "})[0], 400)
+        self.assertEqual(self.c.call("POST", "/api/note/a/actionedit", {"index": "x", "was": "y"})[0], 400)
+        self.assertEqual(self.c.call("POST", "/api/note/a/actionedit", {"index": 0, "was": "Envoyer le plan r\u00e9vis\u00e9", "delete": True})[0], 200)
+        note = self.app.store.get("a")
+        self.assertEqual([x["what"] for x in note["summary"]["actions"]], ["Appeler le fournisseur"])
+        self.assertEqual(note["actions_done"], [])
+        self.assertEqual(self.c.call("POST", "/api/note/a/actionedit", {"index": 5, "was": "x", "delete": True})[0], 409)
+        self.assertEqual(self.c.call("POST", "/api/note/a/actionedit", {"index": 0, "was": "x"}, cookie=False)[0], 403)
+
     def test_follow_up_email_is_written_once_and_redone_on_request(self):
         from cairn import llm
         calls = []

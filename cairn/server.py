@@ -264,10 +264,10 @@ class App:
             if note.get("status") != "done":
                 continue
             finished = set(note.get("actions_done") or [])
-            for action in (note.get("summary") or {}).get("actions") or []:
+            for index, action in enumerate((note.get("summary") or {}).get("actions") or []):
                 what = str(action.get("what") or "").strip()
                 if what:
-                    out.append({"note": note["id"], "title": note.get("title") or "", "date": note.get("date") or "", "what": what,
+                    out.append({"note": note["id"], "index": index, "title": note.get("title") or "", "date": note.get("date") or "", "what": what,
                                 "who": str(action.get("who") or "").strip(), "when": str(action.get("when") or "").strip(), "done": what in finished})
         out.sort(key=lambda a: a["date"], reverse=True)
         return out
@@ -555,6 +555,35 @@ def make_handler(app):
                 finished = [w for w in note.get("actions_done") or [] if w != what]
                 if body.get("done"):
                     finished.append(what)
+                note["actions_done"] = finished[-300:]
+                app.store.save(note)
+                return self._json(200, {"ok": True})
+            if method == "POST" and action == "actionedit":
+                note = app.get_note(note_id)
+                actions = (note.get("summary") or {}).get("actions")
+                try:
+                    index = int(body.get("index"))
+                except (TypeError, ValueError):
+                    raise ApiError(400, "bad_action")
+                was = str(body.get("was") or "").strip()
+                if not isinstance(actions, list) or not 0 <= index < len(actions) or str(actions[index].get("what") or "").strip() != was:
+                    raise ApiError(409, "changed")  # the note was written again meanwhile: the list shown is out of date
+                ticked = was in (note.get("actions_done") or [])
+                finished = [w for w in note.get("actions_done") or [] if w != was]
+                if body.get("delete"):
+                    del actions[index]
+                else:
+                    what = str(body.get("what") or "").strip()[:500]
+                    if not what:
+                        raise ApiError(400, "empty_action")
+                    item = {"what": what}
+                    for key in ("who", "when"):
+                        value = str(body.get(key) or "").strip()[:80]
+                        if value:
+                            item[key] = value
+                    actions[index] = item
+                    if ticked:
+                        finished.append(what)
                 note["actions_done"] = finished[-300:]
                 app.store.save(note)
                 return self._json(200, {"ok": True})

@@ -10,6 +10,7 @@
       aboutLegal: "v{v} · © 2026 Yanick Imhof · Licence MIT · Non affilié à Pocket.", uiLang: "Langue de l’interface",
       off: "Non", on: "Oui",
       devGpuHint: "Identification des interlocuteurs sur la puce graphique (au moins 4 fois plus rapide, même résultat). Cliquer pour utiliser le processeur.", devCpuHint: "Identification des interlocuteurs sur le processeur. Cliquer pour utiliser la puce graphique.",
+      taskWhat: "Action", taskWho: "Qui", taskWhen: "Quand", taskEditHint: "Modifier l'action", taskDelHint: "Supprimer l'action", taskDelAsk: "Supprimer cette action ?",
       find: "Rechercher", findPlaceholder: "Un mot, un nom, un chiffre", findNone: "Aucun résultat", tasks: "Toutes mes actions", tasksNone: "Aucune action pour l'instant", tasksCopy: "Copier les actions à faire", tasksUnassigned: "Sans responsable", tasksCopied: "Actions copiées",
       listenHint: "Écouter à partir d'ici", mailHint: "Écrire le mail de suivi", mailTitle: "Mail de suivi", mailWriting: "Rédaction du mail…", mailCopy: "Copier le mail", mailOpen: "Ouvrir dans l'app Mail", mailRedo: "Réécrire le mail",
       vocab: "Vocabulaire", vocabHint: "Noms de personnes, de lieux et termes rares, un par ligne. Cairn corrige dans la transcription les mots qui leur ressemblent et impose leur orthographe au résumé. « Sion, Cion, Scyon => Acme » remplace toujours chacun par Acme (=>, -> et : fonctionnent). « Science Day => ACME Day | awards, ceremony » ne remplace qu'à côté de ces mots.",
@@ -64,6 +65,7 @@
       aboutLegal: "v{v} · © 2026 Yanick Imhof · MIT license · Not affiliated with Pocket.", uiLang: "Interface language",
       off: "Off", on: "On",
       devGpuHint: "Speaker identification runs on the graphics chip (at least 4 times faster, same result). Click to use the processor.", devCpuHint: "Speaker identification runs on the processor. Click to use the graphics chip.",
+      taskWhat: "Action", taskWho: "Who", taskWhen: "When", taskEditHint: "Edit the action", taskDelHint: "Delete the action", taskDelAsk: "Delete this action?",
       find: "Search", findPlaceholder: "A word, a name, a number", findNone: "No result", tasks: "All my actions", tasksNone: "No action yet", tasksCopy: "Copy the open actions", tasksUnassigned: "Nobody yet", tasksCopied: "Actions copied",
       listenHint: "Listen from here", mailHint: "Write the follow-up email", mailTitle: "Follow-up email", mailWriting: "Writing the email…", mailCopy: "Copy the email", mailOpen: "Open in the Mail app", mailRedo: "Write it again",
       vocab: "Vocabulary", vocabHint: "Names of people and places and rare terms, one per line. Cairn corrects close variants in the transcript and imposes their spelling on the summary. \"Sion, Cion, Scyon => Acme\" always replaces each of them with Acme (=>, -> and : all work). \"Science Day => ACME Day | awards, ceremony\" replaces only near those words.",
@@ -159,7 +161,7 @@
   var S = {
     ui: null, hidden: true, settingsOpen: false, aboutOpen: false, open: null, edit: null, draft: "", exp: null,
     delConfirm: false, rr: "mid", rl: "en", sp: "auto", server: null, full: {}, about: null, upd: null,
-    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: "", vocabEdit: false, vocabDraft: "", pickMode: false, pick: {}, vFrom: "", vTo: "", vRange: false, findOpen: false, findQ: "", findRes: null, tasksOpen: false, tasks: null
+    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: "", vocabEdit: false, vocabDraft: "", pickMode: false, pick: {}, vFrom: "", vTo: "", vRange: false, taskEdit: null, taskDel: null, findOpen: false, findQ: "", findRes: null, tasksOpen: false, tasks: null
   };
   var lastView = "";
   var toastTimer = null;
@@ -567,7 +569,7 @@
     return api("GET", "/api/actions").then(function (r) { S.tasks = r.actions || []; render(); }).catch(function () { /* keep what is shown */ });
   }
   function viewFind(t) {
-    if (S.hidden) { return '<div class="card panel"><div class="small" style="padding:18px 0">' + esc(t.hiddenNote) + "</div></div>"; }
+    if (S.hidden) { return veil(t); }
     var h = '<div class="card panel"><div class="name" style="margin:14px 0 8px"><input id="findInput" type="search" autocomplete="off" placeholder="' + esc(t.findPlaceholder) + '" aria-label="' + esc(t.find) + '" value="' + esc(S.findQ) + '"></div>';
     var res = S.findRes;
     if (res && !res.length) { h += '<div class="small" style="padding:6px 2px 16px">' + esc(t.findNone) + "</div>"; }
@@ -581,8 +583,9 @@
     });
     return h + "</div>";
   }
+  function veil(t) { return '<div class="list veil">' + I.eyeOff + "<span>" + esc(t.hiddenNote) + "</span></div>"; }
   function viewTasks(t) {
-    if (S.hidden) { return '<div class="card panel"><div class="small" style="padding:18px 0">' + esc(t.hiddenNote) + "</div></div>"; }
+    if (S.hidden) { return veil(t); }
     var list = S.tasks || [];
     if (!list.length) { return '<div class="card panel"><div class="small" style="padding:18px 0">' + esc(S.tasks ? t.tasksNone : "…") + "</div></div>"; }
     var groups = {}, order = [];
@@ -597,9 +600,19 @@
     order.forEach(function (who) {
       h += '<div class="tgroup">' + esc(who || t.tasksUnassigned) + "</div>";
       groups[who].sort(function (x, y) { return (x.a.done ? 1 : 0) - (y.a.done ? 1 : 0); }).forEach(function (e) {
-        var a = e.a;
-        h += '<div class="trow"><button type="button" class="tick" data-a="tick" data-v="' + e.i + '" aria-pressed="' + a.done + '">' + (a.done ? I.done : I.circle) + '</button><div class="tmid"><div class="text' + (a.done ? " tdone" : "") + '">' +
-          esc(a.what + (a.when ? " · " + a.when : "")) + '</div><div class="small">' + esc((a.title || "") + " · " + fmtDate(a.date)) + "</div></div></div>";
+        var a = e.a, ed = S.taskEdit && S.taskEdit.i === e.i ? S.taskEdit : null;
+        if (ed) {
+          h += '<div class="tedit"><input id="tkWhat" type="text" value="' + esc(ed.what) + '" placeholder="' + esc(t.taskWhat) + '" aria-label="' + esc(t.taskWhat) + '"><div class="row gap8"><input id="tkWho" type="text" value="' + esc(ed.who) + '" placeholder="' + esc(t.taskWho) +
+            '" aria-label="' + esc(t.taskWho) + '"><input id="tkWhen" type="text" value="' + esc(ed.when) + '" placeholder="' + esc(t.taskWhen) + '" aria-label="' + esc(t.taskWhen) + '"></div><div class="row gap8" style="justify-content:flex-end"><button type="button" class="ib sm" data-a="taskCancel"' + tip(t.pickCancel) + ">" + I.x +
+            '</button><button type="button" class="ib sm blue" data-a="taskSave"' + tip(t.saveName) + ">" + I.checkW + "</button></div></div>";
+          return;
+        }
+        h += '<div class="trow"><button type="button" class="tick" data-a="tick" data-v="' + e.i + '" aria-pressed="' + a.done + '">' + (a.done ? I.done : I.circle) + '</button><button type="button" class="tmid tbtn" data-a="taskEdit" data-v="' + e.i + '"' + tip(t.taskEditHint) + '><span class="text' + (a.done ? " tdone" : "") + '">' +
+          esc(a.what + (a.when ? " \u00b7 " + a.when : "")) + '</span><span class="small">' + esc((a.title || "") + " \u00b7 " + fmtDate(a.date)) + "</span></button>" +
+          '<button type="button" class="ib sm plain" data-a="taskDel" data-v="' + e.i + '"' + tip(t.taskDelHint) + ">" + I.trash + "</button></div>";
+        if (S.taskDel === e.i) {
+          h += '<div class="row gap8 tconfirm"><span class="small" style="margin-right:auto">' + esc(t.taskDelAsk) + '</span><button type="button" class="ib sm" data-a="taskDelNo"' + tip(t.pickCancel) + ">" + I.x + '</button><button type="button" class="ib sm red" data-a="taskDelGo"' + tip(t.taskDelHint) + ">" + I.checkW + "</button></div>";
+        }
       });
     });
     return h + "</div>";
@@ -689,7 +702,7 @@
       h += '<div class="card pickbar"><span class="text">' + esc(t.pickCount.replace("{n}", chosen)) + '</span><div class="row gap8"><button type="button" class="ib sm" data-a="pickAll"' + tip(t.pickAll) + ">" + I.tasks +
         '</button><button type="button" class="ib sm" data-a="pickCancel"' + tip(t.pickCancel) + ">" + I.x + '</button><button type="button" class="ib sm blue" data-a="pickGo"' + (chosen ? "" : " disabled") + tip(t.pickGo) + ">" + I.checkW + "</button></div></div>";
     }
-    h += S.hidden ? '<div class="list veil">' + I.eyeOff + "<span>" + esc(t.hiddenNote) + "</span></div>" : viewList(t, st);
+    h += S.hidden ? veil(t) : viewList(t, st);
     h += '<footer class="foot"><b>Cairn</b> · ' + esc(t.tagline) + "</footer>";
     return h + "</main>";
   }
@@ -908,6 +921,24 @@
       S.tasksOpen = !S.tasksOpen;
       if (S.tasksOpen) { S.settingsOpen = false; S.aboutOpen = false; S.findOpen = false; loadTasks(); }
     },
+    taskEdit: function (v) { var a = S.tasks && S.tasks[parseInt(v, 10)]; if (a) { S.taskEdit = { i: parseInt(v, 10), what: a.what, who: a.who || "", when: a.when || "" }; S.taskDel = null; } },
+    taskCancel: function () { S.taskEdit = null; },
+    taskSave: function () {
+      var ed = S.taskEdit, a = ed && S.tasks && S.tasks[ed.i];
+      if (!a || !ed.what.trim()) { return; }
+      S.taskEdit = null;
+      api("POST", "/api/note/" + encodeURIComponent(a.note) + "/actionedit", { index: a.index, was: a.what, what: ed.what, who: ed.who, when: ed.when }).then(loadTasks)
+        .catch(function (e) { flash(T().error + e.message); loadTasks(); });
+    },
+    taskDel: function (v) { S.taskDel = parseInt(v, 10); S.taskEdit = null; },
+    taskDelNo: function () { S.taskDel = null; },
+    taskDelGo: function () {
+      var a = S.tasks && S.tasks[S.taskDel];
+      S.taskDel = null;
+      if (!a) { return; }
+      api("POST", "/api/note/" + encodeURIComponent(a.note) + "/actionedit", { index: a.index, was: a.what, delete: true }).then(loadTasks)
+        .catch(function (e) { flash(T().error + e.message); loadTasks(); });
+    },
     tick: function (v) {
       var a = S.tasks && S.tasks[parseInt(v, 10)];
       if (!a) { return; }
@@ -1104,13 +1135,17 @@
     if (ev.target.id === "keyInput") { S.keyDraft = ev.target.value; }
     if (ev.target.id === "hfInput") { S.hfDraft = ev.target.value; }
     if (ev.target.id === "vocabInput") { S.vocabDraft = ev.target.value; }
+    if (S.taskEdit && ev.target.id === "tkWhat") { S.taskEdit.what = ev.target.value; }
+    if (S.taskEdit && ev.target.id === "tkWho") { S.taskEdit.who = ev.target.value; }
+    if (S.taskEdit && ev.target.id === "tkWhen") { S.taskEdit.when = ev.target.value; }
     if (ev.target.id === "vFrom") { S.vFrom = ev.target.value; }
     if (ev.target.id === "vTo") { S.vTo = ev.target.value; }
     if (ev.target.id === "findInput") { S.findQ = ev.target.value; clearTimeout(S.findTimer); S.findTimer = setTimeout(runFind, 250); }
     if (ev.target.id === "spkInput") { S.spkDraft = ev.target.value; }
   });
   document.addEventListener("keydown", function (ev) {
-    if (ev.key === "Escape") { closeText(); if (S.exp) { S.exp = null; render(); } }
+    if (ev.key === "Escape") { closeText(); if (S.exp) { S.exp = null; render(); } if (S.taskEdit) { S.taskEdit = null; render(); } }
+    if (ev.key === "Enter" && ev.target.id === "tkWhat") { A.taskSave(); render(); }
     if (ev.key === "Enter" && ev.target.id === "nameInput") { A.saveName(); }
     if (ev.key === "Enter" && ev.target.id === "folderInput") { A.folderSave(); }
     if (ev.key === "Enter" && ev.target.id === "keyInput") { A.keySave(); }
