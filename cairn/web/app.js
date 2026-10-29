@@ -12,7 +12,9 @@
       devGpuHint: "Identification des interlocuteurs sur la puce graphique (au moins 4 fois plus rapide, même résultat). Cliquer pour utiliser le processeur.", devCpuHint: "Identification des interlocuteurs sur le processeur. Cliquer pour utiliser la puce graphique.",
       find: "Rechercher", findPlaceholder: "Un mot, un nom, un chiffre", findNone: "Aucun résultat", tasks: "Toutes mes actions", tasksNone: "Aucune action pour l'instant", tasksCopy: "Copier les actions à faire", tasksUnassigned: "Sans responsable", tasksCopied: "Actions copiées",
       listenHint: "Écouter à partir d'ici", mailHint: "Écrire le mail de suivi", mailTitle: "Mail de suivi", mailWriting: "Rédaction du mail…", mailCopy: "Copier le mail", mailOpen: "Ouvrir dans l'app Mail", mailRedo: "Réécrire le mail",
-      vocab: "Vocabulaire", vocabHint: "Noms de personnes, de lieux et termes rares, un par ligne. Cairn corrige dans la transcription les mots qui leur ressemblent et impose leur orthographe au résumé. « Sion => Acme » remplace toujours Sion par Acme.", vocabPlaceholder: "Un nom ou un terme par ligne", vocabSaved: "Vocabulaire enregistré", vocabFixes: "Corrections du vocabulaire",
+      vocab: "Vocabulaire", vocabHint: "Noms de personnes, de lieux et termes rares, un par ligne. Cairn corrige dans la transcription les mots qui leur ressemblent et impose leur orthographe au résumé. « Sion, Cion, Scyon => Acme » remplace toujours chacun par Acme (=>, -> et : fonctionnent).",
+      vocabTodo: "{n} notes utilisent un ancien vocabulaire", vocabAll: "Tout mettre à jour", vocabChoose: "Choisir des notes", vocabFrom: "Du", vocabTo: "au", vocabRange: "Mettre à jour", vocabStarted: "{n} notes en cours de mise à jour", vocabNothing: "Aucune note à mettre à jour",
+      pickCount: "{n} sélectionnée(s)", pickAll: "Toutes", pickGo: "Mettre à jour", pickCancel: "Annuler", vocabPlaceholder: "Un nom ou un terme par ligne", vocabSaved: "Vocabulaire enregistré", vocabFixes: "Corrections du vocabulaire",
       processedIn: "traité en", notInstalled: "Non installé", getIt: "Installer", refText: "Acheter un Pocket : 10 % de réduction", refNote: "Lien de parrainage facultatif. L’offre dépend uniquement de Pocket et peut changer.",
       models: "Modèles", modelsHint: "Choisir ou ajouter des modèles", modelsSpeech: "Transcription", modelsLlm: "Résumés", modelsDiar: "Identification des interlocuteurs",
       hfToken: "Jeton Hugging Face", hfTokenHint: "Nécessaire une seule fois pour télécharger le modèle de diarisation (gratuit, compte Hugging Face requis ; il faut aussi accepter l'accès au modèle sur huggingface.co). Jamais utilisé ailleurs.",
@@ -64,7 +66,9 @@
       devGpuHint: "Speaker identification runs on the graphics chip (at least 4 times faster, same result). Click to use the processor.", devCpuHint: "Speaker identification runs on the processor. Click to use the graphics chip.",
       find: "Search", findPlaceholder: "A word, a name, a number", findNone: "No result", tasks: "All my actions", tasksNone: "No action yet", tasksCopy: "Copy the open actions", tasksUnassigned: "Nobody yet", tasksCopied: "Actions copied",
       listenHint: "Listen from here", mailHint: "Write the follow-up email", mailTitle: "Follow-up email", mailWriting: "Writing the email…", mailCopy: "Copy the email", mailOpen: "Open in the Mail app", mailRedo: "Write it again",
-      vocab: "Vocabulary", vocabHint: "Names of people and places and rare terms, one per line. Cairn corrects close variants in the transcript and imposes their spelling on the summary. \"Sion => Acme\" always replaces Sion with Acme.", vocabPlaceholder: "One name or term per line", vocabSaved: "Vocabulary saved", vocabFixes: "Vocabulary corrections",
+      vocab: "Vocabulary", vocabHint: "Names of people and places and rare terms, one per line. Cairn corrects close variants in the transcript and imposes their spelling on the summary. \"Sion, Cion, Scyon => Acme\" always replaces each of them with Acme (=>, -> and : all work).",
+      vocabTodo: "{n} notes use an older vocabulary", vocabAll: "Update all", vocabChoose: "Choose notes", vocabFrom: "From", vocabTo: "to", vocabRange: "Update", vocabStarted: "{n} notes are being updated", vocabNothing: "No note to update",
+      pickCount: "{n} selected", pickAll: "All", pickGo: "Update", pickCancel: "Cancel", vocabPlaceholder: "One name or term per line", vocabSaved: "Vocabulary saved", vocabFixes: "Vocabulary corrections",
       processedIn: "processed in", notInstalled: "Not installed", getIt: "Install", refText: "Get a Pocket: 10 % off", refNote: "Optional referral link. The offer is set by Pocket alone and may change.",
       models: "Models", modelsHint: "Choose or add models", modelsSpeech: "Transcription", modelsLlm: "Summaries", modelsDiar: "Speaker identification",
       hfToken: "Hugging Face token", hfTokenHint: "Needed once to download the diarization model (free, a Hugging Face account is required, and you must accept access to the model on huggingface.co). Never used anywhere else.",
@@ -154,7 +158,7 @@
   var S = {
     ui: null, hidden: true, settingsOpen: false, aboutOpen: false, open: null, edit: null, draft: "", exp: null,
     delConfirm: false, rr: "mid", rl: "en", sp: "auto", server: null, full: {}, about: null, upd: null,
-    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: "", vocabEdit: false, vocabDraft: "", findOpen: false, findQ: "", findRes: null, tasksOpen: false, tasks: null
+    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: "", vocabEdit: false, vocabDraft: "", pickMode: false, pick: {}, vFrom: "", vTo: "", findOpen: false, findQ: "", findRes: null, tasksOpen: false, tasks: null
   };
   var lastView = "";
   var toastTimer = null;
@@ -328,6 +332,14 @@
     if (S.vocabEdit) {
       h += '<div class="name" style="margin:0 0 6px;align-items:flex-start"><textarea id="vocabInput" rows="5" placeholder="' + esc(t.vocabPlaceholder) + '" aria-label="' + esc(t.vocab) + '">' + esc(S.vocabDraft) +
         '</textarea><button type="button" class="ib blue" data-a="vocabSave"' + tip(t.saveName) + ">" + I.checkW + "</button></div>";
+    }
+    if (!S.vocabEdit && terms.length) {
+      var todo = (st.totals && st.totals.vocab_todo) || 0;
+      h += '<div class="vtools">' + (todo > 0 ? '<div class="small">' + esc(t.vocabTodo.replace("{n}", todo)) + "</div>" : "") + '<div class="row gap8" style="flex-wrap:wrap;margin:8px 0">' +
+        (todo > 0 ? '<button type="button" class="mbtn" data-a="vocabAll">' + esc(t.vocabAll) + "</button>" : "") +
+        '<button type="button" class="mbtn" data-a="pickStart">' + esc(t.vocabChoose) + "</button></div>" +
+        '<div class="row gap8" style="flex-wrap:wrap;margin-bottom:12px"><span class="small">' + esc(t.vocabFrom) + '</span><input id="vFrom" type="date" class="dinput" value="' + esc(S.vFrom) + '"><span class="small">' + esc(t.vocabTo) +
+        '</span><input id="vTo" type="date" class="dinput" value="' + esc(S.vTo) + '"><button type="button" class="mbtn" data-a="vocabRange">' + esc(t.vocabRange) + "</button></div></div>";
     }
     h += '<div class="hr"></div><div class="setrow"' + tip(t.hfTokenHint) + ">" + I.hf;
     if (st.settings.hf_token) {
@@ -519,10 +531,11 @@
       var rowTip = running ? stepText(st.job, t) : (done || n.status === "error" ? t.rowHint : t.actionsHint);
       var subTip = done ? (n.mixed ? t.mixedHint : t.dateDur) : (running ? "" : t.durHint);
       var bar = running ? (st.job.pct != null ? '<span class="pbar"><span style="width:' + st.job.pct + '%"></span></span>' : (st.job.step ? '<span class="pbar ind"><span></span></span>' : "")) : "";
-      return '<div class="item"><button type="button" class="rowbtn" data-a="row" data-id="' + esc(n.id) + '" aria-expanded="' + open + '"' + tip(rowTip) + '><span class="st">' + statusIcon(n, st.job) +
+      var picking = S.pickMode;
+      return '<div class="item"><button type="button" class="rowbtn" data-a="' + (picking ? "pickTog" : "row") + '" data-id="' + esc(n.id) + '" aria-expanded="' + open + '"' + tip(rowTip) + '><span class="st">' + (picking && done ? (S.pick[n.id] ? I.done : I.circle) : statusIcon(n, st.job)) +
         '</span><span class="mid"><span class="main">' + esc(main) + '</span><span class="sub"' + tip(subTip) + ">" + esc(sub) + "</span>" + bar + "</span>" + (done ? scorePills(n, t) : "") + "</button>" +
-        (open && (done || n.status === "error") ? viewDetail(n, t) : "") +
-        (open && !done ? queueActions(n, st.job, t) : "") + "</div>";
+        (open && !picking && (done || n.status === "error") ? viewDetail(n, t) : "") +
+        (open && !picking && !done ? queueActions(n, st.job, t) : "") + "</div>";
     }).join("") + "</div>";
   }
 
@@ -586,6 +599,13 @@
       });
     });
     return h + "</div>";
+  }
+
+  function applyVocab(body) {
+    api("POST", "/api/vocabulary/apply", body).then(function (r) {
+      flash(r.count ? T().vocabStarted.replace("{n}", r.count) : T().vocabNothing);
+      refresh();
+    }).catch(function (e) { flash(T().error + (e.message === "busy" ? T().mBusy : e.message)); });
   }
 
   function showMail(id, redo) {
@@ -660,6 +680,11 @@
     h += "</div></div>";
     if (!st.ollama) { h += '<div class="err">' + esc(t.modelDown) + "</div>"; }
     h += "</div>";
+    if (S.pickMode && !S.hidden) {
+      var chosen = Object.keys(S.pick).filter(function (k) { return S.pick[k]; }).length;
+      h += '<div class="card pickbar"><span class="text">' + esc(t.pickCount.replace("{n}", chosen)) + '</span><div class="row gap8"><button type="button" class="mbtn" data-a="pickAll">' + esc(t.pickAll) +
+        '</button><button type="button" class="mbtn" data-a="pickCancel">' + esc(t.pickCancel) + '</button><button type="button" class="ib blue" data-a="pickGo"' + (chosen ? "" : " disabled") + tip(t.pickGo) + ">" + I.checkW + "</button></div></div>";
+    }
     h += S.hidden ? '<div class="list veil">' + I.eyeOff + "<span>" + esc(t.hiddenNote) + "</span></div>" : viewList(t, st);
     h += '<footer class="foot"><b>Cairn</b> · ' + esc(t.tagline) + "</footer>";
     return h + "</main>";
@@ -673,12 +698,20 @@
     var app = document.getElementById("app");
     var focus = document.activeElement && document.activeElement.id;
     var value = focus && document.activeElement.value;
+    var caret = null;
+    try {  // the page is drawn again when the state changes: the caret and the scroll of the field being typed in stay where they were
+      if (focus && document.activeElement.setSelectionRange) { caret = [document.activeElement.selectionStart, document.activeElement.selectionEnd, document.activeElement.scrollTop]; }
+    } catch (e) { caret = null; }
     app.innerHTML = html;
     document.documentElement.lang = ui();
     if (focus && document.getElementById(focus)) {
       var el = document.getElementById(focus);
       el.focus();
-      if (el.setSelectionRange && typeof value === "string") { el.value = value; el.setSelectionRange(value.length, value.length); }
+      if (typeof value === "string") { el.value = value; }
+      try {
+        if (caret && el.setSelectionRange) { el.setSelectionRange(caret[0], caret[1]); el.scrollTop = caret[2]; }
+        else if (el.setSelectionRange && typeof value === "string") { el.setSelectionRange(value.length, value.length); }
+      } catch (e) { /* a field without a caret, such as a date */ }
     } else if (S.edit && document.getElementById("nameInput")) {
       var inp = document.getElementById("nameInput"); inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length);
     }
@@ -884,6 +917,25 @@
       navigator.clipboard.writeText(lines.join("\n")).then(function () { flash(T().tasksCopied); });
     },
     mailOpen: function (v, id) { showMail(id); },
+    vocabAll: function () { applyVocab({ all: true }); },
+    vocabRange: function () { if (S.vFrom || S.vTo) { applyVocab({ from: S.vFrom, to: S.vTo }); } },
+    pickStart: function () { S.pickMode = true; S.pick = {}; S.settingsOpen = false; S.hidden = false; S.open = null; refresh(); },
+    pickTog: function (v, id) {
+      var n = ((S.server && S.server.notes) || []).filter(function (x) { return x.id === id; })[0];
+      if (n && n.status === "done") { S.pick[id] = !S.pick[id]; }
+    },
+    pickAll: function () {
+      var done = ((S.server && S.server.notes) || []).filter(function (x) { return x.status === "done"; });
+      var every = done.length && done.every(function (x) { return S.pick[x.id]; });
+      S.pick = {};
+      if (!every) { done.forEach(function (x) { S.pick[x.id] = true; }); }
+    },
+    pickCancel: function () { S.pickMode = false; S.pick = {}; },
+    pickGo: function () {
+      var ids = Object.keys(S.pick).filter(function (k) { return S.pick[k]; });
+      S.pickMode = false; S.pick = {};
+      if (ids.length) { applyVocab({ ids: ids }); }
+    },
     about: function () {
       S.aboutOpen = !S.aboutOpen;
       if (S.aboutOpen) { S.findOpen = false; S.tasksOpen = false; }
@@ -1047,6 +1099,8 @@
     if (ev.target.id === "keyInput") { S.keyDraft = ev.target.value; }
     if (ev.target.id === "hfInput") { S.hfDraft = ev.target.value; }
     if (ev.target.id === "vocabInput") { S.vocabDraft = ev.target.value; }
+    if (ev.target.id === "vFrom") { S.vFrom = ev.target.value; }
+    if (ev.target.id === "vTo") { S.vTo = ev.target.value; }
     if (ev.target.id === "findInput") { S.findQ = ev.target.value; clearTimeout(S.findTimer); S.findTimer = setTimeout(runFind, 250); }
     if (ev.target.id === "spkInput") { S.spkDraft = ev.target.value; }
   });

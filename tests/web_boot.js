@@ -136,6 +136,23 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   await settle();
   check(page.innerHTML.indexOf('data-a="mailOpen"') !== -1, "a finished note offers its follow-up email");
 
+  // vocabulary: how many notes are out of date, update them all, or tick some
+  fx.state.settings.vocabulary = ["Sion, Cion => Acme"];
+  fx.state.totals.vocab_todo = 2;
+  timers.splice(0).forEach((fn) => fn());
+  click({ "data-a": "settings" });
+  await settle();
+  check(page.innerHTML.indexOf('data-a="vocabAll"') !== -1 && page.innerHTML.indexOf('id="vFrom"') !== -1, "the vocabulary offers to update the notes");
+  click({ "data-a": "pickStart" });
+  await settle();
+  check(page.innerHTML.indexOf('data-a="pickTog"') !== -1 && page.innerHTML.indexOf('data-a="row"') === -1 && page.innerHTML.indexOf('data-a="pickGo" disabled') !== -1, "choosing notes turns the list into a selection, nothing chosen yet");
+  click({ "data-a": "pickTog", "data-id": done.id });
+  await settle();
+  check(page.innerHTML.indexOf('data-a="pickGo" disabled') === -1, "a ticked note enables the update");
+  click({ "data-a": "pickGo" });
+  await settle();
+  check(calls.some((c) => c === "POST /api/vocabulary/apply") && page.innerHTML.indexOf('data-a="pickTog"') === -1, "the chosen notes are sent, the list comes back");
+
   // a running job shows its progress on the right row
   fx.state.job = { running: true, kind: "import", step: "transcribing", id: waiting.id, done: 0, total: 1, pct: 40, errors: [] };
   timers.splice(0).forEach((fn) => fn());

@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
-from . import battery, catalog, config, diarize, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, speech
+from . import battery, catalog, config, diarize, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, speech, vocab
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -135,7 +135,8 @@ class App:
             "diar_installed": models.diar_installed(),
             "gpu": sys.platform == "darwin" and platform.machine() == "arm64",
             "totals": {"notes": len(everything), "done": sum(1 for n in everything if n.get("status") == "done"),
-                       "waiting": sum(1 for n in everything if n.get("status") in ("waiting", "error"))},
+                       "waiting": sum(1 for n in everything if n.get("status") in ("waiting", "error")),
+                       "vocab_todo": len(self.vocab_outdated(everything))},
         }
         if with_list:
             data["notes"] = rows
@@ -237,6 +238,23 @@ class App:
             heard = note.get("heard")
             note["fidelity"], note["fidelity_basis"] = score.fidelity_detail(note.get("summary"), note.get("clean"), words_ok=heard in (None, note.get("lang")))
         return note
+
+    def vocab_outdated(self, rows=None):
+        """The finished notes written with another vocabulary than the current one (none when there is no vocabulary to apply)."""
+        terms = config.load_settings().get("vocabulary") or []
+        key = vocab.key(terms)
+        rows = self.store.slim() if rows is None else rows
+        return [n for n in rows if n.get("status") == "done" and n.get("vocab_key", "") != key and (terms or n.get("vocab_fixes"))]
+
+    def vocab_targets(self, body):
+        """The notes to bring up to date: chosen ones, a range of dates (both written again even when they are up to date), or all that are out of date."""
+        rows = {n["id"]: n for n in self.store.slim() if n.get("status") == "done"}
+        if isinstance(body.get("ids"), list):
+            return [i for i in dict.fromkeys(str(i) for i in body["ids"]) if i in rows]
+        if body.get("from") or body.get("to"):
+            low, high = str(body.get("from") or "0000-00-00")[:10], str(body.get("to") or "9999-99-99")[:10]
+            return [i for i, n in sorted(rows.items(), key=lambda kv: kv[1].get("date") or "") if low <= (n.get("date") or "")[:10] <= high]
+        return [n["id"] for n in sorted(self.vocab_outdated(list(rows.values())), key=lambda n: n.get("date") or "")]
 
     def actions(self):
         """Every action of every finished note, newest note first, with its done flag."""
@@ -468,6 +486,14 @@ def make_handler(app):
                     return self._json(200, models.select(body.get("kind"), body.get("id")))
                 except ValueError as error:
                     raise ApiError(400, str(error))
+            if method == "POST" and path == "/api/vocabulary/apply":
+                ids = app.vocab_targets(body)
+                if ids:
+                    try:
+                        app.jobs.start_vocab(ids)
+                    except jobs.Busy:
+                        raise ApiError(409, "busy")
+                return self._json(202 if ids else 200, {"ok": True, "count": len(ids)})
             if method == "GET" and path == "/api/search":
                 return self._json(200, {"results": search.find(app.store.folder, (query.get("q") or [""])[0][:200])})
             if method == "GET" and path == "/api/actions":

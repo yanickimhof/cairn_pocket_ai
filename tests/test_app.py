@@ -1649,12 +1649,43 @@ class VocabularyTest(unittest.TestCase):
         job, store = RetryAndResumeTest()._jobs(a={"status": "done", "segments": [{"start": 0, "end": 1, "text": "x"}], "vocab_key": vocab.key([]),
                                                    "models": {"speech": "W"}, "speech_lang_used": None, "level": "mid", "lang": "en"})
         started = []
-        for terms, expected in ((["Acme"], "_one"), ([], "_rerun")):
+        for terms, expected in ((["Acme"], "_rerun"), ([], "_rerun")):  # no audio is needed: the kept transcript is corrected and the note written again
             started.clear()
             with mock.patch.object(jobs.speech, "model_name", return_value="W"), mock.patch.object(jobs.config, "load_settings", return_value={"vocabulary": terms}), \
                     mock.patch.object(job, "_start", side_effect=lambda kind, target, *a: started.append(target.__name__)):
                 self.assertFalse(job.start_rerun("a", "mid"))  # False: the audio is not transcribed again
             self.assertEqual(started, [expected])
+
+
+    def test_several_spellings_and_every_arrow_share_one_rule(self):
+        from cairn import vocab
+
+        self.assertEqual(vocab.parse("Sion : Acme\nA, B -> C\nlow \u2192 High\nX, Y; Z"), ["Sion => Acme", "A, B => C", "low => High", "X", "Y", "Z"])
+        self.assertEqual(vocab.parse(["Sion, Cion => Acme", "Springfield, Yverdon"]), ["Sion, Cion => Acme", "Springfield, Yverdon"])
+        self.assertEqual(vocab.parse("=> x\ny =>"), [])  # an arrow with nothing on one side is not a rule
+        with self.assertRaises(ValueError):
+            vocab.parse(", ".join(["abcdefghij"] * 40) + " => Acme")
+        terms = ["Science Day -> ACME Day", "SIGN DAY, Silent  Day => ACME Day", "Martin Yen : Martin Jetter"]
+        text, found = vocab.fix_text("At the science day, then sign day, and silent\nday. Martin Yen spoke.", terms)
+        self.assertEqual(text, "At the ACME Day, then ACME Day, and ACME Day. Martin Jetter spoke.")
+        self.assertEqual(len(found), 4)
+        self.assertEqual(vocab.spellings(terms), ["ACME Day", "Martin Jetter"])
+        self.assertEqual(vocab.fix_text("Sionx", ["Sion => Acme"])[0], "Sionx")  # whole words only
+
+    def test_the_words_are_redone_and_the_summary_written_again_without_any_audio(self):
+        from unittest import mock
+
+        from cairn import jobs
+
+        segments = [{"start": 0.0, "end": 2.0, "text": "The Sion awards today.", "speaker": "Speaker 1"}]
+        job, store = RetryAndResumeTest()._jobs(a={"status": "done", "segments": segments, "lang": "en", "level": "mid", "speaker_names": {"Speaker 1": "Marc"}, "audio": "/nowhere.wav"})
+        with mock.patch.object(jobs.config, "load_settings", return_value={"ui": "en", "vocabulary": ["Sion => Acme"]}), \
+                mock.patch.object(jobs.llm, "preflight"), mock.patch.object(job, "_summarize"):
+            job._rerun("a", "mid")
+        note = store.get("a")
+        self.assertIn("Marc: The Acme awards today.", note["clean"])
+        self.assertEqual(note["vocab_fixes"], [{"from": "Sion", "to": "Acme", "count": 1}])
+        self.assertEqual(note["status"], "done")
 
 
 class SpeedTest(unittest.TestCase):
@@ -1827,6 +1858,13 @@ class LibraryTest(unittest.TestCase):
             "summary": {"template": "meeting", "title": "Point projet", "tldr": "Nothing special", "actions": [{"what": "Envoyer le plan", "who": "Sophie"}]},
             "segments": [{"start": 1.0, "end": 2.0, "text": "Hello everyone"}]})
         cls.app.store.save({"id": "w", "status": "waiting", "title": "", "date": "2026-10-06T10:00:00", "audio": str(cls.wav)})
+        cls.initial = {n["id"]: n for n in cls.app.store.all()}
+
+    def setUp(self):
+        import copy
+
+        for note in self.initial.values():  # every test starts from the same notes
+            self.app.store.save(copy.deepcopy(note))
 
     @classmethod
     def tearDownClass(cls):
@@ -1904,6 +1942,58 @@ class LibraryTest(unittest.TestCase):
         self.c.call("POST", "/api/note/a/action", {"what": "Envoyer le plan", "done": False})
         self.assertFalse(any(a["done"] for a in self.c.call("GET", "/api/actions")[1]["actions"]))
         self.assertEqual(self.c.call("POST", "/api/note/a/action", {"what": ""})[0], 400)
+
+    def test_notes_to_bring_up_to_date_by_age_of_vocabulary_range_or_choice(self):
+        from unittest import mock
+
+        from cairn import config, jobs, vocab
+
+        with mock.patch.object(config, "load_settings", return_value=dict(config.DEFAULT_SETTINGS, vocabulary=["Sion => Acme"])):
+            key = vocab.key(["Sion => Acme"])
+            self.assertEqual(self.c.call("GET", "/api/state")[1]["totals"]["vocab_todo"], 2)  # the two finished notes were made without it
+            self.assertEqual(self.app.vocab_targets({}), ["a", "b"])
+            self.assertEqual(self.app.vocab_targets({"from": "2026-10-03"}), ["b"])
+            self.assertEqual(self.app.vocab_targets({"to": "2026-10-02"}), ["a"])
+            self.assertEqual(self.app.vocab_targets({"ids": ["b", "w", "nope", "b"]}), ["b"])  # chosen notes only, finished ones only
+            for note_id in ("a", "b"):
+                self.app.store.save(dict(self.app.store.get(note_id), vocab_key=key))
+            self.assertEqual(self.c.call("GET", "/api/state")[1]["totals"]["vocab_todo"], 0)
+            self.assertEqual(self.app.vocab_targets({}), [])
+            self.assertEqual(self.app.vocab_targets({"ids": ["a"]}), ["a"])  # a chosen note is written again even when up to date
+            started = []
+            with mock.patch.object(self.app.jobs, "start_vocab", side_effect=lambda ids: started.append(ids)):
+                self.assertEqual(self.c.call("POST", "/api/vocabulary/apply", {"ids": ["a", "b"]}), (202, {"ok": True, "count": 2}))
+                self.assertEqual(self.c.call("POST", "/api/vocabulary/apply", {"all": True}), (200, {"ok": True, "count": 0}))
+            self.assertEqual(started, [["a", "b"]])
+            with mock.patch.object(self.app.jobs, "start_vocab", side_effect=jobs.Busy("busy")):
+                self.assertEqual(self.c.call("POST", "/api/vocabulary/apply", {"ids": ["a"]})[0], 409)
+            for note_id in ("a", "b"):
+                note = self.app.store.get(note_id)
+                note.pop("vocab_key", None)
+                self.app.store.save(note)
+
+    def test_a_batch_corrects_each_note_and_one_failure_does_not_stop_the_others(self):
+        from unittest import mock
+
+        from cairn import config, jobs
+
+        self.app.store.save(dict(self.app.store.get("b"), segments=[{"start": 0.0, "end": 1.0, "text": "Hello Sion"}]))
+        calls = []
+
+        def summarize(note, level, lang):
+            calls.append(note["id"])
+            if note["id"] == "a":
+                raise RuntimeError("model down")
+
+        with mock.patch.object(config, "load_settings", return_value=dict(config.DEFAULT_SETTINGS, ui="en", vocabulary=["Sion => Acme"])), \
+                mock.patch.object(jobs.llm, "preflight"), mock.patch.object(self.app.jobs, "_summarize", side_effect=summarize):
+            self.app.jobs._vocab_batch(["a", "b"])
+        self.assertEqual(calls, ["a", "b"])
+        self.assertIn("a: model down", self.app.jobs.snapshot()["errors"][0])
+        self.assertNotIn("vocab_key", self.app.store.get("a"))  # its summary was not written again: still to do
+        self.assertIn("Hello Acme", self.app.store.get("b")["clean"])
+        self.assertEqual(self.app.store.get("b")["vocab_fixes"], [{"from": "Sion", "to": "Acme", "count": 1}])
+        self.assertEqual(self.app.jobs.snapshot()["done"], 2)
 
     def test_follow_up_email_is_written_once_and_redone_on_request(self):
         from cairn import llm

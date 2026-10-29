@@ -77,10 +77,11 @@ For sharper notes, open **Settings, Models**, pick a larger model (Qwen3 8B or 1
 Rare names and places are the speech engine's weak spot, and the summary then repeats the error. In **Settings, Vocabulary**, list them, one per line.
 
 - A name on its own, such as `Acme`: a word that sounds close to it in the transcript is written as listed (`Sion` becomes `Acme`). Cairn leaves alone a different name (`Laurence` is not turned into `Laurent`) and common words.
-- An exact rule, such as `Sion => Acme`: that word is always replaced. Use it for an error that keeps coming back.
+- An exact rule, such as `Sion => Acme` (`->` and `:` work too): that word is always replaced. Use it for an error that keeps coming back.
+- Several spellings, one right word: `Sion, Cion, Scyon => Acme`. In a rule, commas separate the spellings to replace; a phrase such as `Science Day => ACME Day` works too, whatever the case.
 - The summary is also told the spelling to use.
 - Every correction is listed under the note, and the original word is kept: removing an entry puts it back. Keep entries distinctive: if you speak of both Sion the town and Acme the association, use an exact rule only where it is safe.
-- A new vocabulary applies to recordings processed afterwards. To apply it to a finished note, use the redo button: the transcript and the speakers are kept, only the words and the summary are redone.
+- A new vocabulary applies to recordings processed afterwards. Under the vocabulary, Cairn says how many finished notes still use an older one. **Update all** brings them up to date, **Choose notes** lets you tick the notes to update, or give a range of dates. The transcript and the speakers are kept: the words are corrected and the summary is written again, about half a minute per note. The redo button of a single note does the same.
 
 ## Speed
 

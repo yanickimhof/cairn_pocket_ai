@@ -1,7 +1,8 @@
 """A personal vocabulary: names of people and places and rare terms the speech engine often writes wrongly.
 
 One entry per line. "Acme" is a name to look for: a word that sounds close to it is written as "Acme". "Sion => Acme" is an
-exact rule: "Sion" is always written "Acme". Every correction is kept with the note and shown, so nothing changes silently.
+exact rule: "Sion" is always written "Acme". Several spellings can share one rule: "Sion, Cion, Scyon => Acme". "->", the
+arrow character and ":" work like "=>". Every correction is kept with the note and shown, so nothing changes silently.
 The speech engine cannot be told the names itself: with the setting Cairn uses (each 30 s window decoded on its own, which
 avoids repetition loops) its prompt only reaches the first window."""
 
@@ -12,7 +13,9 @@ import unicodedata
 
 MAX_TERMS = 300
 MAX_LEN = 60
+MAX_RULE = 300
 ARROW = "=>"
+ARROWS = ("=>", "->", "\u2192", ":")
 _WORD = re.compile(r"\w+", re.UNICODE)
 _GAP = re.compile(r"^[\s'’-]*$")
 _COMMON = frozenset("""le la les de du des un une et ou en au aux ce ces cet son sa ses mon ma mes ton ta tes il elle on nous vous ils
@@ -20,24 +23,46 @@ elles je tu que qui quoi dont ne pas plus pour par sur sous dans avec sans est s
 are was were be for with by as from this that these those i you he she we they my your our their not but so if then than""".split())
 
 
+def split_rule(term):
+    """(spellings to replace as a list, the right spelling) when the entry is an exact rule, else None."""
+    hits = [(term.find(a), a) for a in ARROWS if a in term]
+    if not hits:
+        return None
+    at, arrow = min(hits)
+    wrong = [w.strip() for w in term[:at].split(",") if w.strip()]
+    right = term[at + len(arrow):].strip()
+    return (wrong, right) if wrong and right else None
+
+
 def parse(value):
-    """The list of entries from text (one per line, or separated by ; or ,) or from a list. Trimmed, no duplicates."""
+    """The list of entries from text (one per line, or separated by ;) or from a list. A rule keeps its commas: they separate
+    the spellings it replaces. Elsewhere a comma separates entries. Trimmed, no duplicates."""
     if isinstance(value, str):
-        parts = re.split(r"[\n;,]+", value)
+        lines = re.split(r"[\n;]+", value)
     elif isinstance(value, (list, tuple)):
-        parts = [str(v) for v in value]
+        lines = [str(v) for v in value]
     else:
         raise ValueError("The vocabulary must be text, one entry per line.")
     out, seen = [], set()
-    for part in parts:
-        term = " ".join(part.split())
-        if not term:
+    for line in lines:
+        line = " ".join(line.split())
+        if not line:
             continue
-        if len(term) > MAX_LEN:
-            raise ValueError("An entry is longer than %d characters." % MAX_LEN)
-        if term.casefold() not in seen:
-            seen.add(term.casefold())
-            out.append(term)
+        rule = split_rule(line)
+        if rule:
+            entries, limit = ["%s %s %s" % (", ".join(rule[0]), ARROW, rule[1])], MAX_RULE
+        elif any(a in line for a in ARROWS):
+            continue  # an arrow with nothing on one side: not a rule, and not a name either
+        elif isinstance(value, str):
+            entries, limit = [p.strip() for p in line.split(",") if p.strip()], MAX_LEN
+        else:
+            entries, limit = [line], MAX_LEN
+        for term in entries:
+            if len(term) > limit:
+                raise ValueError("An entry is longer than %d characters." % limit)
+            if term.casefold() not in seen:
+                seen.add(term.casefold())
+                out.append(term)
     if len(out) > MAX_TERMS:
         raise ValueError("At most %d entries." % MAX_TERMS)
     return out
@@ -52,7 +77,8 @@ def spellings(terms):
     """The spellings to impose on a summary: the entries, and the right-hand side of the exact rules."""
     out = []
     for term in terms or []:
-        spelled = term.split(ARROW, 1)[1].strip() if ARROW in term else term
+        rule = split_rule(term)
+        spelled = rule[1] if rule else term
         if spelled and spelled not in out:
             out.append(spelled)
     return out
@@ -92,10 +118,13 @@ def _close(surface, term):
 def _rules(terms):
     exact, fuzzy = [], []
     for term in terms or []:
-        if ARROW in term:
-            wrong, right = (p.strip() for p in term.split(ARROW, 1))
-            if wrong and right:
-                exact.append((re.compile(r"(?<!\w)" + re.escape(wrong) + r"(?!\w)", re.IGNORECASE), wrong, right))
+        rule = split_rule(term)
+        if rule:
+            for wrong in rule[0]:
+                pattern = r"\s+".join(re.escape(w) for w in wrong.split())
+                exact.append((re.compile(r"(?<!\w)" + pattern + r"(?!\w)", re.IGNORECASE), wrong, rule[1]))
+        elif any(a in term for a in ARROWS):
+            continue  # an arrow with nothing on one side: not a name to look for
         else:
             words = _WORD.findall(term)
             if words and len(_plain(term)) >= 4:

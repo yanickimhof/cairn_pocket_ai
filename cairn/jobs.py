@@ -316,15 +316,7 @@ class Jobs:
                         diarize.assign(note["segments"], turns, lang)
                         note["diarized"] = True
                         keep()
-            terms = settings.get("vocabulary") or []
-            fixes = vocab.apply(note["segments"], terms)  # always run: it puts the original word back when an entry was removed
-            note["vocab_key"] = vocab.key(terms)
-            if fixes:
-                note["vocab_fixes"] = fixes
-            else:
-                note.pop("vocab_fixes", None)
-            names = note.get("speaker_names") or {}
-            note["clean"] = "\n\n".join(speech.raw_lines(diarize.renamed(note["segments"], names) if names else note["segments"]))
+            self._apply_vocab(note, settings)
             step("summarizing")
             began = time.time()
             self._summarize(note, level, lang)
@@ -398,11 +390,9 @@ class Jobs:
         note = self.store.get(note_id)
         spoken_changed = note.get("speech_lang") != note.get("speech_lang_used")
         again = ((bool(made_with) and made_with != speech.model_name()) or spoken_changed) and os.path.exists(note.get("audio", ""))
-        words_changed = (bool(note.get("segments")) and os.path.exists(note.get("audio", ""))
-                         and note.get("vocab_key", "") != vocab.key(config.load_settings().get("vocabulary")))
-        if again or words_changed:  # the transcript and the speakers are kept unless the speech model or language changed
+        if again:  # the transcript and the speakers are kept unless the speech model or language changed
             self._start("import", self._one, note_id)
-        else:
+        else:  # a changed vocabulary needs no audio: the words are corrected in the kept transcript, then the note is written again
             self._start("rerun", self._rerun, note_id, level)
         return again
 
@@ -410,18 +400,58 @@ class Jobs:
         settings = config.load_settings()
         note = self.store.get(note_id)
         self._set(id=note_id, step="summarizing", total=1)
-        lang = self._lang(note, settings)
         llm.preflight()
+        self._rewrite(note, level, self._lang(note, settings), settings)
+
+    def _rewrite(self, note, level, lang, settings):
+        """Correct the words from the current vocabulary, then write the note again from the kept transcript."""
+        before = note.get("vocab_key")
         try:
-            if not note.get("clean") and note.get("segments"):
-                note["clean"] = "\n\n".join(speech.raw_lines(note["segments"]))
+            if note.get("segments"):
+                self._apply_vocab(note, settings)
             self._summarize(note, level, lang)
             note.update(status="done", level=level, error="", step="")
             self.store.save(note)
         except Exception as error:
             note.update(error=str(error))
+            if before is None:  # the summary was not written again: the note must not pass for up to date
+                note.pop("vocab_key", None)
+            else:
+                note["vocab_key"] = before
             self.store.save(note)
             raise
+
+    def _apply_vocab(self, note, settings):
+        terms = settings.get("vocabulary") or []
+        fixes = vocab.apply(note["segments"], terms)  # always run: it puts the original word back when an entry was removed
+        note["vocab_key"] = vocab.key(terms)
+        if fixes:
+            note["vocab_fixes"] = fixes
+        else:
+            note.pop("vocab_fixes", None)
+        names = note.get("speaker_names") or {}
+        note["clean"] = "\n\n".join(speech.raw_lines(diarize.renamed(note["segments"], names) if names else note["segments"]))
+
+    # Bring several finished notes up to date with the vocabulary
+
+    def start_vocab(self, ids):
+        self._start("rerun", self._vocab_batch, ids)
+
+    def _vocab_batch(self, ids):
+        settings = config.load_settings()
+        self._set(total=len(ids), done=0)
+        llm.preflight()
+        for index, note_id in enumerate(ids):
+            if self.cancelled:
+                break
+            self._set(id=note_id, step="summarizing", done=index, pct=None, part=0, parts=0, call=None)
+            try:
+                note = self.store.get(note_id)
+                level = note.get("level") if note.get("level") in config.LEVELS else "mid"
+                self._rewrite(note, level, self._lang(note, settings), settings)
+            except Exception as error:  # one note failing does not stop the others
+                self._fail("%s: %s" % (note_id, error))
+        self._set(done=len(ids))
 
     # Redo only the speaker identification on an already-processed recording
 
