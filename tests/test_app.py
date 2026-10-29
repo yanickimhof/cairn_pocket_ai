@@ -1636,86 +1636,25 @@ class SpeedTest(unittest.TestCase):
     def test_a_speaker_pass_can_be_stopped_at_once(self):
         import subprocess
         import sys
+        import threading
         import time
         from unittest import mock
 
         from cairn import diarize
 
         real = subprocess.Popen
+        result = []
         with mock.patch.object(diarize.models, "diar_installed", return_value=True), \
                 mock.patch.object(diarize.config, "load_settings", return_value={}), \
                 mock.patch.object(diarize.subprocess, "Popen", lambda *a, **k: real([sys.executable, "-c", "import time; time.sleep(60)"], **{x: y for x, y in k.items() if x in ("stdout", "stderr", "text")})):
             began = time.time()
-            running = diarize.Pass("a.mp3", 900)
+            worker = threading.Thread(target=lambda: result.append(diarize.run("a.mp3", 900)))
+            worker.start()
             time.sleep(0.5)
-            running.cancel()
-            self.assertEqual(running.result(), ("none", None))
-            self.assertLess(time.time() - began, 10)
-
-    def test_the_speaker_pass_runs_during_the_transcription_when_memory_allows(self):
-        from unittest import mock
-
-        from cairn import jobs
-
-        events = []
-
-        class FakePass:
-            def __init__(self, audio, timeout):
-                events.append("pass started")
-
-            def result(self):
-                events.append("pass collected")
-                return "ok", [{"start": 0.0, "end": 2.0, "speaker": "SPEAKER_00"}]
-
-            def cancel(self):
-                events.append("pass cancelled")
-
-        for parallel, expected in ((True, ["pass started", "transcribed", "pass collected"]), (False, ["transcribed", "run"])):
-            events.clear()
-            job, store = RetryAndResumeTest()._jobs(a={"status": "waiting", "duration": 2.0})
-            segments = [{"start": 0.0, "end": 2.0, "text": "Hello there everyone today.", "logprob": -0.2}]
-
-            def transcribe(*args, **kwargs):
-                events.append("transcribed")
-                return {"language": "en", "segments": [dict(s) for s in segments], "duration": 2.0}
-
-            def run(*args, **kwargs):
-                events.append("run")
-                return "ok", [{"start": 0.0, "end": 2.0, "speaker": "SPEAKER_00"}]
-
-            with mock.patch.object(jobs.speech, "model_key", return_value="k"), mock.patch.object(jobs.speech, "model_name", return_value="W"), \
-                    mock.patch.object(jobs.speech, "transcribe", side_effect=transcribe), \
-                    mock.patch.object(jobs.diarize, "available", return_value=True), mock.patch.object(jobs.diarize, "parallel_ok", return_value=parallel), \
-                    mock.patch.object(jobs.diarize, "Pass", FakePass), mock.patch.object(jobs.diarize, "run", side_effect=run), \
-                    mock.patch.object(jobs.config, "install_config", return_value={"llm": "m"}), mock.patch.object(job, "_summarize"):
-                job._process("a", {"ui": "en", "diarize": True})
-            self.assertEqual(events, expected)
-            note = store.get("a")
-            self.assertTrue(note["diarized"])
-            self.assertEqual(note["segments"][0]["speaker"] is not None, True)
-            self.assertEqual("parallel" in note["timings"], parallel)
-
-    def test_a_failed_transcription_cancels_the_speaker_pass_running_beside_it(self):
-        from unittest import mock
-
-        from cairn import jobs
-
-        events = []
-
-        class FakePass:
-            def __init__(self, audio, timeout):
-                pass
-
-            def cancel(self):
-                events.append("cancelled")
-
-        job, store = RetryAndResumeTest()._jobs(a={"status": "waiting", "duration": 2.0})
-        with mock.patch.object(jobs.speech, "model_key", return_value="k"), mock.patch.object(jobs.speech, "transcribe", side_effect=RuntimeError("boom")), \
-                mock.patch.object(jobs.diarize, "available", return_value=True), mock.patch.object(jobs.diarize, "parallel_ok", return_value=True), \
-                mock.patch.object(jobs.diarize, "Pass", FakePass):
-            with self.assertRaises(RuntimeError):
-                job._process("a", {"ui": "en", "diarize": True})
-        self.assertEqual(events, ["cancelled"])
+            diarize.abort()
+            worker.join(10)
+        self.assertEqual(result, [("none", None)])
+        self.assertLess(time.time() - began, 10)
 
     def test_automatic_processing_starts_as_soon_as_the_copy_is_done(self):
         from unittest import mock

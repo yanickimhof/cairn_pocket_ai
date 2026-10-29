@@ -284,15 +284,12 @@ class Jobs:
 
         started = time.time()
         timings, reused = {}, []
-        waiting_pass = None  # a speaker pass running while the recording is transcribed
         try:
             spoken = note.get("speech_lang") if note.get("speech_lang") in config.LANGS else None  # None: the engine detects it
             key = speech.model_key()
             if self._transcript_current(note, spoken, key):
                 reused.append("transcribing")  # already transcribed with this model and language: that work is never redone
             else:
-                if settings.get("diarize") and diarize.available() and diarize.parallel_ok():
-                    waiting_pass = diarize.Pass(note["audio"], diarize.timeout_for(note.get("duration")))
                 step("transcribing")
                 began = time.time()
                 result = speech.transcribe(note["audio"], progress=pct, **({"language": spoken} if spoken else {}))
@@ -311,12 +308,7 @@ class Jobs:
                 else:
                     step("diarizing")
                     began = time.time()
-                    if waiting_pass is not None:  # it ran during the transcription: only what is left of it is waited for
-                        state, turns = waiting_pass.result()
-                        waiting_pass = None
-                        timings["parallel"] = ["diarizing"]
-                    else:
-                        state, turns = diarize.run(note["audio"], timeout=diarize.timeout_for(note.get("duration")))
+                    state, turns = diarize.run(note["audio"], timeout=diarize.timeout_for(note.get("duration")))
                     timings["diarizing"] = round(time.time() - began, 1)
                     if state == "ok":
                         diarize.assign(note["segments"], turns, lang)
@@ -358,9 +350,6 @@ class Jobs:
                         retry_after=time.time() + RETRY_DELAY * attempts, timings=timings)
             self.store.save(note)
             raise
-        finally:
-            if waiting_pass is not None:  # the transcription failed or was stopped: the speaker pass is of no use now
-                waiting_pass.cancel()
 
     @staticmethod
     def _transcript_current(note, spoken, key):

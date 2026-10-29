@@ -11,11 +11,9 @@ import json
 import os
 import subprocess  # nosec B404
 import sys
-import threading
 from pathlib import Path
 
 from . import config, models
-from . import system as machine
 
 TIMEOUT = 1800  # a long recording can take a while the first time the model loads
 
@@ -30,13 +28,6 @@ def available():
 
 
 _ACTIVE = set()
-PARALLEL_MIN_GB = 16  # the speaker pass runs during the transcription only on a computer with this much memory
-
-
-def parallel_ok():
-    return machine.ram_gb() >= PARALLEL_MIN_GB
-
-
 def abort():
     """Stop every speaker pass in progress, right now."""
     for proc in list(_ACTIVE):
@@ -46,9 +37,9 @@ def abort():
             pass
 
 
-def run(audio_path, timeout=TIMEOUT, handle=None):
+def run(audio_path, timeout=TIMEOUT):
     """One diarization pass: ("ok", [turns]), ("missing", None) if not installed/importable, else ("none", None).
-    Each turn is {"start": float, "end": float, "speaker": "SPEAKER_00"}. `handle`, a dict, receives the process."""
+    Each turn is {"start": float, "end": float, "speaker": "SPEAKER_00"}."""
     if not available():
         return "missing", None
     device = config.load_settings().get("diarize_device", "auto")
@@ -61,8 +52,6 @@ def run(audio_path, timeout=TIMEOUT, handle=None):
     except OSError:
         return "none", None
     _ACTIVE.add(proc)
-    if handle is not None:
-        handle["proc"] = proc
     try:
         try:
             out, err = proc.communicate(timeout=timeout)
@@ -85,32 +74,6 @@ def run(audio_path, timeout=TIMEOUT, handle=None):
     detail = (err or "").strip().splitlines()[-1:] or ["exit %d" % proc.returncode]
     print("diarize: no result (%s)" % detail[0][:160], file=sys.stderr, flush=True)
     return "none", None
-
-
-class Pass:
-    """A speaker pass that runs in the background while the recording is being transcribed: both only read the audio."""
-
-    def __init__(self, audio_path, timeout):
-        self._handle = {}
-        self._result = ("none", None)
-        self._thread = threading.Thread(target=self._go, args=(audio_path, timeout), daemon=True)
-        self._thread.start()
-
-    def _go(self, audio_path, timeout):
-        self._result = run(audio_path, timeout, self._handle)
-
-    def result(self):
-        self._thread.join()
-        return self._result
-
-    def cancel(self):
-        proc = self._handle.get("proc")
-        if proc is not None:
-            try:
-                proc.kill()
-            except OSError:
-                pass
-        self._thread.join(timeout=10)
 
 
 def label(index, lang):
