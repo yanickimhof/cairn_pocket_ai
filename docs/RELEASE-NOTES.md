@@ -1,5 +1,42 @@
 # Release notes
 
+## 0.4
+
+**Find anything, in a second.**
+Search every word of every note, accents ignored, your words highlighted. `#orion` narrows it to a tag.
+
+**Hear what was said.**
+Tap a time stamp in the transcript and the recording plays from that line. Checking a doubtful word takes seconds.
+
+**All your actions, one list.**
+Every action from every note, by person, newest first. Tick them, correct them, copy them.
+
+**The follow-up email, written.**
+One tap drafts a short email from the note, in its language, ready for your mail app. Cairn sends nothing.
+
+**Your names, spelled right, in context.**
+Several spellings can point to one name, even only near the right words. One tap updates the notes that need it: all of them, a choice, or a period.
+
+**Notes in your own format.**
+Write a template once, a name and an instruction, and every note follows it, sections included. A star makes it the default.
+
+**Tags, not folders.**
+Free words to organize your notes, a filter above the list, tagging by the dozen, and suggestions drawn from your own tags.
+
+**Fresher engine.**
+The libraries behind transcription are rebuilt for macOS 14 and later, closing five security advisories. A second copy can now run beside the first for testing.
+
+## Coming in 0.5
+
+**Who said what, across all your notes.**
+Rename, merge and review speakers once, and let Cairn recognise voices if you want it to.
+
+**Ask your notes.**
+Ask a question, get an answer with its sources, all on your Mac.
+
+**A vocabulary that learns.**
+Cairn lists the words it doubts, you give the spelling, and every note is updated.
+
 ## 0.3
 
 **Your names, spelled right.**
