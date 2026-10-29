@@ -893,12 +893,24 @@ class DiarizationTest(unittest.TestCase):
 
         with mock.patch.object(diarize.models, "diar_installed", return_value=False):
             self.assertEqual(diarize.run("x.mp3"), ("missing", None))
+        def popen(code, out, err):
+            class Fake:
+                returncode = code
+
+                def __init__(self, *args, **kwargs):
+                    pass
+
+                def communicate(self, timeout=None):
+                    return out, err
+
+            return Fake
+
         with mock.patch.object(diarize.models, "diar_installed", return_value=True):
-            with mock.patch.object(diarize.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, '[{"start": 0.0, "end": 1.0, "speaker": "SPEAKER_00"}]\n', "")):
+            with mock.patch.object(diarize.subprocess, "Popen", popen(0, '[{"start": 0.0, "end": 1.0, "speaker": "SPEAKER_00"}]\n', "")):
                 self.assertEqual(diarize.run("x.mp3"), ("ok", [{"start": 0.0, "end": 1.0, "speaker": "SPEAKER_00"}]))
-            with mock.patch.object(diarize.subprocess, "run", return_value=subprocess.CompletedProcess([], 3, "", "")):
+            with mock.patch.object(diarize.subprocess, "Popen", popen(3, "", "")):
                 self.assertEqual(diarize.run("x.mp3"), ("missing", None))
-            with mock.patch.object(diarize.subprocess, "run", return_value=subprocess.CompletedProcess([], 1, "", "boom")):
+            with mock.patch.object(diarize.subprocess, "Popen", popen(1, "", "boom")):
                 self.assertEqual(diarize.run("x.mp3"), ("none", None))
         source = open(diarize.__file__.replace("diarize.py", "diarize_worker.py"), encoding="utf-8").read()
         self.assertIn("HF_HUB_OFFLINE", source)  # inference never reaches the network
@@ -1497,23 +1509,137 @@ class DiarizeDeviceTest(unittest.TestCase):
             self.assertEqual(config.load_settings()["diarize_device"], "cpu")
 
     def test_the_choice_reaches_the_speaker_program(self):
-        from types import SimpleNamespace
         from unittest import mock
 
         from cairn import diarize
 
         seen = {}
 
-        def fake_run(*args, **kwargs):
-            seen.update(kwargs["env"])
-            return SimpleNamespace(returncode=0, stdout="[]", stderr="")
+        class FakeProc:
+            returncode = 0
+
+            def __init__(self, *args, **kwargs):
+                seen.update(kwargs["env"])
+
+            def communicate(self, timeout=None):
+                return "[]", ""
 
         for saved, expected in (({"diarize_device": "cpu"}, "cpu"), ({}, "auto"), ({"diarize_device": "x"}, "auto")):
             with mock.patch.object(diarize.models, "diar_installed", return_value=True), \
                     mock.patch.object(diarize.config, "load_settings", return_value=saved), \
-                    mock.patch.object(diarize.subprocess, "run", side_effect=fake_run):
+                    mock.patch.object(diarize.subprocess, "Popen", FakeProc):
                 self.assertEqual(diarize.run("a.mp3")[0], "ok")
             self.assertEqual(seen["CAIRN_DIARIZE_DEVICE"], expected)
+
+
+class SpeedTest(unittest.TestCase):
+    def test_a_speaker_pass_can_be_stopped_at_once(self):
+        import subprocess
+        import sys
+        import time
+        from unittest import mock
+
+        from cairn import diarize
+
+        real = subprocess.Popen
+        with mock.patch.object(diarize.models, "diar_installed", return_value=True), \
+                mock.patch.object(diarize.config, "load_settings", return_value={}), \
+                mock.patch.object(diarize.subprocess, "Popen", lambda *a, **k: real([sys.executable, "-c", "import time; time.sleep(60)"], **{x: y for x, y in k.items() if x in ("stdout", "stderr", "text")})):
+            began = time.time()
+            running = diarize.Pass("a.mp3", 900)
+            time.sleep(0.5)
+            running.cancel()
+            self.assertEqual(running.result(), ("none", None))
+            self.assertLess(time.time() - began, 10)
+
+    def test_the_speaker_pass_runs_during_the_transcription_when_memory_allows(self):
+        from unittest import mock
+
+        from cairn import jobs
+
+        events = []
+
+        class FakePass:
+            def __init__(self, audio, timeout):
+                events.append("pass started")
+
+            def result(self):
+                events.append("pass collected")
+                return "ok", [{"start": 0.0, "end": 2.0, "speaker": "SPEAKER_00"}]
+
+            def cancel(self):
+                events.append("pass cancelled")
+
+        for parallel, expected in ((True, ["pass started", "transcribed", "pass collected"]), (False, ["transcribed", "run"])):
+            events.clear()
+            job, store = RetryAndResumeTest()._jobs(a={"status": "waiting", "duration": 2.0})
+            segments = [{"start": 0.0, "end": 2.0, "text": "Hello there everyone today.", "logprob": -0.2}]
+
+            def transcribe(*args, **kwargs):
+                events.append("transcribed")
+                return {"language": "en", "segments": [dict(s) for s in segments], "duration": 2.0}
+
+            def run(*args, **kwargs):
+                events.append("run")
+                return "ok", [{"start": 0.0, "end": 2.0, "speaker": "SPEAKER_00"}]
+
+            with mock.patch.object(jobs.speech, "model_key", return_value="k"), mock.patch.object(jobs.speech, "model_name", return_value="W"), \
+                    mock.patch.object(jobs.speech, "transcribe", side_effect=transcribe), \
+                    mock.patch.object(jobs.diarize, "available", return_value=True), mock.patch.object(jobs.diarize, "parallel_ok", return_value=parallel), \
+                    mock.patch.object(jobs.diarize, "Pass", FakePass), mock.patch.object(jobs.diarize, "run", side_effect=run), \
+                    mock.patch.object(jobs.config, "install_config", return_value={"llm": "m"}), mock.patch.object(job, "_summarize"):
+                job._process("a", {"ui": "en", "diarize": True})
+            self.assertEqual(events, expected)
+            note = store.get("a")
+            self.assertTrue(note["diarized"])
+            self.assertEqual(note["segments"][0]["speaker"] is not None, True)
+            self.assertEqual("parallel" in note["timings"], parallel)
+
+    def test_a_failed_transcription_cancels_the_speaker_pass_running_beside_it(self):
+        from unittest import mock
+
+        from cairn import jobs
+
+        events = []
+
+        class FakePass:
+            def __init__(self, audio, timeout):
+                pass
+
+            def cancel(self):
+                events.append("cancelled")
+
+        job, store = RetryAndResumeTest()._jobs(a={"status": "waiting", "duration": 2.0})
+        with mock.patch.object(jobs.speech, "model_key", return_value="k"), mock.patch.object(jobs.speech, "transcribe", side_effect=RuntimeError("boom")), \
+                mock.patch.object(jobs.diarize, "available", return_value=True), mock.patch.object(jobs.diarize, "parallel_ok", return_value=True), \
+                mock.patch.object(jobs.diarize, "Pass", FakePass):
+            with self.assertRaises(RuntimeError):
+                job._process("a", {"ui": "en", "diarize": True})
+        self.assertEqual(events, ["cancelled"])
+
+    def test_automatic_processing_starts_as_soon_as_the_copy_is_done(self):
+        from unittest import mock
+
+        from cairn import jobs
+
+        for auto, expected in ((True, 1), (False, 0)):
+            job, store = RetryAndResumeTest()._jobs()
+            with mock.patch.object(jobs.pocket, "find_pocket", return_value=None), \
+                    mock.patch.object(jobs.config, "load_settings", return_value={"autoprocess": auto}), mock.patch.object(job, "_drain") as drain:
+                job._import(False)
+            self.assertEqual(drain.call_count, expected)
+
+    def test_the_model_stays_loaded_between_notes_only_with_enough_memory(self):
+        from unittest import mock
+
+        from cairn import llm
+
+        sent = []
+        for gb, expected in ((32.0, "30m"), (16.0, None)):
+            with mock.patch.object(llm.machine, "ram_gb", return_value=gb), mock.patch.object(llm, "_post", side_effect=lambda path, body, timeout=0: sent.append(body) or {"message": {"content": "{}"}}), \
+                    mock.patch.object(llm.config, "install_config", return_value={"llm": "m"}):
+                llm.chat("s", "u")
+            self.assertEqual(sent[-1].get("keep_alive"), expected)
 
 
 class FailureMessagesTest(unittest.TestCase):

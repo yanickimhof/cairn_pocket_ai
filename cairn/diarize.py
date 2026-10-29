@@ -11,9 +11,11 @@ import json
 import os
 import subprocess  # nosec B404
 import sys
+import threading
 from pathlib import Path
 
 from . import config, models
+from . import system as machine
 
 TIMEOUT = 1800  # a long recording can take a while the first time the model loads
 
@@ -27,30 +29,88 @@ def available():
     return models.diar_installed()
 
 
-def run(audio_path, timeout=TIMEOUT):
+_ACTIVE = set()
+PARALLEL_MIN_GB = 16  # the speaker pass runs during the transcription only on a computer with this much memory
+
+
+def parallel_ok():
+    return machine.ram_gb() >= PARALLEL_MIN_GB
+
+
+def abort():
+    """Stop every speaker pass in progress, right now."""
+    for proc in list(_ACTIVE):
+        try:
+            proc.kill()
+        except OSError:
+            pass
+
+
+def run(audio_path, timeout=TIMEOUT, handle=None):
     """One diarization pass: ("ok", [turns]), ("missing", None) if not installed/importable, else ("none", None).
-    Each turn is {"start": float, "end": float, "speaker": "SPEAKER_00"}."""
+    Each turn is {"start": float, "end": float, "speaker": "SPEAKER_00"}. `handle`, a dict, receives the process."""
     if not available():
         return "missing", None
     device = config.load_settings().get("diarize_device", "auto")
     env = dict(os.environ, CAIRN_DIARIZE_DEVICE=device if device in ("auto", "cpu") else "auto")
     try:
-        done = subprocess.run(  # nosec B603
-            [sys.executable, "-m", "cairn.diarize_worker", str(audio_path)], capture_output=True, text=True,
-            timeout=timeout, cwd=str(Path(__file__).resolve().parent.parent), check=False, env=env,
+        proc = subprocess.Popen(  # nosec B603
+            [sys.executable, "-m", "cairn.diarize_worker", str(audio_path)], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, cwd=str(Path(__file__).resolve().parent.parent), env=env,
         )
-    except (OSError, subprocess.SubprocessError):
+    except OSError:
         return "none", None
-    if done.returncode == 3:
-        return "missing", None
-    if done.returncode == 0 and done.stdout.strip():
+    _ACTIVE.add(proc)
+    if handle is not None:
+        handle["proc"] = proc
+    try:
         try:
-            return "ok", json.loads(done.stdout.strip())
+            out, err = proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.communicate()
+            print("diarize: no result (took more than %d minutes)" % (timeout // 60), file=sys.stderr, flush=True)
+            return "none", None
+        except (OSError, subprocess.SubprocessError):
+            return "none", None
+    finally:
+        _ACTIVE.discard(proc)
+    if proc.returncode == 3:
+        return "missing", None
+    if proc.returncode == 0 and (out or "").strip():
+        try:
+            return "ok", json.loads(out.strip())
         except ValueError:
             return "none", None
-    detail = (done.stderr or "").strip().splitlines()[-1:] or ["exit %d" % done.returncode]
+    detail = (err or "").strip().splitlines()[-1:] or ["exit %d" % proc.returncode]
     print("diarize: no result (%s)" % detail[0][:160], file=sys.stderr, flush=True)
     return "none", None
+
+
+class Pass:
+    """A speaker pass that runs in the background while the recording is being transcribed: both only read the audio."""
+
+    def __init__(self, audio_path, timeout):
+        self._handle = {}
+        self._result = ("none", None)
+        self._thread = threading.Thread(target=self._go, args=(audio_path, timeout), daemon=True)
+        self._thread.start()
+
+    def _go(self, audio_path, timeout):
+        self._result = run(audio_path, timeout, self._handle)
+
+    def result(self):
+        self._thread.join()
+        return self._result
+
+    def cancel(self):
+        proc = self._handle.get("proc")
+        if proc is not None:
+            try:
+                proc.kill()
+            except OSError:
+                pass
+        self._thread.join(timeout=10)
 
 
 def label(index, lang):

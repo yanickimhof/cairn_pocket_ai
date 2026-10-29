@@ -11,6 +11,7 @@ import urllib.request
 from pathlib import Path
 
 from . import config
+from . import system as machine
 
 NAMES = {"fr": "French", "en": "English"}
 TEMPLATES = ["meeting", "call", "presentation", "idea", "other"]
@@ -121,6 +122,8 @@ def models():
 
 
 CHAT_TIMEOUT = 900  # seconds one call may take before the model server is taken for stuck
+KEEP_ALIVE = "30m"      # how long the model stays loaded between two notes of a batch
+KEEP_ALIVE_MIN_GB = 24  # only on a computer with this much memory: loading it again costs about 15 s, holding it costs 6 GB
 
 
 def chat(system, user, schema=None, num_ctx=8192, timeout=CHAT_TIMEOUT, num_predict=None):
@@ -133,6 +136,8 @@ def chat(system, user, schema=None, num_ctx=8192, timeout=CHAT_TIMEOUT, num_pred
     }
     if schema:
         body["format"] = schema
+    if machine.ram_gb() >= KEEP_ALIVE_MIN_GB:
+        body["keep_alive"] = KEEP_ALIVE
     try:
         try:
             data = _post("/api/chat", body, timeout=timeout)

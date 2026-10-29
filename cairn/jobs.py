@@ -91,6 +91,7 @@ class Jobs:
             self.cancelled = True
             self.paused = True
         speech.abort()
+        diarize.abort()
 
     def start_privacy(self):
         """Run the privacy check: a tiny transcription and question, watching the network."""
@@ -235,6 +236,8 @@ class Jobs:
         self._set(step="", done=0, total=0)
         if process:
             self._drain(settings)
+        elif settings.get("autoprocess", False) and not self.paused:
+            self._drain(settings, automatic=True)  # automatic processing starts as soon as the copy is done, not at the next check
 
     def _copy_one(self, source, path, audio_dir):
         rel = path.relative_to(source).as_posix()
@@ -281,12 +284,15 @@ class Jobs:
 
         started = time.time()
         timings, reused = {}, []
+        waiting_pass = None  # a speaker pass running while the recording is transcribed
         try:
             spoken = note.get("speech_lang") if note.get("speech_lang") in config.LANGS else None  # None: the engine detects it
             key = speech.model_key()
             if note.get("segments") and note.get("transcribed_key") == key and (note.get("transcribed_lang") or None) == spoken:
                 reused.append("transcribing")  # already transcribed with this model and language: that work is never redone
             else:
+                if settings.get("diarize") and diarize.available() and diarize.parallel_ok():
+                    waiting_pass = diarize.Pass(note["audio"], diarize.timeout_for(note.get("duration")))
                 step("transcribing")
                 began = time.time()
                 result = speech.transcribe(note["audio"], progress=pct, **({"language": spoken} if spoken else {}))
@@ -305,7 +311,12 @@ class Jobs:
                 else:
                     step("diarizing")
                     began = time.time()
-                    state, turns = diarize.run(note["audio"], timeout=diarize.timeout_for(note.get("duration")))
+                    if waiting_pass is not None:  # it ran during the transcription: only what is left of it is waited for
+                        state, turns = waiting_pass.result()
+                        waiting_pass = None
+                        timings["parallel"] = ["diarizing"]
+                    else:
+                        state, turns = diarize.run(note["audio"], timeout=diarize.timeout_for(note.get("duration")))
                     timings["diarizing"] = round(time.time() - began, 1)
                     if state == "ok":
                         diarize.assign(note["segments"], turns, lang)
@@ -326,7 +337,7 @@ class Jobs:
             note.pop("attempts", None)
             note.pop("retry_after", None)
             keep()
-            spent = " ".join("%s=%ss" % (k, v) for k, v in timings.items() if k != "reused")
+            spent = " ".join("%s=%ss" % (k, v) for k, v in timings.items() if isinstance(v, (int, float)))
             print("timing: %s audio=%ds %s%s" % (str(note_id)[:14], int(note.get("duration") or 0), spent,
                                                " reused=" + ",".join(reused) if reused else ""), file=sys.stderr, flush=True)
         except Gone:
@@ -339,6 +350,9 @@ class Jobs:
                         retry_after=time.time() + RETRY_DELAY * attempts, timings=timings)
             self.store.save(note)
             raise
+        finally:
+            if waiting_pass is not None:  # the transcription failed or was stopped: the speaker pass is of no use now
+                waiting_pass.cancel()
 
     def _summarize(self, note, level, lang):
         text = note.get("clean") or ""

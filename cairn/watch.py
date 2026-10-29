@@ -43,7 +43,7 @@ class Watcher:
             app.purge_pocket()
         except OSError:
             pass
-        if settings.get("autoimport", True) and now - self.sync_at >= 120:
+        if settings.get("autoimport", True) and now - self.sync_at >= 45:
             if app.pocket_state().get("new"):
                 self.sync_at = now  # at most one attempt every two minutes, so a failing copy never loops
                 app.jobs.paused = False  # new recordings are new work
@@ -52,7 +52,7 @@ class Watcher:
                 except jobs.Busy:
                     pass
                 return
-        if settings.get("autoprocess", False) and not app.jobs.paused and now - self.queue_at >= 60 and now >= getattr(app.jobs, 'llm_blocked_until', 0.0) and app.waiting_count():
+        if settings.get("autoprocess", False) and not app.jobs.paused and now - self.queue_at >= 15 and now >= getattr(app.jobs, 'llm_blocked_until', 0.0) and app.waiting_count():
             self.queue_at = now
             try:
                 app.jobs.start_queue()
@@ -76,7 +76,7 @@ class Watcher:
         time.sleep(10)
         while True:
             self.tick()
-            time.sleep(20)
+            time.sleep(10)
 
 
 def start(app):
