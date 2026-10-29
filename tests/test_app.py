@@ -1280,7 +1280,8 @@ class PreflightAndWatchdogTest(unittest.TestCase):
         from cairn import llm
 
         llm._READY.update(model=None, at=0.0)
-        with mock.patch.object(llm.config, "install_config", return_value={"llm": "m:8b"}):
+        llm._CAPABLE.clear()
+        with mock.patch.object(llm.config, "install_config", return_value={"llm": "m:8b"}), mock.patch.object(llm, "version", return_value="0.40.11"):
             with mock.patch.object(llm, "available", return_value=False):
                 with self.assertRaisesRegex(llm.LLMError, "not running"):
                     llm.preflight()
@@ -1292,11 +1293,20 @@ class PreflightAndWatchdogTest(unittest.TestCase):
                 with self.assertRaisesRegex(llm.LLMError, "structured output"):
                     llm.preflight()
             with mock.patch.object(llm, "available", return_value=True), mock.patch.object(llm, "models", return_value=[{"name": "m:8b"}]), \
-                    mock.patch.object(llm, "chat", return_value='{"ok": true}') as probe:
+                    mock.patch.object(llm, "chat", return_value='{"ok": true}') as probe, mock.patch.object(llm, "unload") as unload, \
+                    mock.patch.object(llm.machine, "ram_gb", return_value=16.0), mock.patch.object(llm, "version", return_value="0.40.11"):
                 llm.preflight()
                 llm.preflight()  # answered recently: not asked again
                 self.assertEqual(probe.call_count, 1)
                 self.assertEqual(probe.call_args.kwargs["num_ctx"], llm._ctx("one two three"))  # same context as a short note: no reload
+                unload.assert_called_once()  # 16 GB: the model does not stay loaded beside the speech and speaker models
+                llm._READY.update(model=None, at=0.0)
+                llm.preflight()  # long after: the server and the model are looked at again, the probe is not repeated
+                self.assertEqual(probe.call_count, 1)
+                with mock.patch.object(llm, "version", return_value="0.41.0"):
+                    llm._READY.update(model=None, at=0.0)
+                    llm.preflight()  # a new server version: tried again
+                    self.assertEqual(probe.call_count, 2)
         llm._READY.update(model=None, at=0.0)
 
     def test_a_failed_check_stops_the_queue_before_anything_is_started(self):

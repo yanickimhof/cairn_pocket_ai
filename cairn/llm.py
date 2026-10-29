@@ -160,13 +160,24 @@ def chat(system, user, schema=None, num_ctx=8192, timeout=CHAT_TIMEOUT, num_pred
 
 PROBE_CTX = 8192
 _READY = {"model": None, "at": 0.0}
+_CAPABLE = {}  # (model, server version) once it has returned structured notes in this run: that does not change, so it is asked once
 _PROBE = {"type": "object", "properties": {"ok": {"type": "boolean"}}, "required": ["ok"]}
+
+
+def unload():
+    """Free the model's memory now."""
+    try:
+        _post("/api/chat", {"model": config.install_config()["llm"], "messages": [], "keep_alive": 0}, timeout=30)
+    except (urllib.error.URLError, OSError, ValueError, LLMError):
+        pass
 
 
 def preflight(max_age=120):
     """Say now, in a few seconds, whether a note can be written: the model server answers, the chosen model is
     installed, and it can return structured notes. Run before any long work, so a problem is not found only after
-    a transcription. The probe also loads the model, which the first summary needs anyway."""
+    a transcription. The structured notes are tried once per model and server version. On a computer with little
+    memory the model is unloaded right after: held beside the speech and speaker models it slowed the speaker pass
+    from 22 s to 82 s in a measurement on 16 GB; the summary loads it when it is needed."""
     name = config.install_config()["llm"]
     if _READY["model"] == name and time.time() - _READY["at"] < max_age:
         return
@@ -175,8 +186,13 @@ def preflight(max_age=120):
     have = {m.get("name") for m in models()}
     if name not in have and name + ":latest" not in have:
         raise LLMError("The summary model %s is not installed in Ollama. Choose another one in Settings > Models." % name)
-    # the same context as a short note: the model server loads the model again when the context asked for changes
-    chat("Answer with a JSON object.", "Is this working? Answer yes.", schema=_PROBE, num_ctx=PROBE_CTX, num_predict=16, timeout=300)
+    ident = (name, version())
+    if ident not in _CAPABLE:
+        # the same context as a short note: the model server loads the model again when the context asked for changes
+        chat("Answer with a JSON object.", "Is this working? Answer yes.", schema=_PROBE, num_ctx=PROBE_CTX, num_predict=16, timeout=300)
+        _CAPABLE[ident] = True
+        if machine.ram_gb() < KEEP_ALIVE_MIN_GB:
+            unload()
     _READY.update(model=name, at=time.time())
 
 
