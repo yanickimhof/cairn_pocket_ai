@@ -253,9 +253,13 @@ def followup(note, lang):
              "key_points": summary.get("key_points") or [], "decisions": summary.get("decisions") or [],
              "speakers": sorted({v for v in (note.get("speaker_names") or {}).values() if v})}
     system = (
-        "You write the follow-up email sent after a meeting or call. Write in %s. Keep it short: a greeting, two or three sentences "
-        "on what was decided, the actions as a short list saying who does what and by when, and a closing line. No filler, no thanks for "
-        "their time, no invented detail. Plain text without markdown. The subject names the topic." % NAMES[lang]
+        "You write the follow-up email sent after a meeting or call. Write in %s. Reply with a subject and a body. The body is plain text "
+        "with line breaks, laid out exactly like this:\n"
+        "a greeting line\n\n"
+        "two or three sentences on what was decided or agreed\n\n"
+        "Actions: (only when there are actions, one line each, starting with a dash, saying who does what and by when)\n\n"
+        "a short closing line\n\n"
+        "Short and factual: no filler, no thanks for their time, nothing invented, no markdown. The subject names the topic." % NAMES[lang]
     )
     raw = chat(system, json.dumps(facts, ensure_ascii=False), schema=_MAIL, num_ctx=4096, timeout=300)
     try:
@@ -264,7 +268,8 @@ def followup(note, lang):
         raise LLMError("The model did not return a usable email.") from error
     if not isinstance(data, dict) or not str(data.get("body") or "").strip():
         raise LLMError("The model did not return a usable email.")
-    return {"subject": str(data.get("subject") or "").strip()[:200], "body": str(data["body"]).strip()}
+    body = str(data["body"]).replace("\\n", "\n").strip()
+    return {"subject": str(data.get("subject") or "").strip()[:200], "body": body}
 
 
 def summarize(text, level, lang, progress=None, vocabulary=None):
