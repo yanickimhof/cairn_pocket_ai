@@ -6,6 +6,8 @@
 - A failed recording is retried by itself a few times only, with a growing delay, and a transcript or speaker pass already made is never redone
 - The summary model is checked before any long work, so a problem shows in seconds and not after a transcription; a speech engine that stops moving is cut off; the computer is kept awake during a job (macOS)
 - The time spent in each step is kept with the note and logged, without any content
+- On a computer with under 24 GB the speech engine and the summary model are freed between steps: kept loaded together they slowed the speaker pass from 22 s to 82 s in a measurement on 16 GB
+- The list of notes sees a change that kept the size and a coarse timestamp (a note put back from skipped to waiting)
 - Faster: automatic processing starts as soon as the copy is done and checks are more frequent. Stop now ends a speaker pass at once. (Running the speaker pass during the transcription was measured on an M4 with 16 GB: 94 s against 98 s one after the other, with 1.4 GB more swap, so it is not done: the graphics chip is the shared limit.)
 - Models and About show what is really installed on this computer: real sizes, installed and running Ollama versions, correct model names
 - Speaker rediarization and renaming
