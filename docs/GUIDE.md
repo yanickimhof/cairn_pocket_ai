@@ -81,7 +81,7 @@ Rare names and places are the speech engine's weak spot, and the summary then re
 - Several spellings, one right word: `Sion, Cion, Scyon => Acme`. In a rule, commas separate the spellings to replace; a phrase such as `Science Day => ACME Day` works too, whatever the case.
 - The summary is also told the spelling to use.
 - Every correction is listed under the note, and the original word is kept: removing an entry puts it back. Keep entries distinctive: if you speak of both Sion the town and Acme the association, use an exact rule only where it is safe.
-- A new vocabulary applies to recordings processed afterwards. Under the vocabulary, Cairn says how many finished notes still use an older one. **Update all** brings them up to date, **Choose notes** lets you tick the notes to update, or give a range of dates. The transcript and the speakers are kept: the words are corrected and the summary is written again, about half a minute per note. The redo button of a single note does the same.
+- A new vocabulary applies to recordings processed afterwards. Under the vocabulary, Cairn says how many finished notes still use an older one. **Update all** brings them up to date and writes again only the notes whose words the vocabulary changes. **Choose notes** lets you tick the notes to update, and a range of dates does the same: those are always written again. The transcript and the speakers are kept, the words are corrected and the summary is rewritten, about half a minute per note. The redo button of a single note does the same.
 
 ## Speed
 

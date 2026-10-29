@@ -1,6 +1,7 @@
 """Background work: import from the Pocket, transcribe, summarize. One job at a time."""
 
 import math
+import copy
 import os
 import sys
 import threading
@@ -434,11 +435,14 @@ class Jobs:
 
     # Bring several finished notes up to date with the vocabulary
 
-    def start_vocab(self, ids):
-        self._start("rerun", self._vocab_batch, ids)
+    def start_vocab(self, ids, force=True):
+        self._start("rerun", self._vocab_batch, ids, force)
 
-    def _vocab_batch(self, ids):
+    def _vocab_batch(self, ids, force=True):
+        """Write the notes again with the current vocabulary. Without `force`, a note whose words the vocabulary would not change
+        is only marked as up to date: its summary is not written again for nothing."""
         settings = config.load_settings()
+        terms = settings.get("vocabulary") or []
         self._set(total=len(ids), done=0)
         llm.preflight()
         for index, note_id in enumerate(ids):
@@ -447,6 +451,12 @@ class Jobs:
             self._set(id=note_id, step="summarizing", done=index, pct=None, part=0, parts=0, call=None)
             try:
                 note = self.store.get(note_id)
+                if not force:
+                    probe = copy.deepcopy(note.get("segments") or [])
+                    if (vocab.apply(probe, terms) or None) == (note.get("vocab_fixes") or None):
+                        note["vocab_key"] = vocab.key(terms)
+                        self.store.save(note)
+                        continue
                 level = note.get("level") if note.get("level") in config.LEVELS else "mid"
                 self._rewrite(note, level, self._lang(note, settings), settings)
             except Exception as error:  # one note failing does not stop the others

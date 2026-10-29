@@ -1951,20 +1951,20 @@ class LibraryTest(unittest.TestCase):
         with mock.patch.object(config, "load_settings", return_value=dict(config.DEFAULT_SETTINGS, vocabulary=["Sion => Acme"])):
             key = vocab.key(["Sion => Acme"])
             self.assertEqual(self.c.call("GET", "/api/state")[1]["totals"]["vocab_todo"], 2)  # the two finished notes were made without it
-            self.assertEqual(self.app.vocab_targets({}), ["a", "b"])
-            self.assertEqual(self.app.vocab_targets({"from": "2026-10-03"}), ["b"])
-            self.assertEqual(self.app.vocab_targets({"to": "2026-10-02"}), ["a"])
-            self.assertEqual(self.app.vocab_targets({"ids": ["b", "w", "nope", "b"]}), ["b"])  # chosen notes only, finished ones only
+            self.assertEqual(self.app.vocab_targets({}), (["a", "b"], False))
+            self.assertEqual(self.app.vocab_targets({"from": "2026-10-03"}), (["b"], True))
+            self.assertEqual(self.app.vocab_targets({"to": "2026-10-02"}), (["a"], True))
+            self.assertEqual(self.app.vocab_targets({"ids": ["b", "w", "nope", "b"]}), (["b"], True))  # chosen notes only, finished ones only
             for note_id in ("a", "b"):
                 self.app.store.save(dict(self.app.store.get(note_id), vocab_key=key))
             self.assertEqual(self.c.call("GET", "/api/state")[1]["totals"]["vocab_todo"], 0)
-            self.assertEqual(self.app.vocab_targets({}), [])
-            self.assertEqual(self.app.vocab_targets({"ids": ["a"]}), ["a"])  # a chosen note is written again even when up to date
+            self.assertEqual(self.app.vocab_targets({}), ([], False))
+            self.assertEqual(self.app.vocab_targets({"ids": ["a"]}), (["a"], True))  # a chosen note is written again even when up to date
             started = []
-            with mock.patch.object(self.app.jobs, "start_vocab", side_effect=lambda ids: started.append(ids)):
+            with mock.patch.object(self.app.jobs, "start_vocab", side_effect=lambda ids, force=True: started.append((ids, force))):
                 self.assertEqual(self.c.call("POST", "/api/vocabulary/apply", {"ids": ["a", "b"]}), (202, {"ok": True, "count": 2}))
                 self.assertEqual(self.c.call("POST", "/api/vocabulary/apply", {"all": True}), (200, {"ok": True, "count": 0}))
-            self.assertEqual(started, [["a", "b"]])
+            self.assertEqual(started, [(["a", "b"], True)])
             with mock.patch.object(self.app.jobs, "start_vocab", side_effect=jobs.Busy("busy")):
                 self.assertEqual(self.c.call("POST", "/api/vocabulary/apply", {"ids": ["a"]})[0], 409)
             for note_id in ("a", "b"):
@@ -1994,6 +1994,24 @@ class LibraryTest(unittest.TestCase):
         self.assertIn("Hello Acme", self.app.store.get("b")["clean"])
         self.assertEqual(self.app.store.get("b")["vocab_fixes"], [{"from": "Sion", "to": "Acme", "count": 1}])
         self.assertEqual(self.app.jobs.snapshot()["done"], 2)
+
+    def test_updating_all_only_writes_again_the_notes_the_vocabulary_changes(self):
+        from unittest import mock
+
+        from cairn import config, jobs
+
+        self.app.store.save(dict(self.app.store.get("b"), segments=[{"start": 0.0, "end": 1.0, "text": "Hello Sion"}]))
+        calls = []
+        with mock.patch.object(config, "load_settings", return_value=dict(config.DEFAULT_SETTINGS, ui="en", vocabulary=["Sion => Acme"])), \
+                mock.patch.object(jobs.llm, "preflight"), mock.patch.object(self.app.jobs, "_summarize", side_effect=lambda note, *a: calls.append(note["id"])):
+            self.app.jobs._vocab_batch(["a", "b"], force=False)
+            self.assertEqual(calls, ["b"])  # a has no "Sion": it is only marked as up to date
+            self.assertTrue(self.app.store.get("a")["vocab_key"])
+            self.assertEqual(self.app.store.get("a")["summary"]["tldr"], self.initial["a"]["summary"]["tldr"])
+            self.assertEqual(self.app.vocab_outdated(), [])
+            calls.clear()
+            self.app.jobs._vocab_batch(["a", "b"], force=True)  # chosen by hand: written again whatever happens
+            self.assertEqual(calls, ["a", "b"])
 
     def test_follow_up_email_is_written_once_and_redone_on_request(self):
         from cairn import llm

@@ -247,14 +247,15 @@ class App:
         return [n for n in rows if n.get("status") == "done" and n.get("vocab_key", "") != key and (terms or n.get("vocab_fixes"))]
 
     def vocab_targets(self, body):
-        """The notes to bring up to date: chosen ones, a range of dates (both written again even when they are up to date), or all that are out of date."""
+        """(notes, force): chosen ones or a range of dates are written again even when up to date (force); all the out of date ones only
+        when the vocabulary changes their words."""
         rows = {n["id"]: n for n in self.store.slim() if n.get("status") == "done"}
         if isinstance(body.get("ids"), list):
-            return [i for i in dict.fromkeys(str(i) for i in body["ids"]) if i in rows]
+            return [i for i in dict.fromkeys(str(i) for i in body["ids"]) if i in rows], True
         if body.get("from") or body.get("to"):
             low, high = str(body.get("from") or "0000-00-00")[:10], str(body.get("to") or "9999-99-99")[:10]
-            return [i for i, n in sorted(rows.items(), key=lambda kv: kv[1].get("date") or "") if low <= (n.get("date") or "")[:10] <= high]
-        return [n["id"] for n in sorted(self.vocab_outdated(list(rows.values())), key=lambda n: n.get("date") or "")]
+            return [i for i, n in sorted(rows.items(), key=lambda kv: kv[1].get("date") or "") if low <= (n.get("date") or "")[:10] <= high], True
+        return [n["id"] for n in sorted(self.vocab_outdated(list(rows.values())), key=lambda n: n.get("date") or "")], False
 
     def actions(self):
         """Every action of every finished note, newest note first, with its done flag."""
@@ -487,10 +488,10 @@ def make_handler(app):
                 except ValueError as error:
                     raise ApiError(400, str(error))
             if method == "POST" and path == "/api/vocabulary/apply":
-                ids = app.vocab_targets(body)
+                ids, force = app.vocab_targets(body)
                 if ids:
                     try:
-                        app.jobs.start_vocab(ids)
+                        app.jobs.start_vocab(ids, force)
                     except jobs.Busy:
                         raise ApiError(409, "busy")
                 return self._json(202 if ids else 200, {"ok": True, "count": len(ids)})
