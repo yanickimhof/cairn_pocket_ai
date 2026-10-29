@@ -1485,6 +1485,21 @@ class RetryAndResumeTest(unittest.TestCase):
             job._process("a", {"ui": "en", "diarize": False})
         return calls, store.get("a")
 
+    def test_the_speech_engine_is_freed_after_a_transcription_only_on_a_small_computer(self):
+        from unittest import mock
+
+        from cairn import jobs
+
+        for gb, expected in ((16.0, 1), (32.0, 0)):
+            job, store = self._jobs(a={"status": "waiting"})
+            segments = [{"start": 0.0, "end": 2.0, "text": "Hello there everyone today.", "logprob": -0.2}]
+            with mock.patch.object(jobs.speech, "model_key", return_value="k"), mock.patch.object(jobs.speech, "model_name", return_value="W"), \
+                    mock.patch.object(jobs.speech, "transcribe", return_value={"language": "en", "segments": segments, "duration": 2.0}), \
+                    mock.patch.object(jobs.speech, "shutdown") as shutdown, mock.patch.object(jobs.system, "ram_gb", return_value=gb), \
+                    mock.patch.object(jobs.config, "install_config", return_value={"llm": "m"}), mock.patch.object(job, "_summarize"):
+                job._process("a", {"ui": "en", "diarize": False})
+            self.assertEqual(shutdown.call_count, expected)
+
     def test_a_transcript_already_made_with_this_model_is_not_made_again(self):
         calls, note = self._resume({"transcribed_key": "mlx:large", "transcribed_lang": ""})
         self.assertEqual(calls, [])
@@ -1689,6 +1704,24 @@ class SpeedTest(unittest.TestCase):
                     mock.patch.object(llm.config, "install_config", return_value={"llm": "m"}):
                 llm.chat("s", "u")
             self.assertEqual(sent[-1].get("keep_alive"), expected)
+
+
+class ListingCacheTest(unittest.TestCase):
+    def test_a_rewrite_with_the_same_size_and_timestamp_is_still_seen(self):
+        import os
+
+        from cairn import notes
+
+        folder = Path(tempfile.mkdtemp())
+        store = notes.Store(folder / "Texts")
+        store.save({"id": "a", "source": "a", "status": "skipped", "date": "2026-10-08T17:00", "audio": ""})
+        self.assertEqual([n["status"] for n in store.slim()], ["skipped"])
+        path = next((folder / "Texts").glob("*.json"))
+        before = path.stat().st_mtime_ns
+        store.save({"id": "a", "source": "a", "status": "waiting", "date": "2026-10-08T17:00", "audio": ""})  # same length: "skipped" and "waiting"
+        os.utime(path, ns=(before, before))  # a file system with a coarse clock: the timestamp did not move
+        self.assertEqual(path.stat().st_size, len(path.read_bytes()))
+        self.assertEqual([n["status"] for n in store.slim()], ["waiting"])
 
 
 class FailureMessagesTest(unittest.TestCase):

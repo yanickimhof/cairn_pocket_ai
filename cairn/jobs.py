@@ -7,7 +7,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import awake, config, diarize, llm, pocket, privacy, score, speech, vocab
+from . import awake, config, diarize, llm, pocket, privacy, score, speech, system, vocab
 from .notes import guess_date, make_id
 
 
@@ -302,6 +302,8 @@ class Jobs:
                     transcribed_key=key, transcribed_lang=spoken or "", diarized=False,
                 )
                 keep()
+                if system.ram_gb() < speech.KEEP_MIN_GB:
+                    speech.shutdown()  # reloading it costs 1 or 2 s; kept beside the speaker and summary models it slowed them on 16 GB
             if settings.get("diarize") and diarize.available():
                 if note.get("diarized"):
                     reused.append("diarizing")

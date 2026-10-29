@@ -86,7 +86,7 @@ class Store:
                     stat = path.stat()
                 except OSError:
                     continue
-                sig = (stat.st_mtime_ns, stat.st_size)
+                sig = (stat.st_mtime_ns, stat.st_size, stat.st_ino)  # a note is rewritten as a new file: the inode tells a rewrite that left the size and a coarse timestamp unchanged
                 seen.add(path)
                 cached = self._cache.get(path)
                 if not cached or cached[0] != sig:

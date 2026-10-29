@@ -16,6 +16,7 @@ DOUBTFUL_LOGPROB = -0.8
 DOUBTFUL_COMPRESSION = 2.4
 
 IDLE_SECONDS = 300
+KEEP_MIN_GB = 24  # the speech engine stays loaded between recordings only on a computer with this much memory
 STALL_SECONDS = 300      # no progress at all for this long: the speech engine is taken for stuck
 NO_PROGRESS_CAP = 3600   # an engine that never reports progress gets this long in all
 _LOCK = threading.Lock()
