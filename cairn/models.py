@@ -1,5 +1,6 @@
 """Models on demand: list, download (only when the user asks) and select."""
 
+import importlib.util
 import json
 import os
 import shutil
@@ -28,7 +29,13 @@ def diar_dir():
 
 
 def diar_installed():
-    return (diar_dir() / MARK).exists()
+    """The model is there and so is the package that runs it (an update that rebuilds the environment removes the package)."""
+    if not (diar_dir() / MARK).exists():
+        return False
+    try:
+        return importlib.util.find_spec("pyannote.audio") is not None
+    except (ImportError, ValueError):
+        return False
 
 
 def dir_size(path):

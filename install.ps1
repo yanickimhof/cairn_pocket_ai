@@ -68,11 +68,17 @@ if (-not (Test-Path $Uv)) { Fail 'uv could not be installed.' }
 
 Say 'Creating the isolated Python environment'
 $env:UV_VENV_CLEAR = '1'
+$HadDiar = Test-Path (Join-Path $CairnHome 'models\diar\.cairn-complete')   # speaker identification was installed: it is put back after the update
 & $Uv venv --python 3.11 (Join-Path $CairnHome '.venv')
 if ($LASTEXITCODE -ne 0) { Fail 'Python environment creation failed.' }
 $Py = Join-Path $CairnHome '.venv\Scripts\python.exe'
 Say 'Installing the speech engine (versions and hashes pinned)'
 & $Uv pip install --python $Py --require-hashes -r $Req
+if ($HadDiar) {
+  Say 'Putting back speaker identification (pyannote.audio)'
+  & $Uv pip install --python $Py --quiet pyannote.audio
+  if ($LASTEXITCODE -ne 0) { Write-Host 'Speaker identification could not be put back: install it again from Settings, Models.' }
+}
 if ($LASTEXITCODE -ne 0) { Fail 'Speech engine installation failed.' }
 Remove-Item -Recurse -Force (Join-Path $CairnHome '.cache') -ErrorAction SilentlyContinue   # download cache, not needed once installed
 

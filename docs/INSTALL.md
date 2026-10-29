@@ -19,7 +19,7 @@ Nothing is registered, so nothing starts by itself. Cairn listens on port 8731, 
 
 ## Update
 
-Cairn looks for a new version once a day (switch in **Settings, Check for updates**) and puts a dot on the info icon when one exists. To update, run the install command again: it replaces the engine and keeps your notes, settings and models. The version it replaces stays in `~/Cairn/src.previous`, in case you need to go back.
+Cairn looks for a new version once a day (switch in **Settings, Check for updates**) and puts a dot on the info icon when one exists. To update, run the install command again: it replaces the engine and keeps your notes, settings and models. If speaker identification was installed, it is put back. The version it replaces stays in `~/Cairn/src.previous`, in case you need to go back.
 
 ## Troubleshooting
 

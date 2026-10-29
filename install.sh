@@ -82,11 +82,17 @@ if [ -z "$UV" ]; then
 fi
 [ -x "$UV" ] || die "uv could not be installed."
 
+HAD_DIAR=0
+[ -f "$CAIRN_HOME/models/diar/.cairn-complete" ] && HAD_DIAR=1   # speaker identification was installed: it is put back after the update
 say "Creating the isolated Python environment"
 UV_VENV_CLEAR=1 "$UV" venv --python 3.11 "$CAIRN_HOME/.venv"
 PY="$CAIRN_HOME/.venv/bin/python"
 say "Installing the speech engine (versions and hashes pinned)"
 "$UV" pip install --python "$PY" --require-hashes -r "$HERE/requirements/$REQ"
+if [ "$HAD_DIAR" = 1 ]; then
+  say "Putting back speaker identification (pyannote.audio)"
+  "$UV" pip install --python "$PY" --quiet pyannote.audio || printf 'Speaker identification could not be put back: install it again from Settings, Models.\n'
+fi
 rm -rf "$CAIRN_HOME/.cache/uv"   # download cache, not needed once installed (saves about 0.9 GB)
 if [ "$ENGINE" = "mlx" ]; then
   # The speech engine reads audio through ffmpeg: use the build shipped in a pinned package.

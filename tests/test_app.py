@@ -453,6 +453,11 @@ class AppTest(unittest.TestCase):
         diar_dir = models.diar_dir()
         diar_dir.mkdir(parents=True, exist_ok=True)
         (diar_dir / models.MARK).write_text("ok", encoding="utf-8")
+        from unittest import mock
+
+        package = mock.patch.object(models.importlib.util, "find_spec", return_value=object())  # the package that runs it is there too
+        package.start()
+        self.addCleanup(package.stop)
         try:
             status, data = self.c.call("GET", "/api/about")
             self.assertEqual(status, 200)
@@ -1013,7 +1018,7 @@ class DiarizationTest(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     models.remove("diar", "pyannote-3.1")  # must turn the feature off first
                 config.save_settings({"diarize": False})
-            with mock.patch.object(models, "diar_dir", return_value=folder / "models" / "diar"):
+            with mock.patch.object(models, "diar_dir", return_value=folder / "models" / "diar"), mock.patch.object(models, "diar_installed", return_value=True):
                 (folder / "models" / "diar").mkdir(parents=True)
                 (folder / "models" / "diar" / models.MARK).write_text("ok", encoding="utf-8")
                 self.assertEqual(models.remove("diar", "pyannote-3.1"), {"ok": True})
@@ -1812,6 +1817,37 @@ class FailureMessagesTest(unittest.TestCase):
         expected = [{"start": 0.0, "end": 1.23, "speaker": "SPEAKER_00"}, {"start": 1.5, "end": 3.0, "speaker": "SPEAKER_01"}]
         self.assertEqual(diarize_worker.speaker_turns(Annotation()), expected)  # pyannote 3
         self.assertEqual(diarize_worker.speaker_turns(SimpleNamespace(speaker_diarization=Annotation())), expected)  # pyannote 4
+
+
+class UpdateKeepsSpeakerIdentificationTest(unittest.TestCase):
+    """An update rebuilds the Python environment, which removes pyannote.audio: Cairn must notice, and the installers put it back."""
+
+    def test_the_model_alone_is_not_an_installed_feature(self):
+        from unittest import mock
+
+        from cairn import models
+
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(models.config, "home", return_value=Path(tmp)):
+            self.assertFalse(models.diar_installed())  # nothing there
+            (Path(tmp) / "models" / "diar").mkdir(parents=True)
+            (Path(tmp) / "models" / "diar" / models.MARK).write_text("")
+            with mock.patch.object(models.importlib.util, "find_spec", return_value=None):
+                self.assertFalse(models.diar_installed())  # the weights are there, the package is gone: offered again in Settings, Models
+            with mock.patch.object(models.importlib.util, "find_spec", return_value=object()):
+                self.assertTrue(models.diar_installed())
+            with mock.patch.object(models.importlib.util, "find_spec", side_effect=ModuleNotFoundError("pyannote")):
+                self.assertFalse(models.diar_installed())
+
+    def test_the_installers_put_the_package_back_after_rebuilding_the_environment(self):
+        root = Path(__file__).resolve().parent.parent
+        sh = (root / "install.sh").read_text(encoding="utf-8")
+        self.assertLess(sh.index("HAD_DIAR=1"), sh.index("UV_VENV_CLEAR=1"))  # looked at before the environment is cleared
+        self.assertLess(sh.index("--require-hashes"), sh.index("pip install --python \"$PY\" --quiet pyannote.audio"))
+        ps = (root / "install.ps1").read_text(encoding="utf-8")
+        self.assertLess(ps.index("$HadDiar ="), ps.index("& $Uv venv"))
+        self.assertLess(ps.index("--require-hashes"), ps.index("--quiet pyannote.audio"))
+        self.assertIn(".cairn-complete", sh)
+        self.assertIn(".cairn-complete", ps)
 
 
 class AboutHelpersTest(unittest.TestCase):
