@@ -142,7 +142,12 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   timers.splice(0).forEach((fn) => fn());
   click({ "data-a": "settings" });
   await settle();
-  check(page.innerHTML.indexOf('data-a="vocabAll"') !== -1 && page.innerHTML.indexOf('id="vFrom"') !== -1, "the vocabulary offers to update the notes");
+  check(page.innerHTML.indexOf('data-a="vocabAll"') !== -1 && page.innerHTML.indexOf('data-a="vocabRangeToggle"') !== -1 && page.innerHTML.indexOf('id="vFrom"') === -1, "the vocabulary offers to update the notes with icons");
+  click({ "data-a": "vocabRangeToggle" });
+  await settle();
+  check(page.innerHTML.indexOf('id="vFrom"') !== -1 && page.innerHTML.indexOf('data-a="vocabRange"') !== -1, "the period opens on its icon");
+  click({ "data-a": "vocabRangeToggle" });
+  await settle();
   click({ "data-a": "pickStart" });
   await settle();
   check(page.innerHTML.indexOf('data-a="pickTog"') !== -1 && page.innerHTML.indexOf('data-a="row"') === -1 && page.innerHTML.indexOf('data-a="pickGo" disabled') !== -1, "choosing notes turns the list into a selection, nothing chosen yet");

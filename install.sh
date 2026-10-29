@@ -5,7 +5,8 @@
 #   curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.3.0/install.sh | bash
 #
 # Optional variables: CAIRN_HOME (default ~/Cairn), CAIRN_LLM (default qwen3:4b),
-# CAIRN_WHISPER_REPO (speech model), CAIRN_REF (branch or tag to install; the default is the release this script belongs to).
+# CAIRN_WHISPER_REPO (speech model), CAIRN_REF (branch or tag to install; the default is the release this script belongs to),
+# CAIRN_NO_SERVICE=1 (macOS: no background mode, for a second copy next to one that is already running).
 set -euo pipefail
 umask 077
 
@@ -184,7 +185,7 @@ source "$CAIRN_HOME/env.sh"
 PYTHONPATH="$HERE" "$PY" -c "import cairn.server"
 
 say "Done. Cairn is ready."
-if [ "$(uname -s)" = "Darwin" ] && [ -z "${CI:-}" ]; then
+if [ "$(uname -s)" = "Darwin" ] && [ -z "${CI:-}" ] && [ -z "${CAIRN_NO_SERVICE:-}" ]; then
   # Background mode: starts at login and restarts by itself if it stops (remove with: cairn service uninstall)
   "$CAIRN_HOME/bin/cairn" service install || true
   printf '\nCairn runs in the background. Open it with %s/Cairn.app\nor run: %s/bin/cairn service open\n' "$CAIRN_HOME" "$CAIRN_HOME"

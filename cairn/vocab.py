@@ -2,7 +2,8 @@
 
 One entry per line. "Acme" is a name to look for: a word that sounds close to it is written as "Acme". "Sion => Acme" is an
 exact rule: "Sion" is always written "Acme". Several spellings can share one rule: "Sion, Cion, Scyon => Acme". "->", the
-arrow character and ":" work like "=>". Every correction is kept with the note and shown, so nothing changes silently.
+arrow character and ":" work like "=>". A rule can be limited to a context: "Science Day => ACME Day | awards, ceremony" replaces
+the words only when one of the words after the bar is spoken close by (in the same line or the two before and after). Every correction is kept with the note and shown, so nothing changes silently.
 The speech engine cannot be told the names itself: with the setting Cairn uses (each 30 s window decoded on its own, which
 avoids repetition loops) its prompt only reaches the first window."""
 
@@ -13,7 +14,9 @@ import unicodedata
 
 MAX_TERMS = 300
 MAX_LEN = 60
-MAX_RULE = 300
+MAX_RULE = 400
+BAR = "|"
+NEAR = 2  # lines on each side of a line that count as its context
 ARROW = "=>"
 ARROWS = ("=>", "->", "\u2192", ":")
 _WORD = re.compile(r"\w+", re.UNICODE)
@@ -24,14 +27,17 @@ are was were be for with by as from this that these those i you he she we they m
 
 
 def split_rule(term):
-    """(spellings to replace as a list, the right spelling) when the entry is an exact rule, else None."""
+    """(spellings to replace, the right spelling, context words) when the entry is an exact rule, else None.
+    The context words are empty when the rule always applies."""
     hits = [(term.find(a), a) for a in ARROWS if a in term]
     if not hits:
         return None
     at, arrow = min(hits)
     wrong = [w.strip() for w in term[:at].split(",") if w.strip()]
-    right = term[at + len(arrow):].strip()
-    return (wrong, right) if wrong and right else None
+    right, _bar, near = term[at + len(arrow):].partition(BAR)
+    right = right.strip()
+    context = [c.strip() for c in near.split(",") if c.strip()]
+    return (wrong, right, context) if wrong and right else None
 
 
 def parse(value):
@@ -50,7 +56,7 @@ def parse(value):
             continue
         rule = split_rule(line)
         if rule:
-            entries, limit = ["%s %s %s" % (", ".join(rule[0]), ARROW, rule[1])], MAX_RULE
+            entries, limit = ["%s %s %s%s" % (", ".join(rule[0]), ARROW, rule[1], " %s %s" % (BAR, ", ".join(rule[2])) if rule[2] else "")], MAX_RULE
         elif any(a in line for a in ARROWS):
             continue  # an arrow with nothing on one side: not a rule, and not a name either
         elif isinstance(value, str):
@@ -122,7 +128,8 @@ def _rules(terms):
         if rule:
             for wrong in rule[0]:
                 pattern = r"\s+".join(re.escape(w) for w in wrong.split())
-                exact.append((re.compile(r"(?<!\w)" + pattern + r"(?!\w)", re.IGNORECASE), wrong, rule[1]))
+                near = [re.compile(r"(?<!\w)" + re.escape(c) + r"(?!\w)", re.IGNORECASE) for c in rule[2]]
+                exact.append((re.compile(r"(?<!\w)" + pattern + r"(?!\w)", re.IGNORECASE), wrong, rule[1], near))
         elif any(a in term for a in ARROWS):
             continue  # an arrow with nothing on one side: not a name to look for
         else:
@@ -132,12 +139,16 @@ def _rules(terms):
     return exact, sorted(fuzzy, key=lambda f: -len(f[1]))
 
 
-def fix_text(text, terms):
-    """(new text, corrections) for one text. A correction is {"from", "to"}."""
+def fix_text(text, terms, context=None):
+    """(new text, corrections) for one text. A correction is {"from", "to"}. `context` is the text around it, for the rules
+    that apply only near certain words (the text itself when it is not given)."""
     exact, fuzzy = _rules(terms)
     found = []
-    for pattern, wrong, right in exact:
-        def swap(match, right=right):
+    around = text if context is None else context
+    for pattern, wrong, right, near in exact:
+        def swap(match, right=right, near=near):
+            if near and not any(n.search(around) for n in near):
+                return match.group(0)  # the words that make this the name are not spoken here
             found.append({"from": match.group(0), "to": right})
             return right
         text = pattern.sub(swap, text)
@@ -166,9 +177,11 @@ def apply(segments, terms):
     """Correct the segments in place from the current vocabulary, starting again from what the speech engine wrote,
     so that removing an entry puts the original word back. Returns the corrections: [{"from", "to", "count"}]."""
     totals = {}
-    for seg in segments or []:
-        original = seg.get("orig", seg.get("text", ""))
-        text, found = fix_text(original, terms)
+    segments = segments or []
+    originals = [seg.get("orig", seg.get("text", "")) for seg in segments]
+    for i, seg in enumerate(segments):
+        original = originals[i]
+        text, found = fix_text(original, terms, " ".join(originals[max(0, i - NEAR):i + NEAR + 1]))
         if text != original:
             seg["orig"], seg["text"] = original, text
         else:

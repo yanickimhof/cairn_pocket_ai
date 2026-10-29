@@ -4,7 +4,18 @@ The command is in the [README](../README.md). It detects your system, installs e
 
 ## Options
 
-Set before the command: `CAIRN_HOME` (install folder), `CAIRN_LLM` (language model, default `qwen3:4b`), `CAIRN_WHISPER_REPO` (speech model), `CAIRN_REF` (branch or tag). Models too small to be useful (Whisper tiny or base, language models under 3B) are refused. An existing Ollama and its models are reused.
+Set before the command: `CAIRN_HOME` (install folder), `CAIRN_LLM` (language model, default `qwen3:4b`), `CAIRN_WHISPER_REPO` (speech model), `CAIRN_REF` (branch or tag), `CAIRN_NO_SERVICE=1` (see below). Models too small to be useful (Whisper tiny or base, language models under 3B) are refused. An existing Ollama and its models are reused.
+
+### A second copy, next to the one you use
+
+On macOS the installer sets up the background mode, a small login item named `io.github.cairn` that keeps Cairn running. There is one per Mac: a second install would replace it and take its place. To try an install in another folder without touching yours, set `CAIRN_NO_SERVICE=1` before the command, and give the folder a name of its own:
+
+```
+CAIRN_HOME=~/CairnTest CAIRN_NO_SERVICE=1 bash install.sh
+CAIRN_PORT=8741 ~/CairnTest/bin/cairn
+```
+
+Nothing is registered, so nothing starts by itself. Cairn listens on port 8731, or the next free one; `CAIRN_PORT` picks the first port to try, so both copies can run side by side. Delete the folder to remove the copy.
 
 ## Update
 

@@ -12,9 +12,9 @@
       devGpuHint: "Identification des interlocuteurs sur la puce graphique (au moins 4 fois plus rapide, même résultat). Cliquer pour utiliser le processeur.", devCpuHint: "Identification des interlocuteurs sur le processeur. Cliquer pour utiliser la puce graphique.",
       find: "Rechercher", findPlaceholder: "Un mot, un nom, un chiffre", findNone: "Aucun résultat", tasks: "Toutes mes actions", tasksNone: "Aucune action pour l'instant", tasksCopy: "Copier les actions à faire", tasksUnassigned: "Sans responsable", tasksCopied: "Actions copiées",
       listenHint: "Écouter à partir d'ici", mailHint: "Écrire le mail de suivi", mailTitle: "Mail de suivi", mailWriting: "Rédaction du mail…", mailCopy: "Copier le mail", mailOpen: "Ouvrir dans l'app Mail", mailRedo: "Réécrire le mail",
-      vocab: "Vocabulaire", vocabHint: "Noms de personnes, de lieux et termes rares, un par ligne. Cairn corrige dans la transcription les mots qui leur ressemblent et impose leur orthographe au résumé. « Sion, Cion, Scyon => Acme » remplace toujours chacun par Acme (=>, -> et : fonctionnent).",
-      vocabTodo: "{n} notes utilisent un ancien vocabulaire", vocabAll: "Tout mettre à jour", vocabChoose: "Choisir des notes", vocabFrom: "Du", vocabTo: "au", vocabRange: "Mettre à jour", vocabStarted: "{n} notes en cours de mise à jour", vocabNothing: "Aucune note à mettre à jour",
-      pickCount: "{n} sélectionnée(s)", pickAll: "Toutes", pickGo: "Mettre à jour", pickCancel: "Annuler", vocabPlaceholder: "Un nom ou un terme par ligne", vocabSaved: "Vocabulaire enregistré", vocabFixes: "Corrections du vocabulaire",
+      vocab: "Vocabulaire", vocabHint: "Noms de personnes, de lieux et termes rares, un par ligne. Cairn corrige dans la transcription les mots qui leur ressemblent et impose leur orthographe au résumé. « Sion, Cion, Scyon => Acme » remplace toujours chacun par Acme (=>, -> et : fonctionnent). « Science Day => ACME Day | awards, ceremony » ne remplace qu'à côté de ces mots.",
+      vocabTodo: "{n} notes utilisent un ancien vocabulaire", vocabAll: "Mettre à jour les notes", vocabChoose: "Choisir des notes", vocabRange: "Mettre à jour une période", vocabStarted: "{n} notes en cours de mise à jour", vocabNothing: "Aucune note à mettre à jour",
+      pickCount: "{n} sélectionnée(s)", pickAll: "Tout sélectionner", pickGo: "Mettre à jour les notes choisies", pickCancel: "Annuler", vocabPlaceholder: "Un nom ou un terme par ligne", vocabSaved: "Vocabulaire enregistré", vocabFixes: "Corrections du vocabulaire",
       processedIn: "traité en", notInstalled: "Non installé", getIt: "Installer", refText: "Acheter un Pocket : 10 % de réduction", refNote: "Lien de parrainage facultatif. L’offre dépend uniquement de Pocket et peut changer.",
       models: "Modèles", modelsHint: "Choisir ou ajouter des modèles", modelsSpeech: "Transcription", modelsLlm: "Résumés", modelsDiar: "Identification des interlocuteurs",
       hfToken: "Jeton Hugging Face", hfTokenHint: "Nécessaire une seule fois pour télécharger le modèle de diarisation (gratuit, compte Hugging Face requis ; il faut aussi accepter l'accès au modèle sur huggingface.co). Jamais utilisé ailleurs.",
@@ -66,9 +66,9 @@
       devGpuHint: "Speaker identification runs on the graphics chip (at least 4 times faster, same result). Click to use the processor.", devCpuHint: "Speaker identification runs on the processor. Click to use the graphics chip.",
       find: "Search", findPlaceholder: "A word, a name, a number", findNone: "No result", tasks: "All my actions", tasksNone: "No action yet", tasksCopy: "Copy the open actions", tasksUnassigned: "Nobody yet", tasksCopied: "Actions copied",
       listenHint: "Listen from here", mailHint: "Write the follow-up email", mailTitle: "Follow-up email", mailWriting: "Writing the email…", mailCopy: "Copy the email", mailOpen: "Open in the Mail app", mailRedo: "Write it again",
-      vocab: "Vocabulary", vocabHint: "Names of people and places and rare terms, one per line. Cairn corrects close variants in the transcript and imposes their spelling on the summary. \"Sion, Cion, Scyon => Acme\" always replaces each of them with Acme (=>, -> and : all work).",
-      vocabTodo: "{n} notes use an older vocabulary", vocabAll: "Update all", vocabChoose: "Choose notes", vocabFrom: "From", vocabTo: "to", vocabRange: "Update", vocabStarted: "{n} notes are being updated", vocabNothing: "No note to update",
-      pickCount: "{n} selected", pickAll: "All", pickGo: "Update", pickCancel: "Cancel", vocabPlaceholder: "One name or term per line", vocabSaved: "Vocabulary saved", vocabFixes: "Vocabulary corrections",
+      vocab: "Vocabulary", vocabHint: "Names of people and places and rare terms, one per line. Cairn corrects close variants in the transcript and imposes their spelling on the summary. \"Sion, Cion, Scyon => Acme\" always replaces each of them with Acme (=>, -> and : all work). \"Science Day => ACME Day | awards, ceremony\" replaces only near those words.",
+      vocabTodo: "{n} notes use an older vocabulary", vocabAll: "Update the notes", vocabChoose: "Choose notes", vocabRange: "Update a period", vocabStarted: "{n} notes are being updated", vocabNothing: "No note to update",
+      pickCount: "{n} selected", pickAll: "Select all", pickGo: "Update the chosen notes", pickCancel: "Cancel", vocabPlaceholder: "One name or term per line", vocabSaved: "Vocabulary saved", vocabFixes: "Vocabulary corrections",
       processedIn: "processed in", notInstalled: "Not installed", getIt: "Install", refText: "Get a Pocket: 10 % off", refNote: "Optional referral link. The offer is set by Pocket alone and may change.",
       models: "Models", modelsHint: "Choose or add models", modelsSpeech: "Transcription", modelsLlm: "Summaries", modelsDiar: "Speaker identification",
       hfToken: "Hugging Face token", hfTokenHint: "Needed once to download the diarization model (free, a Hugging Face account is required, and you must accept access to the model on huggingface.co). Never used anywhere else.",
@@ -116,6 +116,7 @@
     search: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>',
     tasks: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6h10"></path><path d="M10 12h10"></path><path d="M10 18h10"></path><path d="m3.5 6 1.5 1.5L7.5 5"></path><path d="m3.5 12 1.5 1.5 2.5-2.5"></path><path d="m3.5 18 1.5 1.5 2.5-2.5"></path></svg>',
     mail: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"></rect><path d="m4.5 8 7.5 5.5L19.5 8"></path></svg>',
+    calendar: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="3"></rect><path d="M4 10h16"></path><path d="M8.5 3.5v4"></path><path d="M15.5 3.5v4"></path></svg>',
     circle: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B5B5BA" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle></svg>',
     chip: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect><rect x="9.5" y="9.5" width="5" height="5" rx="1"></rect><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"></path></svg>',
     bolt: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"></path></svg>',
@@ -158,7 +159,7 @@
   var S = {
     ui: null, hidden: true, settingsOpen: false, aboutOpen: false, open: null, edit: null, draft: "", exp: null,
     delConfirm: false, rr: "mid", rl: "en", sp: "auto", server: null, full: {}, about: null, upd: null,
-    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: "", vocabEdit: false, vocabDraft: "", pickMode: false, pick: {}, vFrom: "", vTo: "", findOpen: false, findQ: "", findRes: null, tasksOpen: false, tasks: null
+    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: "", vocabEdit: false, vocabDraft: "", pickMode: false, pick: {}, vFrom: "", vTo: "", vRange: false, findOpen: false, findQ: "", findRes: null, tasksOpen: false, tasks: null
   };
   var lastView = "";
   var toastTimer = null;
@@ -335,11 +336,14 @@
     }
     if (!S.vocabEdit && terms.length) {
       var todo = (st.totals && st.totals.vocab_todo) || 0;
-      h += '<div class="vtools">' + (todo > 0 ? '<div class="small">' + esc(t.vocabTodo.replace("{n}", todo)) + "</div>" : "") + '<div class="row gap8" style="flex-wrap:wrap;margin:8px 0">' +
-        (todo > 0 ? '<button type="button" class="mbtn" data-a="vocabAll">' + esc(t.vocabAll) + "</button>" : "") +
-        '<button type="button" class="mbtn" data-a="pickStart">' + esc(t.vocabChoose) + "</button></div>" +
-        '<div class="row gap8" style="flex-wrap:wrap;margin-bottom:12px"><span class="small">' + esc(t.vocabFrom) + '</span><input id="vFrom" type="date" class="dinput" value="' + esc(S.vFrom) + '"><span class="small">' + esc(t.vocabTo) +
-        '</span><input id="vTo" type="date" class="dinput" value="' + esc(S.vTo) + '"><button type="button" class="mbtn" data-a="vocabRange">' + esc(t.vocabRange) + "</button></div></div>";
+      h += '<div class="vtools"><span class="small">' + (todo > 0 ? esc(t.vocabTodo.replace("{n}", todo)) : "") + "</span>" +
+        '<button type="button" class="ib sm' + (todo > 0 ? " blue" : "") + '" data-a="vocabAll"' + (todo > 0 ? "" : " disabled") + tip(t.vocabAll) + ">" + (todo > 0 ? I.refreshW : I.refresh) + "</button>" +
+        '<button type="button" class="ib sm" data-a="pickStart"' + tip(t.vocabChoose) + ">" + I.tasks + "</button>" +
+        '<button type="button" class="ib sm' + bg(S.vRange) + '" data-a="vocabRangeToggle"' + tip(t.vocabRange) + ">" + I.calendar + "</button></div>";
+      if (S.vRange) {
+        h += '<div class="vtools range"><input id="vFrom" type="date" class="dinput" value="' + esc(S.vFrom) + '" aria-label="' + esc(t.vocabRange) + '"><span class="small">\u2192</span><input id="vTo" type="date" class="dinput" value="' + esc(S.vTo) +
+          '" aria-label="' + esc(t.vocabRange) + '"><button type="button" class="ib sm blue" data-a="vocabRange"' + tip(t.vocabRange) + ">" + I.checkW + "</button></div>";
+      }
     }
     h += '<div class="hr"></div><div class="setrow"' + tip(t.hfTokenHint) + ">" + I.hf;
     if (st.settings.hf_token) {
@@ -682,8 +686,8 @@
     h += "</div>";
     if (S.pickMode && !S.hidden) {
       var chosen = Object.keys(S.pick).filter(function (k) { return S.pick[k]; }).length;
-      h += '<div class="card pickbar"><span class="text">' + esc(t.pickCount.replace("{n}", chosen)) + '</span><div class="row gap8"><button type="button" class="mbtn" data-a="pickAll">' + esc(t.pickAll) +
-        '</button><button type="button" class="mbtn" data-a="pickCancel">' + esc(t.pickCancel) + '</button><button type="button" class="ib blue" data-a="pickGo"' + (chosen ? "" : " disabled") + tip(t.pickGo) + ">" + I.checkW + "</button></div></div>";
+      h += '<div class="card pickbar"><span class="text">' + esc(t.pickCount.replace("{n}", chosen)) + '</span><div class="row gap8"><button type="button" class="ib sm" data-a="pickAll"' + tip(t.pickAll) + ">" + I.tasks +
+        '</button><button type="button" class="ib sm" data-a="pickCancel"' + tip(t.pickCancel) + ">" + I.x + '</button><button type="button" class="ib sm blue" data-a="pickGo"' + (chosen ? "" : " disabled") + tip(t.pickGo) + ">" + I.checkW + "</button></div></div>";
     }
     h += S.hidden ? '<div class="list veil">' + I.eyeOff + "<span>" + esc(t.hiddenNote) + "</span></div>" : viewList(t, st);
     h += '<footer class="foot"><b>Cairn</b> · ' + esc(t.tagline) + "</footer>";
@@ -918,6 +922,7 @@
     },
     mailOpen: function (v, id) { showMail(id); },
     vocabAll: function () { applyVocab({ all: true }); },
+    vocabRangeToggle: function () { S.vRange = !S.vRange; },
     vocabRange: function () { if (S.vFrom || S.vTo) { applyVocab({ from: S.vFrom, to: S.vTo }); } },
     pickStart: function () { S.pickMode = true; S.pick = {}; S.settingsOpen = false; S.hidden = false; S.open = null; refresh(); },
     pickTog: function (v, id) {

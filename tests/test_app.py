@@ -1672,6 +1672,22 @@ class VocabularyTest(unittest.TestCase):
         self.assertEqual(vocab.spellings(terms), ["ACME Day", "Martin Jetter"])
         self.assertEqual(vocab.fix_text("Sionx", ["Sion => Acme"])[0], "Sionx")  # whole words only
 
+    def test_a_rule_with_a_context_replaces_only_near_those_words(self):
+        from cairn import vocab
+
+        terms = vocab.parse("Science Day -> ACME Day | awards, ceremony\nMartin Yen => Martin Jetter")
+        self.assertEqual(terms, ["Science Day => ACME Day | awards, ceremony", "Martin Yen => Martin Jetter"])
+        self.assertEqual(vocab.spellings(terms), ["ACME Day", "Martin Jetter"])  # the summary is told the right spelling only
+        segments = [{"text": "We saw the science day yesterday."}, {"text": "Nothing."}, {"text": "The awards ceremony was great."},
+                    {"text": "x"}, {"text": "y"}, {"text": "At school, science day is on Friday."}]
+        fixes = vocab.apply(segments, terms)
+        self.assertEqual(fixes, [{"from": "science day", "to": "ACME Day", "count": 1}])
+        self.assertEqual([s["text"] for s in segments][0], "We saw the ACME Day yesterday.")  # "awards" is two lines away
+        self.assertEqual(segments[5]["text"], "At school, science day is on Friday.")  # no context word near: left alone, a real science day
+        self.assertEqual(vocab.fix_text("science day", terms)[0], "science day")  # alone, without the words that make it the name
+        self.assertEqual(vocab.fix_text("science day awards", terms)[0], "ACME Day awards")
+        self.assertEqual(vocab.parse(["a => b |"]), ["a => b"])  # an empty context means always
+
     def test_the_words_are_redone_and_the_summary_written_again_without_any_audio(self):
         from unittest import mock
 
