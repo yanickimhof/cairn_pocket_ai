@@ -8,6 +8,21 @@ No cloud, no account, no telemetry. Nothing leaves your machine.
 
 *A cairn is a stack of stones that marks a trail. This one marks the way from your voice to your notes.*
 
+## What Cairn does
+
+- **Plug in, it imports.** Connect your Pocket over USB-C and the recordings are copied by themselves.
+- **Every word, on your computer.** Whisper transcribes in your language. No upload, no minute limit.
+- **Who said what.** Speakers are told apart and named once. Four times faster on the graphics chip of an Apple silicon Mac.
+- **Notes you can act on.** A TL;DR, actions with an owner and a date, key points, decisions. Five templates.
+- **Your names, spelled right.** A personal vocabulary fixes rare names and places in the transcript and the summary.
+- **A score you can trust.** Fidelity and confidence on every note, doubtful passages flagged.
+- **Out in one click.** Markdown, HTML, text, or copied straight into an email.
+- **Your models, your choice.** Whisper large-v3 or turbo, Qwen3 4B, 8B or 14B, installed only when you want them.
+- **Built for long days.** A failed recording is retried by itself, finished work is never redone, the Mac stays awake.
+- **Private by design.** Offline, no account, no telemetry, and a secure mode that hides the screen.
+
+All of it runs on your machine. What is new in each version: [release notes](https://github.com/yanickimhof/cairn_pocket_ai/releases) and the [roadmap](docs/ROADMAP.md).
+
 | Secure by default | Your recordings | Your notes |
 |---|---|---|
 | ![Secure mode](docs/screenshots/secure-mode.png) | ![Recordings, with live progress](docs/screenshots/recordings.png) | ![Note](docs/screenshots/note.png) |
