@@ -11,7 +11,7 @@
       off: "Non", on: "Oui",
       devGpuHint: "Identification des interlocuteurs sur la puce graphique (au moins 4 fois plus rapide, même résultat). Cliquer pour utiliser le processeur.", devCpuHint: "Identification des interlocuteurs sur le processeur. Cliquer pour utiliser la puce graphique.",
       taskWhat: "Action", taskWho: "Qui", taskWhen: "Quand", taskEditHint: "Modifier l'action", taskDelHint: "Supprimer l'action", taskDelAsk: "Supprimer cette action ?",
-      tplMine: "Mes modèles de note", tplEditHint: "Créer ou modifier un modèle de note", tplName: "Nom du modèle", tplPrompt: "Ex. : compte rendu client : objectifs, décisions, risques, prochaines étapes", tplStar: "Utiliser pour toutes les nouvelles notes", tplDelAsk: "Supprimer ce modèle ?", tplNone: "Aucun modèle pour l'instant",
+      tplMine: "Mes modèles de note", tplEditHint: "Créer ou modifier un modèle de note", tplName: "Nom du modèle", tplPrompt: "Ex. : Compte rendu client. Sections : Objectifs, Risques, Décisions, Prochaines étapes. Une ligne chacune.", tplEditRow: "Modifier le modèle", tplHelp: "Citez les sections voulues, dans l'ordre : la note aura un TL;DR, les actions, puis une section par nom. Un ton ou une longueur peuvent s'ajouter.", tplStar: "Utiliser pour toutes les nouvelles notes", tplDelAsk: "Supprimer ce modèle ?", tplNone: "Aucun modèle pour l'instant",
       tagHint: "Tags", tagPlaceholder: "Ajouter un tag", tagDismissHint: "Ignorer les suggestions", tagAcceptHint: "Ajouter ce tag", tagRemoveHint: "Retirer ce tag", tagFilterHint: "Filtrer par tag", tagsSuggest: "Suggérer des tags", tagsSuggestHint: "Après chaque note, Cairn propose jusqu'à 3 de vos tags existants, à valider. Un appel de plus au modèle par note.", tagApplied: "{n} notes taguées", pickTagPlaceholder: "#tag",
       find: "Rechercher", findPlaceholder: "Un mot, un nom, un chiffre", findNone: "Aucun résultat", tasks: "Toutes mes actions", tasksNone: "Aucune action pour l'instant", tasksCopy: "Copier les actions à faire", tasksUnassigned: "Sans responsable", tasksCopied: "Actions copiées",
       listenHint: "Écouter à partir d'ici", mailHint: "Écrire le mail de suivi", mailTitle: "Mail de suivi", mailWriting: "Rédaction du mail…", mailCopy: "Copier le mail", mailOpen: "Ouvrir dans l'app Mail", mailRedo: "Réécrire le mail",
@@ -68,7 +68,7 @@
       off: "Off", on: "On",
       devGpuHint: "Speaker identification runs on the graphics chip (at least 4 times faster, same result). Click to use the processor.", devCpuHint: "Speaker identification runs on the processor. Click to use the graphics chip.",
       taskWhat: "Action", taskWho: "Who", taskWhen: "When", taskEditHint: "Edit the action", taskDelHint: "Delete the action", taskDelAsk: "Delete this action?",
-      tplMine: "My note templates", tplEditHint: "Create or edit a note template", tplName: "Template name", tplPrompt: "E.g. client report: goals, decisions, risks, next steps", tplStar: "Use for every new note", tplDelAsk: "Delete this template?", tplNone: "No template yet",
+      tplMine: "My note templates", tplEditHint: "Create or edit a note template", tplName: "Template name", tplPrompt: "E.g. Client report. Sections: Goals, Risks, Decisions, Next steps. One line each.", tplEditRow: "Edit the template", tplHelp: "Name the sections you want, in order: the note gets a TL;DR, the actions, then one section per name. A tone or a length can be added.", tplStar: "Use for every new note", tplDelAsk: "Delete this template?", tplNone: "No template yet",
       tagHint: "Tags", tagPlaceholder: "Add a tag", tagDismissHint: "Ignore the suggestions", tagAcceptHint: "Add this tag", tagRemoveHint: "Remove this tag", tagFilterHint: "Filter by tag", tagsSuggest: "Suggest tags", tagsSuggestHint: "After each note, Cairn offers up to 3 of your existing tags, for you to confirm. One more model call per note.", tagApplied: "{n} notes tagged", pickTagPlaceholder: "#tag",
       find: "Search", findPlaceholder: "A word, a name, a number", findNone: "No result", tasks: "All my actions", tasksNone: "No action yet", tasksCopy: "Copy the open actions", tasksUnassigned: "Nobody yet", tasksCopied: "Actions copied",
       listenHint: "Listen from here", mailHint: "Write the follow-up email", mailTitle: "Follow-up email", mailWriting: "Writing the email…", mailCopy: "Copy the email", mailOpen: "Open in the Mail app", mailRedo: "Write it again",
@@ -336,6 +336,10 @@
       [["0", t.off, false], ["1", t.on, true]].map(function (o) {
         return '<button type="button" data-a="autoprocess" data-v="' + o[0] + '" class="' + bg((st.settings.autoprocess === true) === o[2]).trim() + '">' + esc(o[1]) + "</button>";
       }).join("") + "</div></div>";
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.tagsSuggestHint) + '><span class="text" style="font-size:14px">' + esc(t.tagsSuggest) + '</span><div class="seg s38">' +
+      [["0", t.off, false], ["1", t.on, true]].map(function (o) {
+        return '<button type="button" data-a="tagsSuggest" data-v="' + o[0] + '" class="' + bg((st.settings.tags_suggest === true) === o[2]).trim() + '">' + esc(o[1]) + "</button>";
+      }).join("") + "</div></div>";
     var terms = st.settings.vocabulary || [];
     h += '<div class="hr"></div><div class="setrow"' + tip(t.vocabHint) + '><span class="text" style="font-size:14px">' + esc(t.vocab) + (terms.length ? " · " + terms.length : "") +
       '</span><button type="button" class="ib" data-a="vocabAsk"' + tip(t.vocabHint) + ">" + (terms.length ? I.pencil : I.plus) + "</button></div>";
@@ -358,10 +362,7 @@
     h += '<div class="hr"></div><div class="setrow"' + tip(t.tplEditHint) + '><span class="text" style="font-size:14px">' + esc(t.tplMine) + (tpls.length ? " \u00b7 " + tpls.length : "") +
       '</span><button type="button" class="ib" data-a="tplAsk"' + tip(t.tplEditHint) + ">" + (S.tplOpen ? I.x : (tpls.length ? I.pencil : I.plus)) + "</button></div>";
     if (S.tplOpen) { h += viewTemplates(t, st); }
-    h += '<div class="hr"></div><div class="setrow"' + tip(t.tagsSuggestHint) + '><span class="text" style="font-size:14px">' + esc(t.tagsSuggest) + '</span><div class="seg s38">' +
-      [["0", t.off, false], ["1", t.on, true]].map(function (o) {
-        return '<button type="button" data-a="tagsSuggest" data-v="' + o[0] + '" class="' + bg((st.settings.tags_suggest === true) === o[2]).trim() + '">' + esc(o[1]) + "</button>";
-      }).join("") + "</div></div>";
+
     h += '<div class="hr"></div><div class="setrow"' + tip(t.hfTokenHint) + ">" + I.hf;
     if (st.settings.hf_token) {
       var gpu = (st.settings.diarize_device || "auto") !== "cpu";
@@ -618,14 +619,15 @@
     list.forEach(function (x, i) {
       if (ed && ed.idx === i) { return; }
       h += '<div class="trow"><button type="button" class="tick" data-a="tplStar" data-v="' + i + '"' + tip(t.tplStar) + ' aria-pressed="' + (x.id === dflt) + '">' + (x.id === dflt ? I.starOn : I.star) + '</button><button type="button" class="tmid tbtn" data-a="tplEdit" data-v="' + i + '"' +
-        tip(x.prompt) + '><span class="text">' + esc(x.name) + '</span></button><button type="button" class="ib sm plain" data-a="tplDelAsk" data-v="' + i + '"' + tip(t.taskDelHint) + ">" + I.trash + "</button></div>";
+        tip(x.prompt) + '><span class="text">' + esc(x.name) + '</span></button><button type="button" class="ib sm plain" data-a="tplEdit" data-v="' + i + '"' + tip(t.tplEditRow) + ">" + I.pencil +
+        '</button><button type="button" class="ib sm plain" data-a="tplDelAsk" data-v="' + i + '"' + tip(t.taskDelHint) + ">" + I.trash + "</button></div>";
       if (S.tplDel === i) {
         h += '<div class="row gap8 tconfirm"><span class="small" style="margin-right:auto">' + esc(t.tplDelAsk) + '</span><button type="button" class="ib sm" data-a="tplDelNo"' + tip(t.pickCancel) + ">" + I.x + '</button><button type="button" class="ib sm red" data-a="tplDelGo"' + tip(t.taskDelHint) + ">" + I.checkW + "</button></div>";
       }
     });
     if (ed) {
       h += '<div class="tedit"><input id="tplName" type="text" maxlength="40" value="' + esc(ed.name) + '" placeholder="' + esc(t.tplName) + '" aria-label="' + esc(t.tplName) + '"><textarea id="tplPrompt" rows="4" maxlength="800" placeholder="' + esc(t.tplPrompt) + '" aria-label="' + esc(t.tplPrompt) + '">' + esc(ed.prompt) +
-        '</textarea><div class="row gap8" style="justify-content:flex-end"><button type="button" class="ib sm" data-a="tplCancel"' + tip(t.pickCancel) + ">" + I.x + '</button><button type="button" class="ib sm blue" data-a="tplSave"' + tip(t.saveName) + ">" + I.checkW + "</button></div></div>";
+        '</textarea><div class="small">' + esc(t.tplHelp) + '</div><div class="row gap8" style="justify-content:flex-end"><button type="button" class="ib sm" data-a="tplCancel"' + tip(t.pickCancel) + ">" + I.x + '</button><button type="button" class="ib sm blue" data-a="tplSave"' + tip(t.saveName) + ">" + I.checkW + "</button></div></div>";
     } else {
       h += '<div class="row" style="justify-content:flex-end;padding:4px 0 10px"><span class="small" style="margin-right:auto">' + (list.length ? "" : esc(t.tplNone)) + '</span><button type="button" class="ib sm" data-a="tplNew"' + tip(t.tplEditHint) + ">" + I.plus + "</button></div>";
     }

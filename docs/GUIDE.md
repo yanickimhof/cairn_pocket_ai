@@ -48,6 +48,7 @@ Tags are free words you give to notes to find them again: a project, a person, a
 Settings, **My note templates** (the plus) creates a template: a name and an instruction in everyday words, for example *Client report: goals, decisions, risks, next steps*. The summary model writes the note as the sections your instruction names, in that order, after the TL;DR and the actions. A section the recording says nothing about shows a dash: nothing is invented. The sections appear in the note and in every export.
 
 - **On a note:** the template button (the second one, next to the pencil) goes through the built-in types, then through your templates. Choosing one of yours writes the note again with it, and the template is kept if the note is redone. Its name replaces the type in the exports.
+- **Editing:** tap the pencil next to a template, or its name, to change it. The field under the instruction reminds you how to write one: name the sections you want, in order, and the note gets a TL;DR, the actions, then one section per name.
 - **The star** makes a template the one used for every new note that has no choice of its own. Tap it again to go back to the automatic type.
 - **Editing or deleting** a template does not change the notes already written with it.
 

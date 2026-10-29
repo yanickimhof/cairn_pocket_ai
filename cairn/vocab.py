@@ -173,6 +173,38 @@ def fix_text(text, terms, context=None):
     return text, found
 
 
+_SUMMARY_TEXT = ("title", "tldr", "context")
+_SUMMARY_LISTS = ("key_points", "decisions")
+
+
+def fix_summary(summary, terms):
+    """Write the vocabulary into the text of a summary, in place: the model may have spelled a name its own way whatever it was told.
+    The rules that need a context find it in the whole summary. Returns the corrections: [{"from", "to", "count"}]."""
+    if not terms or not isinstance(summary, dict):
+        return []
+    holders = []  # (container, key) of every text that gets corrected
+    for key in _SUMMARY_TEXT:
+        holders.append((summary, key))
+    for key in _SUMMARY_LISTS:
+        holders += [(summary[key], i) for i in range(len(summary.get(key) or []))]
+    for action in summary.get("actions") or []:
+        holders += [(action, k) for k in ("what", "who", "when")]
+    for section in summary.get("sections") or []:
+        holders += [(section, k) for k in ("heading", "text")]
+    for topic in summary.get("topics") or []:
+        holders += [(topic, k) for k in ("name", "summary")]
+    holders = [(c, k) for c, k in holders if isinstance(c, (dict, list)) and isinstance(c[k] if isinstance(c, list) or k in c else None, str)]
+    context = " ".join(c[k] for c, k in holders)
+    totals = {}
+    for container, key in holders:
+        text, found = fix_text(container[key], terms, context)
+        container[key] = text
+        for fix in found:
+            pair = (fix["from"], fix["to"])
+            totals[pair] = totals.get(pair, 0) + 1
+    return [{"from": a, "to": b, "count": n} for (a, b), n in sorted(totals.items(), key=lambda kv: (-kv[1], kv[0]))]
+
+
 def apply(segments, terms):
     """Correct the segments in place from the current vocabulary, starting again from what the speech engine wrote,
     so that removing an entry puts the original word back. Returns the corrections: [{"from", "to", "count"}]."""

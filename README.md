@@ -12,47 +12,22 @@ No cloud, no account, no telemetry. Nothing leaves your machine.
 
 ## What Cairn does
 
-**Plug in, and it imports.**
-Connect your Pocket and your recordings are copied to your Mac, with nothing else to do.
+| | |
+|---|---|
+| **Import** | Connect your Pocket and Cairn copies and verifies every recording by itself. |
+| **Transcribe** | Whisper turns each recording into text on your computer, at any length, with no upload. |
+| **Speakers** | Voices are told apart and named, so a transcript reads as a conversation. |
+| **Notes** | A title, a summary, the actions, the key points and the decisions, at the depth you choose, with a fidelity score you can check. |
+| **Templates** | Define a format once, a client report or a weekly brief, and every note follows it. |
+| **Search** | Find any word across all your notes in a second, narrowed by tag. |
+| **Listen** | Tap a time stamp to hear the passage and settle a doubtful word in seconds. |
+| **Tags** | Organize with free words instead of folders, and let Cairn suggest them from your own. |
+| **Actions** | Every action from every note, by person, in one list you can tick, correct and copy. |
+| **Follow-up** | The follow-up email is drafted from the note, ready for your mail app. |
+| **Vocabulary** | Teach Cairn your names, places and jargon, and a spelling is fixed in every note at once. |
+| **Export** | Markdown, HTML, text or a paste-ready email: your notes leave in the format you choose. |
 
-**Every word, on your Mac.**
-Transcription in your language, with no upload and no time limit.
-
-**Who said what.**
-Cairn tells the speakers apart, and you name each voice.
-
-**Notes that get to the point.**
-A summary, the actions, the key points and the decisions, at the level of detail you choose.
-
-**Your note, your format.**
-Write a template once, a name and an instruction, and every note follows it.
-
-**Find it, then hear it.**
-Search every word of every note, filter by tag, and tap a time stamp to listen from that line.
-
-**Tags, not folders.**
-Organize with free words, and let Cairn suggest them from your own.
-
-**All your actions, one list.**
-Every action from every note, by person. Tick, correct, copy.
-
-**The follow-up email, written.**
-One tap drafts it from the note, ready for your mail app.
-
-**Your names, spelled right.**
-Teach Cairn names and places, even only in the right context, and update your notes in one tap.
-
-**A score you can trust.**
-Every note shows how faithful it is to what was said, and flags the passages to check.
-
-**Share in one click.**
-Copy it into an email, or export to Markdown, HTML or text.
-
-**Your models, your choice.**
-Pick the Whisper and Qwen models that suit your Mac, and add or remove them any time.
-
-**Private by design.**
-No account, no cloud, no telemetry. A secure mode hides your notes from the screen.
+**Sovereign by design.** No account, no cloud, no telemetry. Your recordings never leave your computer and everything works offline. A secure mode hides the screen, and you pick the Whisper and Qwen models that run.
 
 What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
 

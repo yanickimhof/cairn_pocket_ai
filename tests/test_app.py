@@ -1693,6 +1693,39 @@ class VocabularyTest(unittest.TestCase):
         self.assertEqual(vocab.fix_text("science day awards", terms)[0], "ACME Day awards")
         self.assertEqual(vocab.parse(["a => b |"]), ["a => b"])  # an empty context means always
 
+    def test_the_summary_follows_the_vocabulary_whatever_the_model_wrote(self):
+        from cairn import vocab
+
+        terms = ["Science Day => ACME Day | awards, ceremony", "Atelier Nor => Atelier Nord", "Springfield"]
+        summary = {"title": "Science Day awards", "tldr": "The science day ceremony took place with Atelier Nor.", "context": "At Eschalens.",
+                   "actions": [{"what": "Call Atelier Nor", "who": "Marc", "when": "Monday"}], "key_points": ["Science Day was a success", 3],
+                   "decisions": [], "sections": [{"heading": "Goals", "text": "Win the awards at Eschalens"}], "topics": [{"name": "Atelier Nor", "summary": "x"}]}
+        fixes = vocab.fix_summary(summary, terms)
+        self.assertEqual(summary["title"], "ACME Day awards")
+        self.assertEqual(summary["tldr"], "The ACME Day ceremony took place with Atelier Nord.")
+        self.assertEqual(summary["context"], "At Springfield.")  # a name the vocabulary lists, written close to it
+        self.assertEqual(summary["actions"][0]["what"], "Call Atelier Nord")
+        self.assertEqual(summary["key_points"], ["ACME Day was a success", 3])  # the rule's context words are found elsewhere in the summary
+        self.assertEqual(summary["sections"][0]["text"], "Win the awards at Springfield")
+        self.assertEqual(summary["topics"][0]["name"], "Atelier Nord")
+        self.assertTrue(all(isinstance(f["count"], int) for f in fixes) and {f["to"] for f in fixes} == {"ACME Day", "Atelier Nord", "Springfield"})
+        self.assertEqual(vocab.fix_summary({"tldr": "A science day at school."}, terms), [])  # no context word: a real science day
+        self.assertEqual(vocab.fix_summary({"tldr": "x"}, []), [])
+        self.assertEqual(vocab.fix_summary("not a summary", terms), [])
+
+    def test_a_note_written_again_has_its_title_and_tldr_corrected(self):
+        from unittest import mock
+
+        from cairn import jobs, llm
+
+        job, store = RetryAndResumeTest()._jobs(a={"status": "done", "clean": "words " * 20})
+        reply = {"title": "The Sion awards", "tldr": "Sion won the awards.", "actions": [], "template": "meeting"}
+        with mock.patch.object(jobs.config, "load_settings", return_value={"vocabulary": ["Sion => Acme"], "templates": []}), \
+                mock.patch.object(llm, "summarize", return_value=reply):
+            note = store.get("a")
+            job._summarize(note, "mid", "en")
+        self.assertEqual((note["title"], note["summary"]["tldr"]), ("The Acme awards", "Acme won the awards."))
+
     def test_the_words_are_redone_and_the_summary_written_again_without_any_audio(self):
         from unittest import mock
 

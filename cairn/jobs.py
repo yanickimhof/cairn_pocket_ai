@@ -372,6 +372,7 @@ class Jobs:
         custom = templates.find(settings.get("templates"), note.get("template") or settings.get("template_default"))
         summary = llm.summarize(text, level, lang, progress, vocabulary=vocab.spellings(settings.get("vocabulary")),
                                 instructions=custom["prompt"] if custom else None)
+        vocab.fix_summary(summary, settings.get("vocabulary"))  # the title, the TL;DR and the rest spell the names as the vocabulary says
         note["summary"], note["lang"] = summary, lang
         heard = note.get("heard")
         note["fidelity"], note["fidelity_basis"] = score.fidelity_detail(summary, text, words_ok=heard in (None, lang))
