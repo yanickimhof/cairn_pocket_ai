@@ -158,6 +158,7 @@ def chat(system, user, schema=None, num_ctx=8192, timeout=CHAT_TIMEOUT, num_pred
     return (data.get("message", {}).get("content") or "").strip()
 
 
+PROBE_CTX = 8192
 _READY = {"model": None, "at": 0.0}
 _PROBE = {"type": "object", "properties": {"ok": {"type": "boolean"}}, "required": ["ok"]}
 
@@ -174,7 +175,8 @@ def preflight(max_age=120):
     have = {m.get("name") for m in models()}
     if name not in have and name + ":latest" not in have:
         raise LLMError("The summary model %s is not installed in Ollama. Choose another one in Settings > Models." % name)
-    chat("Answer with a JSON object.", "Is this working? Answer yes.", schema=_PROBE, num_ctx=2048, num_predict=16, timeout=300)
+    # the same context as a short note: the model server loads the model again when the context asked for changes
+    chat("Answer with a JSON object.", "Is this working? Answer yes.", schema=_PROBE, num_ctx=PROBE_CTX, num_predict=16, timeout=300)
     _READY.update(model=name, at=time.time())
 
 

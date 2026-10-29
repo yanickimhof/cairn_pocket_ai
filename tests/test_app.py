@@ -1296,6 +1296,7 @@ class PreflightAndWatchdogTest(unittest.TestCase):
                 llm.preflight()
                 llm.preflight()  # answered recently: not asked again
                 self.assertEqual(probe.call_count, 1)
+                self.assertEqual(probe.call_args.kwargs["num_ctx"], llm._ctx("one two three"))  # same context as a short note: no reload
         llm._READY.update(model=None, at=0.0)
 
     def test_a_failed_check_stops_the_queue_before_anything_is_started(self):
