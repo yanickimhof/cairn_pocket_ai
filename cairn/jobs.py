@@ -7,7 +7,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import config, diarize, llm, pocket, privacy, score, speech
+from . import awake, config, diarize, llm, pocket, privacy, score, speech
 from .notes import guess_date, make_id
 
 
@@ -30,6 +30,7 @@ class Jobs:
         self._state = {"running": False, "kind": "", "step": "", "id": None, "done": 0, "total": 0, "pct": None, "part": 0, "parts": 0, "errors": []}
         self.cancelled = False
         self.paused = False  # set by Stop: automatic processing waits for new recordings or a manual start
+        self.llm_blocked_until = 0.0  # after a failed check of the model server, automatic processing waits a little
         self.store.reset_interrupted()
 
     def snapshot(self):
@@ -62,12 +63,25 @@ class Jobs:
         threading.Thread(target=self._guard, args=(target,) + args, daemon=True).start()
 
     def _guard(self, target, *args):
+        awake.hold()  # a long batch is not cut short by the computer falling asleep
         try:
             target(*args)
         except Exception as error:  # a job must never leave the state stuck
             self._fail(str(error))
         finally:
+            awake.release()
             self._set(running=False, step="", id=None, pct=None)
+
+    def _ready(self):
+        """Check the summary model before any long work. False, with the reason recorded, when a note cannot be written
+        now: the recordings are left as they are and automatic processing waits two minutes before trying again."""
+        try:
+            llm.preflight()
+            return True
+        except llm.LLMError as error:
+            self._fail(str(error))
+            self.llm_blocked_until = time.time() + 120
+            return False
 
     def cancel(self):
         """Stop after the step in progress; a transcription is interrupted at once."""
@@ -138,7 +152,10 @@ class Jobs:
             self._drain(settings, attempted, automatic=True)
 
     def _try(self, note_id, settings):
-        """Process one recording and keep going if it fails. Returns False when the job was cancelled."""
+        """Process one recording and keep going if it fails. Returns False when the job was cancelled
+        or when the summary model cannot be used (nothing is started then)."""
+        if not self._ready():
+            return False
         try:
             self._process(note_id, settings)
         except Gone:
@@ -369,6 +386,7 @@ class Jobs:
         note = self.store.get(note_id)
         self._set(id=note_id, step="summarizing", total=1)
         lang = self._lang(note, settings)
+        llm.preflight()
         try:
             if not note.get("clean") and note.get("segments"):
                 note["clean"] = "\n\n".join(speech.raw_lines(note["segments"]))

@@ -52,7 +52,7 @@ class Watcher:
                 except jobs.Busy:
                     pass
                 return
-        if settings.get("autoprocess", False) and not app.jobs.paused and now - self.queue_at >= 60 and app.waiting_count():
+        if settings.get("autoprocess", False) and not app.jobs.paused and now - self.queue_at >= 60 and now >= getattr(app.jobs, 'llm_blocked_until', 0.0) and app.waiting_count():
             self.queue_at = now
             try:
                 app.jobs.start_queue()

@@ -1038,7 +1038,8 @@ class UnitTest(unittest.TestCase):
             store.save(note)
 
         settings = dict(jobs.config.load_settings(), autoprocess=autoprocess)
-        with mock.patch.object(job, "_process", side_effect=fake), mock.patch.object(jobs.config, "load_settings", return_value=settings):
+        with mock.patch.object(job, "_process", side_effect=fake), mock.patch.object(job, "_ready", return_value=True), \
+                mock.patch.object(jobs.config, "load_settings", return_value=settings):
             job._one("c")
         return order
 
@@ -1260,6 +1261,129 @@ class UnitTest(unittest.TestCase):
 
 
 
+class PreflightAndWatchdogTest(unittest.TestCase):
+    def test_the_model_is_checked_before_any_long_work(self):
+        from unittest import mock
+
+        from cairn import llm
+
+        llm._READY.update(model=None, at=0.0)
+        with mock.patch.object(llm.config, "install_config", return_value={"llm": "m:8b"}):
+            with mock.patch.object(llm, "available", return_value=False):
+                with self.assertRaisesRegex(llm.LLMError, "not running"):
+                    llm.preflight()
+            with mock.patch.object(llm, "available", return_value=True), mock.patch.object(llm, "models", return_value=[{"name": "other:1b"}]):
+                with self.assertRaisesRegex(llm.LLMError, "not installed"):
+                    llm.preflight()
+            with mock.patch.object(llm, "available", return_value=True), mock.patch.object(llm, "models", return_value=[{"name": "m:8b"}]), \
+                    mock.patch.object(llm, "chat", side_effect=llm.LLMError("structured output unavailable")):
+                with self.assertRaisesRegex(llm.LLMError, "structured output"):
+                    llm.preflight()
+            with mock.patch.object(llm, "available", return_value=True), mock.patch.object(llm, "models", return_value=[{"name": "m:8b"}]), \
+                    mock.patch.object(llm, "chat", return_value='{"ok": true}') as probe:
+                llm.preflight()
+                llm.preflight()  # answered recently: not asked again
+                self.assertEqual(probe.call_count, 1)
+        llm._READY.update(model=None, at=0.0)
+
+    def test_a_failed_check_stops_the_queue_before_anything_is_started(self):
+        import time
+        from unittest import mock
+
+        from cairn import jobs, llm, notes as notes_module
+
+        folder = Path(tempfile.mkdtemp())
+        store = notes_module.Store(folder / "Texts")
+        audio = folder / "a.wav"
+        audio.write_bytes(b"x")
+        store.save({"id": "a", "source": "a", "status": "waiting", "date": "2026-10-08T17:00", "audio": str(audio)})
+        job = jobs.Jobs(store)
+        with mock.patch.object(jobs.llm, "preflight", side_effect=llm.LLMError("Ollama is not running")), \
+                mock.patch.object(job, "_process") as process:
+            job._drain({}, automatic=True)
+        process.assert_not_called()
+        self.assertEqual(store.get("a")["status"], "waiting")  # untouched: not marked as failed
+        self.assertIn("Ollama is not running", job.snapshot()["errors"][0])
+        self.assertGreater(job.llm_blocked_until, time.time() + 100)
+
+    def test_automatic_processing_waits_while_the_model_server_is_down(self):
+        from types import SimpleNamespace
+        from unittest import mock
+
+        from cairn import watch
+
+        calls = []
+        jobs_ns = SimpleNamespace(snapshot=lambda: {"running": False}, start_privacy=lambda: None, start_sync=lambda: None,
+                                  start_queue=lambda: calls.append("queue"), paused=False, llm_blocked_until=10**9 + 100)
+        app = SimpleNamespace(jobs=jobs_ns, pocket_state=lambda: {"new": 0}, waiting_count=lambda: 3, purge_pocket=lambda: 0,
+                              check_update=lambda: {"available": False}, update_info=None)
+        with mock.patch.object(watch.privacy, "last_report", return_value={"when": "2999-01-01T00:00:00"}), \
+                mock.patch.object(watch.config, "load_settings", return_value={"autoimport": True, "autocheck": False, "autoprocess": True}):
+            watcher = watch.Watcher(app)
+            watcher.tick(now=10**9)
+            self.assertEqual(calls, [])
+            watcher.tick(now=10**9 + 200)
+            self.assertEqual(calls, ["queue"])
+
+    def test_a_call_to_the_model_that_never_answers_is_named(self):
+        from unittest import mock
+
+        from cairn import llm
+
+        with mock.patch.object(llm, "_post", side_effect=TimeoutError("timed out")), \
+                mock.patch.object(llm.config, "install_config", return_value={"llm": "m"}):
+            with self.assertRaisesRegex(llm.LLMError, "did not answer"):
+                llm.chat("s", "u", timeout=60)
+
+    def _stuck_engine(self, **limits):
+        import subprocess
+        import sys
+        from unittest import mock
+
+        from cairn import speech
+
+        proc = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+        speech._WORKER["proc"] = proc
+        folder = Path(tempfile.mkdtemp())
+        try:
+            with mock.patch.object(speech, "_worker", return_value=proc), mock.patch.multiple(speech, **limits):
+                if "STALL_SECONDS" in limits:
+                    (folder / "progress").write_text("0.2000")  # it moved once, then nothing
+                return speech._run("mlx", "m", "a.wav", str(folder / "out.json"), str(folder / "progress"), None)
+        finally:
+            proc.kill()
+            speech._WORKER["proc"] = None
+
+    def test_a_speech_engine_that_stops_moving_is_cut_off(self):
+        from cairn import speech
+
+        with self.assertRaisesRegex(RuntimeError, "did not answer"):
+            self._stuck_engine(STALL_SECONDS=1)
+
+    def test_a_speech_engine_that_never_reports_is_cut_off_at_the_cap(self):
+        with self.assertRaisesRegex(RuntimeError, "did not answer"):
+            self._stuck_engine(NO_PROGRESS_CAP=1)
+
+    def test_the_computer_is_kept_awake_only_while_jobs_run(self):
+        from unittest import mock
+
+        from cairn import awake
+
+        with mock.patch.object(awake.sys, "platform", "darwin"), mock.patch.object(awake.shutil, "which", return_value="/usr/bin/caffeinate"), \
+                mock.patch.object(awake.subprocess, "Popen") as popen:
+            awake.hold()
+            awake.hold()
+            self.assertEqual(popen.call_count, 1)
+            awake.release()
+            popen.return_value.terminate.assert_not_called()
+            awake.release()
+            popen.return_value.terminate.assert_called_once()
+        with mock.patch.object(awake.sys, "platform", "linux"), mock.patch.object(awake.subprocess, "Popen") as popen:
+            awake.hold()
+            awake.release()
+            popen.assert_not_called()
+
+
 class RetryAndResumeTest(unittest.TestCase):
     def _jobs(self, **notes):
         from cairn import jobs, notes as notes_module
@@ -1292,12 +1416,12 @@ class RetryAndResumeTest(unittest.TestCase):
             note["status"] = "done"
             store.save(note)
 
-        with mock.patch.object(job, "_process", side_effect=fake):
+        with mock.patch.object(job, "_process", side_effect=fake), mock.patch.object(job, "_ready", return_value=True):
             job._drain({}, automatic=True)
         self.assertEqual(sorted(seen), ["due", "fresh"])
         job2, store = self._jobs(given_up={"status": "error", "attempts": 9, "retry_after": time.time() + 9999})
         seen.clear()
-        with mock.patch.object(job2, "_process", side_effect=fake):
+        with mock.patch.object(job2, "_process", side_effect=fake), mock.patch.object(job2, "_ready", return_value=True):
             job2._drain({})  # the person pressed the button
         self.assertEqual(seen, ["given_up"])
 

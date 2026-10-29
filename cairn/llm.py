@@ -4,6 +4,7 @@ import json
 import os
 import re
 import shutil
+import time
 import urllib.error
 import urllib.request
 
@@ -119,22 +120,25 @@ def models():
         return []
 
 
-def chat(system, user, schema=None, num_ctx=8192):
+CHAT_TIMEOUT = 900  # seconds one call may take before the model server is taken for stuck
+
+
+def chat(system, user, schema=None, num_ctx=8192, timeout=CHAT_TIMEOUT, num_predict=None):
     body = {
         "model": config.install_config()["llm"],
         "stream": False,
         "think": False,
-        "options": {"temperature": 0.2, "num_ctx": num_ctx},
+        "options": dict({"temperature": 0.2, "num_ctx": num_ctx}, **({"num_predict": num_predict} if num_predict else {})),
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
     }
     if schema:
         body["format"] = schema
     try:
         try:
-            data = _post("/api/chat", body)
+            data = _post("/api/chat", body, timeout=timeout)
         except urllib.error.HTTPError as error:
             if error.code == 400 and body.pop("think", None) is not None:  # model without thinking mode
-                data = _post("/api/chat", body)
+                data = _post("/api/chat", body, timeout=timeout)
             elif error.code == 501 and schema:  # the server cannot give structured output for this model
                 raise LLMError(
                     "This model cannot return structured notes with the Ollama now running (structured output "
@@ -143,8 +147,30 @@ def chat(system, user, schema=None, num_ctx=8192):
             else:
                 raise
     except (urllib.error.URLError, OSError) as error:
+        if isinstance(error, TimeoutError) or isinstance(getattr(error, "reason", None), TimeoutError):
+            raise LLMError("The summary model did not answer within %d minutes. Check Ollama, then try again." % (timeout // 60)) from error
         raise LLMError("The local model server is not reachable (%s)." % error) from error
     return (data.get("message", {}).get("content") or "").strip()
+
+
+_READY = {"model": None, "at": 0.0}
+_PROBE = {"type": "object", "properties": {"ok": {"type": "boolean"}}, "required": ["ok"]}
+
+
+def preflight(max_age=120):
+    """Say now, in a few seconds, whether a note can be written: the model server answers, the chosen model is
+    installed, and it can return structured notes. Run before any long work, so a problem is not found only after
+    a transcription. The probe also loads the model, which the first summary needs anyway."""
+    name = config.install_config()["llm"]
+    if _READY["model"] == name and time.time() - _READY["at"] < max_age:
+        return
+    if not available():
+        raise LLMError("The local model server (Ollama) is not running. Start it, then try again.")
+    have = {m.get("name") for m in models()}
+    if name not in have and name + ":latest" not in have:
+        raise LLMError("The summary model %s is not installed in Ollama. Choose another one in Settings > Models." % name)
+    chat("Answer with a JSON object.", "Is this working? Answer yes.", schema=_PROBE, num_ctx=2048, num_predict=16, timeout=300)
+    _READY.update(model=name, at=time.time())
 
 
 def _ctx(text):

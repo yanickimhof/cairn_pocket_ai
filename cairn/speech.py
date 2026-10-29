@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 
 from . import config
 
@@ -15,6 +16,8 @@ DOUBTFUL_LOGPROB = -0.8
 DOUBTFUL_COMPRESSION = 2.4
 
 IDLE_SECONDS = 300
+STALL_SECONDS = 300      # no progress at all for this long: the speech engine is taken for stuck
+NO_PROGRESS_CAP = 3600   # an engine that never reports progress gets this long in all
 _LOCK = threading.Lock()
 _WORKER = {"proc": None, "key": None, "timer": None, "lines": None}
 
@@ -60,6 +63,14 @@ def _worker(engine, model_dir):
     return proc
 
 
+def _read_mark(path):
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return float(handle.read())
+    except (OSError, ValueError):
+        return None
+
+
 def _run(engine, model_dir, audio, output, mark, progress, language=None):
     proc = _worker(engine, model_dir)
     if _WORKER["timer"]:
@@ -80,13 +91,19 @@ def _run(engine, model_dir, audio, output, mark, progress, language=None):
         proc.stdin.flush()
     except OSError:
         pass
+    began = last_move = time.time()
+    last_value = None
     while reader.is_alive():
-        if progress:
-            try:
-                with open(mark, encoding="utf-8") as handle:
-                    progress(int(100 * float(handle.read())))
-            except (OSError, ValueError):
-                pass
+        value = _read_mark(mark)
+        if value is not None:
+            if progress:
+                progress(int(100 * value))
+            if value != last_value:
+                last_value, last_move = value, time.time()
+        now = time.time()
+        if (last_value is not None and now - last_move > STALL_SECONDS) or (last_value is None and now - began > NO_PROGRESS_CAP):
+            _stop_worker()
+            raise RuntimeError("Transcription stopped: the speech engine did not answer for %d minutes." % ((now - last_move) // 60))
         reader.join(timeout=0.4)
     if not replies or replies[0] != "ok" or not os.path.exists(output):
         reason = replies[0] if replies else " ".join("".join(chatter).strip().splitlines()[-3:])
