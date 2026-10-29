@@ -8,6 +8,8 @@ No cloud, no account, no telemetry. Nothing leaves your machine.
 
 *A cairn is a stack of stones that marks a trail. This one marks the way from your voice to your notes.*
 
+![Cairn: import, transcribe, speakers, notes, templates, search, listen, tags, actions, follow-up, vocabulary, export](docs/brand/features.png)
+
 ## What Cairn does
 
 **Plug in, and it imports.**
