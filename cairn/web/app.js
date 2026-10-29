@@ -12,6 +12,7 @@
       devGpuHint: "Identification des interlocuteurs sur la puce graphique (au moins 4 fois plus rapide, même résultat). Cliquer pour utiliser le processeur.", devCpuHint: "Identification des interlocuteurs sur le processeur. Cliquer pour utiliser la puce graphique.",
       taskWhat: "Action", taskWho: "Qui", taskWhen: "Quand", taskEditHint: "Modifier l'action", taskDelHint: "Supprimer l'action", taskDelAsk: "Supprimer cette action ?",
       tplMine: "Mes modèles de note", tplEditHint: "Créer ou modifier un modèle de note", tplName: "Nom du modèle", tplPrompt: "Ex. : compte rendu client : objectifs, décisions, risques, prochaines étapes", tplStar: "Utiliser pour toutes les nouvelles notes", tplDelAsk: "Supprimer ce modèle ?", tplNone: "Aucun modèle pour l'instant",
+      tagHint: "Tags", tagPlaceholder: "Ajouter un tag", tagDismissHint: "Ignorer les suggestions", tagAcceptHint: "Ajouter ce tag", tagRemoveHint: "Retirer ce tag", tagFilterHint: "Filtrer par tag", tagsSuggest: "Suggérer des tags", tagsSuggestHint: "Après chaque note, Cairn propose jusqu'à 3 de vos tags existants, à valider. Un appel de plus au modèle par note.", tagApplied: "{n} notes taguées", pickTagPlaceholder: "#tag",
       find: "Rechercher", findPlaceholder: "Un mot, un nom, un chiffre", findNone: "Aucun résultat", tasks: "Toutes mes actions", tasksNone: "Aucune action pour l'instant", tasksCopy: "Copier les actions à faire", tasksUnassigned: "Sans responsable", tasksCopied: "Actions copiées",
       listenHint: "Écouter à partir d'ici", mailHint: "Écrire le mail de suivi", mailTitle: "Mail de suivi", mailWriting: "Rédaction du mail…", mailCopy: "Copier le mail", mailOpen: "Ouvrir dans l'app Mail", mailRedo: "Réécrire le mail",
       vocab: "Vocabulaire", vocabHint: "Noms de personnes, de lieux et termes rares, un par ligne. Cairn corrige dans la transcription les mots qui leur ressemblent et impose leur orthographe au résumé. « Sion, Cion, Scyon => Acme » remplace toujours chacun par Acme (=>, -> et : fonctionnent). « Science Day => ACME Day | awards, ceremony » ne remplace qu'à côté de ces mots.",
@@ -68,6 +69,7 @@
       devGpuHint: "Speaker identification runs on the graphics chip (at least 4 times faster, same result). Click to use the processor.", devCpuHint: "Speaker identification runs on the processor. Click to use the graphics chip.",
       taskWhat: "Action", taskWho: "Who", taskWhen: "When", taskEditHint: "Edit the action", taskDelHint: "Delete the action", taskDelAsk: "Delete this action?",
       tplMine: "My note templates", tplEditHint: "Create or edit a note template", tplName: "Template name", tplPrompt: "E.g. client report: goals, decisions, risks, next steps", tplStar: "Use for every new note", tplDelAsk: "Delete this template?", tplNone: "No template yet",
+      tagHint: "Tags", tagPlaceholder: "Add a tag", tagDismissHint: "Ignore the suggestions", tagAcceptHint: "Add this tag", tagRemoveHint: "Remove this tag", tagFilterHint: "Filter by tag", tagsSuggest: "Suggest tags", tagsSuggestHint: "After each note, Cairn offers up to 3 of your existing tags, for you to confirm. One more model call per note.", tagApplied: "{n} notes tagged", pickTagPlaceholder: "#tag",
       find: "Search", findPlaceholder: "A word, a name, a number", findNone: "No result", tasks: "All my actions", tasksNone: "No action yet", tasksCopy: "Copy the open actions", tasksUnassigned: "Nobody yet", tasksCopied: "Actions copied",
       listenHint: "Listen from here", mailHint: "Write the follow-up email", mailTitle: "Follow-up email", mailWriting: "Writing the email…", mailCopy: "Copy the email", mailOpen: "Open in the Mail app", mailRedo: "Write it again",
       vocab: "Vocabulary", vocabHint: "Names of people and places and rare terms, one per line. Cairn corrects close variants in the transcript and imposes their spelling on the summary. \"Sion, Cion, Scyon => Acme\" always replaces each of them with Acme (=>, -> and : all work). \"Science Day => ACME Day | awards, ceremony\" replaces only near those words.",
@@ -123,6 +125,7 @@
     calendar: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="3"></rect><path d="M4 10h16"></path><path d="M8.5 3.5v4"></path><path d="M15.5 3.5v4"></path></svg>',
     star: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B5B5BA" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.8 2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.8 6.9 19.5l1-5.7-4.1-4 5.7-.8z"></path></svg>',
     starOn: '<svg width="20" height="20" viewBox="0 0 24 24" fill="#C86D51" stroke="#C86D51" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.8 2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.8 6.9 19.5l1-5.7-4.1-4 5.7-.8z"></path></svg>',
+    tag: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12.2V4.5h7.7l9 9a1.8 1.8 0 0 1 0 2.5l-5.2 5.2a1.8 1.8 0 0 1-2.5 0z"></path><circle cx="8" cy="9" r="1.3"></circle></svg>',
     circle: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B5B5BA" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle></svg>',
     chip: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect><rect x="9.5" y="9.5" width="5" height="5" rx="1"></rect><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"></path></svg>',
     bolt: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"></path></svg>',
@@ -165,7 +168,7 @@
   var S = {
     ui: null, hidden: true, settingsOpen: false, aboutOpen: false, open: null, edit: null, draft: "", exp: null,
     delConfirm: false, rr: "mid", rl: "en", sp: "auto", server: null, full: {}, about: null, upd: null,
-    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: "", vocabEdit: false, vocabDraft: "", pickMode: false, pick: {}, vFrom: "", vTo: "", vRange: false, taskEdit: null, taskDel: null, tplOpen: false, tplEdit: null, tplDel: null, findOpen: false, findQ: "", findRes: null, tasksOpen: false, tasks: null
+    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: "", vocabEdit: false, vocabDraft: "", pickMode: false, pick: {}, vFrom: "", vTo: "", vRange: false, taskEdit: null, taskDel: null, tagEdit: null, tagDraft: "", tagFilter: "", pickTag: "", tplOpen: false, tplEdit: null, tplDel: null, findOpen: false, findQ: "", findRes: null, tasksOpen: false, tasks: null
   };
   var lastView = "";
   var toastTimer = null;
@@ -355,6 +358,10 @@
     h += '<div class="hr"></div><div class="setrow"' + tip(t.tplEditHint) + '><span class="text" style="font-size:14px">' + esc(t.tplMine) + (tpls.length ? " \u00b7 " + tpls.length : "") +
       '</span><button type="button" class="ib" data-a="tplAsk"' + tip(t.tplEditHint) + ">" + (S.tplOpen ? I.x : (tpls.length ? I.pencil : I.plus)) + "</button></div>";
     if (S.tplOpen) { h += viewTemplates(t, st); }
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.tagsSuggestHint) + '><span class="text" style="font-size:14px">' + esc(t.tagsSuggest) + '</span><div class="seg s38">' +
+      [["0", t.off, false], ["1", t.on, true]].map(function (o) {
+        return '<button type="button" data-a="tagsSuggest" data-v="' + o[0] + '" class="' + bg((st.settings.tags_suggest === true) === o[2]).trim() + '">' + esc(o[1]) + "</button>";
+      }).join("") + "</div></div>";
     h += '<div class="hr"></div><div class="setrow"' + tip(t.hfTokenHint) + ">" + I.hf;
     if (st.settings.hf_token) {
       var gpu = (st.settings.diarize_device || "auto") !== "cpu";
@@ -492,10 +499,12 @@
     h += '<button type="button" class="ib blue" data-a="rerun"' + (jobBusy ? " disabled" : "") + tip(t.redoHint) + ">" + I.refreshW + "</button></div>";
     h += '<div class="row" style="gap:4px">' + tplButton(full, t);
     h += '<button type="button" class="ib" data-a="viewText" data-id="' + esc(n.id) + '"' + tip(t.viewText) + ">" + I.doc.replace("#6E6E73", "#1D1D1F") + "</button>";
+    h += '<button type="button" class="ib' + (S.tagEdit === n.id ? " on" : "") + '" data-a="tagToggle" data-id="' + esc(n.id) + '"' + tip(t.tagHint) + ">" + I.tag + "</button>";
     h += '<button type="button" class="ib" data-a="mailOpen" data-id="' + esc(n.id) + '"' + tip(t.mailHint) + ">" + I.mail + "</button>";
     h += '<button type="button" class="ib" data-a="startRename"' + tip(t.rename) + ">" + I.pencil + "</button>";
     h += '<span class="pop"><button type="button" class="ib' + (S.exp === n.id ? " on" : "") + '" data-a="toggleExport"' + tip(t.exportHint) + ">" + I.down + "</button>" + exportList(n, t) + "</span>";
     h += '<button type="button" class="ib" data-a="askDelete"' + tip(t.deleteHint) + ">" + I.trash + "</button></div></div>";
+    h += tagPanel(n, t);
     if (S.rediarConfirm === n.id) { h += confirmBox(t.rediarizeConfirm, "rediarizeGo", t); }
     if (S.delConfirm) { h += confirmBox(S.server && S.server.pocket && S.server.pocket.connected ? t.deleteConfirm : t.deleteConfirmOff, "confirmDelete", t); }
     if (n.error) { h += '<div class="err">' + esc(t.error + n.error) + "</div>"; }
@@ -544,7 +553,9 @@
   }
 
   function viewList(t, st) {
-    var notes = st.notes || [];
+    var notes = (st.notes || []).filter(function (n) {
+      return !S.tagFilter || tagsOf(n).some(function (x) { return x.toLowerCase() === S.tagFilter.toLowerCase(); });
+    });
     if (!notes.length) { return '<div class="card" style="padding:22px;text-align:center"><span class="small">' + esc(t.none) + "</span></div>"; }
     return '<div class="list">' + notes.map(function (n) {
       var done = n.status === "done", running = st.job.running && st.job.id === n.id;
@@ -556,7 +567,9 @@
       var bar = running ? (st.job.pct != null ? '<span class="pbar"><span style="width:' + st.job.pct + '%"></span></span>' : (st.job.step ? '<span class="pbar ind"><span></span></span>' : "")) : "";
       var picking = S.pickMode;
       return '<div class="item"><button type="button" class="rowbtn" data-a="' + (picking ? "pickTog" : "row") + '" data-id="' + esc(n.id) + '" aria-expanded="' + open + '"' + tip(rowTip) + '><span class="st">' + (picking && done ? (S.pick[n.id] ? I.done : I.circle) : statusIcon(n, st.job)) +
-        '</span><span class="mid"><span class="main">' + esc(main) + '</span><span class="sub"' + tip(subTip) + ">" + esc(sub) + "</span>" + bar + "</span>" + (done ? scorePills(n, t) : "") + "</button>" +
+        '</span><span class="mid"><span class="main">' + esc(main) + '</span><span class="sub"' + tip(subTip) + ">" + esc(sub) + "</span>" +
+        (tagsOf(n).length || (n.tag_suggestions || []).length ? '<span class="tagline">' + tagsOf(n).map(function (x) { return "#" + esc(x); }).join(" ") +
+          ((n.tag_suggestions || []).length ? ' <span class="sug">' + (n.tag_suggestions || []).map(function (x) { return "+#" + esc(x); }).join(" ") + "</span>" : "") + "</span>" : "") + bar + "</span>" + (done ? scorePills(n, t) : "") + "</button>" +
         (open && !picking && (done || n.status === "error") ? viewDetail(n, t) : "") +
         (open && !picking && !done ? queueActions(n, st.job, t) : "") + "</div>";
     }).join("") + "</div>";
@@ -619,6 +632,40 @@
     return h + "</div>";
   }
 
+  function tagsOf(n) { return (n && n.tags) || []; }
+  function allTags() {
+    var count = {}, shown = {};
+    ((S.server && S.server.notes) || []).forEach(function (n) {
+      tagsOf(n).forEach(function (x) { var k = x.toLowerCase(); count[k] = (count[k] || 0) + 1; shown[k] = shown[k] || x; });
+    });
+    return Object.keys(count).sort(function (a, b) { return count[b] - count[a] || a.localeCompare(b); }).map(function (k) { return { tag: shown[k], count: count[k] }; });
+  }
+  function viewTagFilter(t) {
+    var list = allTags();
+    if (!list.length) { return ""; }
+    return '<div class="tagbar">' + list.slice(0, 14).map(function (x) {
+      return '<button type="button" class="tg' + (S.tagFilter.toLowerCase() === x.tag.toLowerCase() ? " on" : "") + '" data-a="tagFilter" data-v="' + esc(x.tag) + '"' + tip(t.tagFilterHint) + ">#" + esc(x.tag) + "</button>";
+    }).join("") + "</div>";
+  }
+  function tagPanel(n, t) {
+    var mine = tagsOf(n), sugg = n.tag_suggestions || [], editing = S.tagEdit === n.id;
+    if (!mine.length && !sugg.length && !editing) { return ""; }
+    var h = '<div class="tagpanel"><div class="tagbar">';
+    mine.forEach(function (x) { h += '<span class="tg on">#' + esc(x) + '<button type="button" class="tgx" data-a="tagRemove" data-v="' + esc(x) + '"' + tip(t.tagRemoveHint) + ">\u00d7</button></span>"; });
+    sugg.forEach(function (x) { h += '<button type="button" class="tg dash" data-a="tagAccept" data-v="' + esc(x) + '"' + tip(t.tagAcceptHint) + ">+ #" + esc(x) + "</button>"; });
+    if (sugg.length) { h += '<button type="button" class="tgx" data-a="tagDismiss"' + tip(t.tagDismissHint) + ">" + I.x.replace('width="20" height="20"', 'width="14" height="14"') + "</button>"; }
+    h += "</div>";
+    if (editing) {
+      var have = mine.map(function (x) { return x.toLowerCase(); });
+      var quick = allTags().filter(function (x) { return have.indexOf(x.tag.toLowerCase()) < 0 && (!S.tagDraft || x.tag.toLowerCase().indexOf(S.tagDraft.toLowerCase()) >= 0); }).slice(0, 8);
+      h += '<div class="name" style="margin-top:8px"><input id="tagInput" type="text" maxlength="30" autocomplete="off" placeholder="' + esc(t.tagPlaceholder) + '" aria-label="' + esc(t.tagPlaceholder) + '" value="' + esc(S.tagDraft) +
+        '"><button type="button" class="ib blue" data-a="tagAdd"' + tip(t.tagAcceptHint) + ">" + I.checkW + "</button></div>";
+      if (quick.length) {
+        h += '<div class="tagbar" style="margin-top:8px">' + quick.map(function (x) { return '<button type="button" class="tg" data-a="tagPick" data-v="' + esc(x.tag) + '">#' + esc(x.tag) + "</button>"; }).join("") + "</div>";
+      }
+    }
+    return h + "</div>";
+  }
   function veil(t) { return '<div class="list veil">' + I.eyeOff + "<span>" + esc(t.hiddenNote) + "</span></div>"; }
   function viewTasks(t) {
     if (S.hidden) { return veil(t); }
@@ -654,6 +701,10 @@
     return h + "</div>";
   }
 
+  function noteRow(id) { return ((S.server && S.server.notes) || []).filter(function (x) { return x.id === id; })[0]; }
+  function setNoteTags(id, list) {
+    api("POST", "/api/note/" + encodeURIComponent(id) + "/tags", { tags: list }).then(refresh).catch(function (e) { flash(T().error + e.message); });
+  }
   function applyVocab(body) {
     api("POST", "/api/vocabulary/apply", body).then(function (r) {
       flash(r.count ? T().vocabStarted.replace("{n}", r.count) : T().vocabNothing);
@@ -735,10 +786,10 @@
     h += "</div>";
     if (S.pickMode && !S.hidden) {
       var chosen = Object.keys(S.pick).filter(function (k) { return S.pick[k]; }).length;
-      h += '<div class="card pickbar"><span class="text">' + esc(t.pickCount.replace("{n}", chosen)) + '</span><div class="row gap8"><button type="button" class="ib sm" data-a="pickAll"' + tip(t.pickAll) + ">" + I.tasks +
+      h += '<div class="card pickbar"><span class="text">' + esc(t.pickCount.replace("{n}", chosen)) + '</span><div class="row gap8"><input id="pickTagInput" type="text" class="dinput" maxlength="30" style="width:96px" placeholder="' + esc(t.pickTagPlaceholder) + '" aria-label="' + esc(t.tagHint) + '" value="' + esc(S.pickTag) + '"><button type="button" class="ib sm" data-a="pickTagGo"' + (chosen && S.pickTag.trim() ? "" : " disabled") + tip(t.tagHint) + ">" + I.tag + "</button>" + '<button type="button" class="ib sm" data-a="pickAll"' + tip(t.pickAll) + ">" + I.tasks +
         '</button><button type="button" class="ib sm" data-a="pickCancel"' + tip(t.pickCancel) + ">" + I.x + '</button><button type="button" class="ib sm blue" data-a="pickGo"' + (chosen ? "" : " disabled") + tip(t.pickGo) + ">" + I.checkW + "</button></div></div>";
     }
-    h += S.hidden ? veil(t) : viewList(t, st);
+    h += S.hidden ? veil(t) : (S.pickMode ? "" : viewTagFilter(t)) + viewList(t, st);
     h += '<footer class="foot"><b>Cairn</b> · ' + esc(t.tagline) + "</footer>";
     return h + "</main>";
   }
@@ -980,6 +1031,27 @@
       var x = myTemplates()[parseInt(v, 10)];
       if (x) { api("POST", "/api/settings", { template_default: (S.server.settings.template_default === x.id) ? "" : x.id }).then(refresh).catch(function (e) { flash(T().error + e.message); }); }
     },
+    tagsSuggest: function (v) { api("POST", "/api/settings", { tags_suggest: v === "1" }).then(refresh); },
+    tagToggle: function (v, id) { S.tagEdit = S.tagEdit === id ? null : id; S.tagDraft = ""; },
+    tagFilter: function (v) { S.tagFilter = S.tagFilter.toLowerCase() === String(v).toLowerCase() ? "" : v; },
+    tagRemove: function (v) { setNoteTags(S.open, tagsOf(noteRow(S.open)).filter(function (x) { return x !== v; })); },
+    tagAccept: function (v) { setNoteTags(S.open, tagsOf(noteRow(S.open)).concat([v])); },
+    tagPick: function (v) { setNoteTags(S.open, tagsOf(noteRow(S.open)).concat([v])); S.tagDraft = ""; },
+    tagAdd: function () {
+      var draft = S.tagDraft.trim();
+      if (draft) { setNoteTags(S.open, tagsOf(noteRow(S.open)).concat([draft])); }
+      S.tagDraft = "";
+    },
+    tagDismiss: function () {
+      api("POST", "/api/note/" + encodeURIComponent(S.open) + "/tags", { dismiss: true }).then(refresh).catch(function (e) { flash(T().error + e.message); });
+    },
+    pickTagGo: function () {
+      var ids = Object.keys(S.pick).filter(function (k) { return S.pick[k]; }), tag = S.pickTag.trim();
+      if (!ids.length || !tag) { return; }
+      S.pickMode = false; S.pick = {}; S.pickTag = "";
+      api("POST", "/api/tags/add", { ids: ids, tag: tag }).then(function (r) { flash(T().tagApplied.replace("{n}", r.count)); refresh(); })
+        .catch(function (e) { flash(T().error + e.message); });
+    },
     taskEdit: function (v) { var a = S.tasks && S.tasks[parseInt(v, 10)]; if (a) { S.taskEdit = { i: parseInt(v, 10), what: a.what, who: a.who || "", when: a.when || "" }; S.taskDel = null; } },
     taskCancel: function () { S.taskEdit = null; },
     taskSave: function () {
@@ -1199,6 +1271,8 @@
     if (ev.target.id === "vocabInput") { S.vocabDraft = ev.target.value; }
     if (S.tplEdit && ev.target.id === "tplName") { S.tplEdit.name = ev.target.value; }
     if (S.tplEdit && ev.target.id === "tplPrompt") { S.tplEdit.prompt = ev.target.value; }
+    if (ev.target.id === "tagInput") { S.tagDraft = ev.target.value; render(); }
+    if (ev.target.id === "pickTagInput") { S.pickTag = ev.target.value; render(); }
     if (S.taskEdit && ev.target.id === "tkWhat") { S.taskEdit.what = ev.target.value; }
     if (S.taskEdit && ev.target.id === "tkWho") { S.taskEdit.who = ev.target.value; }
     if (S.taskEdit && ev.target.id === "tkWhen") { S.taskEdit.when = ev.target.value; }
@@ -1210,6 +1284,7 @@
   document.addEventListener("keydown", function (ev) {
     if (ev.key === "Escape") { closeText(); if (S.exp) { S.exp = null; render(); } if (S.taskEdit) { S.taskEdit = null; render(); } if (S.tplEdit) { S.tplEdit = null; render(); } }
     if (ev.key === "Enter" && ev.target.id === "tkWhat") { A.taskSave(); render(); }
+    if (ev.key === "Enter" && ev.target.id === "tagInput") { A.tagAdd(); render(); }
     if (ev.key === "Enter" && ev.target.id === "nameInput") { A.saveName(); }
     if (ev.key === "Enter" && ev.target.id === "folderInput") { A.folderSave(); }
     if (ev.key === "Enter" && ev.target.id === "keyInput") { A.keySave(); }

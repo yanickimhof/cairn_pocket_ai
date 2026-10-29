@@ -22,6 +22,12 @@ def fold(text):
     return "".join(out), back
 
 
+def split_query(query):
+    """(text of the query, tags asked for): "#orion budget" is the word budget among the notes tagged orion."""
+    tags = [t for t in re.findall(r"#([^\s#]+)", query or "")][:5]
+    return re.sub(r"#[^\s#]+", " ", query or ""), [fold(t)[0] for t in tags]
+
+
 def terms(query):
     words = re.findall(r"\w+", fold(query)[0])
     return [w for w in dict.fromkeys(words) if len(w) > 1 or w.isdigit()][:8]
@@ -31,6 +37,8 @@ def _pieces(note):
     """(where, start seconds or None, text) for everything searchable in a note."""
     summary = note.get("summary") or {}
     out = [("title", None, note.get("title") or "")]
+    if note.get("tags"):
+        out.append(("title", None, " ".join(note["tags"])))  # a tag counts as much as a word of the title
     for key in ("tldr", "context"):
         if summary.get(key):
             out.append(("summary", None, str(summary[key])))
@@ -72,7 +80,8 @@ def _load(folder):
         if not cached or cached[0] != sig:
             note = config.read_json(path, default=None)
             ok = note and note.get("id") and note.get("status") == "done"
-            cached = _CACHE[path] = (sig, (note["id"], note.get("title") or "", note.get("date") or "", _index(path, note)) if ok else None)
+            cached = _CACHE[path] = (sig, (note["id"], note.get("title") or "", note.get("date") or "", _index(path, note),
+                                           {fold(t)[0] for t in note.get("tags") or []}) if ok else None)
         if cached[1]:
             yield cached[1]
     for gone in set(_CACHE) - seen:
@@ -110,11 +119,14 @@ def _marked(text, wanted):
 
 
 def find(folder, query):
-    wanted = terms(query)
-    if not wanted:
+    text, asked = split_query(query)
+    wanted = terms(text)
+    if not wanted and not asked:
         return []
     results = []
-    for note_id, title, date, pieces in _load(folder):
+    for note_id, title, date, pieces, tagset in _load(folder):
+        if not all(t in tagset for t in asked):
+            continue
         everything = " ".join(p[3] for p in pieces)
         if not all(w in everything for w in wanted):
             continue

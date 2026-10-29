@@ -33,6 +33,16 @@ Off by default. Settings has the Hugging Face token (right above the Pocket sess
 - **Stop:** interrupts the current job at once, speaker identification included.
 - **If something fails:** a recording is tried again by itself, up to three attempts in all, after 5 then 10 minutes, and a transcript or speaker pass already made is never redone. Before any long job Cairn checks that the summary model answers, so a missing or incompatible model shows within seconds. A speech engine that stops moving for five minutes is cut off. On macOS the computer stays awake while a job runs. The note shows the reason, and **Process** tries it again.
 
+## Tags
+
+Tags are free words you give to notes to find them again: a project, a person, a topic. A note can have up to 12, and they stay with it when it is redone.
+
+- **Add:** the tag icon on a note opens a field. Type a word and press Enter: the tags you already use are offered as you type. Tap a tag's cross to remove it.
+- **Several notes at once:** in **Choose notes** (under the vocabulary in Settings), tick the notes, type a tag in the bar and tap the tag icon.
+- **Find:** the tags of your notes appear as buttons above the list: tap one to show only those notes, tap it again to lift the filter. In the search, `#orion` lists the notes tagged orion, and `#orion budget` searches the word budget among them. A tag is also found as a word.
+- **Suggestions:** Settings, **Suggest tags** (off by default). After each note, Cairn offers up to three of your existing tags that fit, with one more call to the model. They show dashed, with a plus: tap one to add it, or the cross to ignore them all. Cairn never creates a tag you did not write.
+- **Exports:** the tags appear with the date in Markdown and text (`#orion`, spaces become dashes) and as chips in HTML.
+
 ## Your own note templates
 
 Settings, **My note templates** (the plus) creates a template: a name and an instruction in everyday words, for example *Client report: goals, decisions, risks, next steps*. The summary model writes the note as the sections your instruction names, in that order, after the TL;DR and the actions. A section the recording says nothing about shows a dash: nothing is invented. The sections appear in the note and in every export.

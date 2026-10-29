@@ -208,6 +208,39 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   click({ "data-a": "settings" });
   await settle();
 
+  // tags: shown on the row, a filter above the list, edited in the note, one suggestion waiting
+  fx.state.notes.filter((n) => n.id === done.id)[0].tags = ["Orion"];
+  fx.state.notes.filter((n) => n.id === done.id)[0].tag_suggestions = ["juridique"];
+  timers.splice(0).forEach((fn) => fn());
+  await settle();
+  check(page.innerHTML.indexOf("#Orion") !== -1 && page.innerHTML.indexOf("+#juridique") !== -1 && page.innerHTML.indexOf('data-a="tagFilter"') !== -1, "the list shows the tags, the suggestion and a filter");
+  click({ "data-a": "row", "data-id": done.id });
+  await settle();
+  check(page.innerHTML.indexOf('data-a="tagAccept"') !== -1 && page.innerHTML.indexOf('data-a="tagRemove"') !== -1 && page.innerHTML.indexOf('data-a="tagToggle"') !== -1, "the note shows its tags and its suggestion");
+  click({ "data-a": "tagAccept", "data-v": "juridique" });
+  await settle();
+  check(calls.some((c) => c === "POST /api/note/" + done.id + "/tags"), "accepting a suggestion is saved on the note");
+  click({ "data-a": "tagToggle", "data-id": done.id });
+  await settle();
+  check(page.innerHTML.indexOf('id="tagInput"') !== -1, "the tag field opens");
+  (listeners.input || []).forEach((fn) => fn({ target: { id: "tagInput", value: "famille" } }));
+  click({ "data-a": "tagAdd" });
+  await settle();
+  click({ "data-a": "tagFilter", "data-v": "Orion" });
+  await settle();
+  check(page.innerHTML.indexOf('data-id="' + waiting.id + '"') === -1 && page.innerHTML.indexOf('data-id="' + done.id + '"') !== -1, "the filter keeps only the notes with that tag");
+  click({ "data-a": "tagFilter", "data-v": "Orion" });
+  await settle();
+  check(page.innerHTML.indexOf('data-id="' + waiting.id + '"') !== -1, "the filter is lifted by a second tap");
+  click({ "data-a": "settings" });
+  await settle();
+  check(page.innerHTML.indexOf('data-a="tagsSuggest"') !== -1, "the settings offer the tag suggestions");
+  click({ "data-a": "pickStart" });
+  await settle();
+  check(page.innerHTML.indexOf('id="pickTagInput"') !== -1, "choosing notes offers to tag them");
+  click({ "data-a": "pickCancel" });
+  await settle();
+
   // a running job shows its progress on the right row
   fx.state.job = { running: true, kind: "import", step: "transcribing", id: waiting.id, done: 0, total: 1, pct: 40, errors: [] };
   timers.splice(0).forEach((fn) => fn());

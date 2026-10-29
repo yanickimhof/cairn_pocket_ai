@@ -8,11 +8,11 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
-from . import config, score
+from . import config, score, tags
 
 ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,150}")
 HEAVY = ("segments", "clean", "doubtful", "summary")  # what makes a note large: left out of the listing copy
-LIGHT = ("id", "title", "date", "duration", "status", "quality", "fidelity", "fidelity_basis", "speech_lang", "heard", "mixed", "passages", "level", "lang", "error", "step")
+LIGHT = ("id", "title", "date", "duration", "status", "quality", "fidelity", "fidelity_basis", "speech_lang", "heard", "mixed", "passages", "level", "lang", "error", "step", "tags", "tag_suggestions")
 
 
 def make_id(rel):
@@ -115,6 +115,9 @@ class Store:
             with os.fdopen(fd, "w", encoding="utf-8") as handle:
                 handle.write("\n".join(sorted(items)))
             os.replace(tmp, self.folder / "ignored.txt")  # atomic: a crash cannot empty the list
+
+    def tag_counts(self):
+        return tags.counts(self.slim())
 
     def light(self):
         rows = []

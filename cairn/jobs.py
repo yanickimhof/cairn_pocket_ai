@@ -383,6 +383,11 @@ class Jobs:
             note["title"] = summary["title"]
         if not note.get("title"):
             note["title"] = note["date"].replace("T", " ")[:16] if note.get("date") else note["id"]
+        if settings.get("tags_suggest"):
+            try:  # a suggestion is a convenience: it never makes a note fail
+                note["tag_suggestions"] = llm.suggest_tags(note, self.store.tag_counts())
+            except Exception:
+                note.pop("tag_suggestions", None)
 
     # Redo a finished recording at the chosen level
 

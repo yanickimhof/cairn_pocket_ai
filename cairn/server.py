@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
-from . import battery, catalog, config, diarize, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, speech, templates, vocab
+from . import battery, catalog, config, diarize, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, speech, tags, templates, vocab
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -495,6 +495,31 @@ def make_handler(app):
                     except jobs.Busy:
                         raise ApiError(409, "busy")
                 return self._json(202 if ids else 200, {"ok": True, "count": len(ids)})
+            if method == "GET" and path == "/api/tags":
+                return self._json(200, {"tags": app.store.tag_counts()})
+            if method == "POST" and path == "/api/tags/add":
+                try:
+                    tag = tags.clean([body.get("tag")])
+                except ValueError as error:
+                    raise ApiError(400, str(error))
+                if not tag or not isinstance(body.get("ids"), list):
+                    raise ApiError(400, "bad_tag")
+                changed = 0
+                for note_id in dict.fromkeys(str(i) for i in body["ids"]):
+                    if not app.store.exists(note_id):
+                        continue
+                    note = app.store.get(note_id)
+                    mine = [t for t in note.get("tags") or [] if t.casefold() != tag[0].casefold()]
+                    if not body.get("remove"):
+                        mine.append(tag[0])
+                    try:
+                        note["tags"] = tags.clean(mine)
+                    except ValueError:
+                        continue  # a note that already has the most tags
+                    note["tag_suggestions"] = [s for s in note.get("tag_suggestions") or [] if s.casefold() != tag[0].casefold()]
+                    app.store.save(note)
+                    changed += 1
+                return self._json(200, {"ok": True, "count": changed})
             if method == "GET" and path == "/api/search":
                 return self._json(200, {"results": search.find(app.store.folder, (query.get("q") or [""])[0][:200])})
             if method == "GET" and path == "/api/actions":
@@ -556,6 +581,19 @@ def make_handler(app):
                 if body.get("done"):
                     finished.append(what)
                 note["actions_done"] = finished[-300:]
+                app.store.save(note)
+                return self._json(200, {"ok": True})
+            if method == "POST" and action == "tags":
+                note = app.get_note(note_id)
+                if body.get("dismiss"):
+                    note.pop("tag_suggestions", None)
+                else:
+                    try:
+                        note["tags"] = tags.clean(body.get("tags"))
+                    except ValueError as error:
+                        raise ApiError(400, str(error))
+                    have = {t.casefold() for t in note["tags"]}
+                    note["tag_suggestions"] = [s for s in note.get("tag_suggestions") or [] if s.casefold() not in have]
                 app.store.save(note)
                 return self._json(200, {"ok": True})
             if method == "POST" and action == "actionedit":

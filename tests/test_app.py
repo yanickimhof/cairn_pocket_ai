@@ -2051,6 +2051,96 @@ class LibraryTest(unittest.TestCase):
         self.assertEqual(self.c.call("POST", "/api/note/a/actionedit", {"index": 5, "was": "x", "delete": True})[0], 409)
         self.assertEqual(self.c.call("POST", "/api/note/a/actionedit", {"index": 0, "was": "x"}, cookie=False)[0], 403)
 
+    def test_tags_are_cleaned_counted_and_set_on_notes_and_in_bulk(self):
+        from cairn import tags
+
+        self.assertEqual(tags.clean(["#Orion", " orion ", "legal  matters", "", "x" * 50]), ["Orion", "legal matters", "x" * 30])
+        with self.assertRaises(ValueError):
+            tags.clean("orion")
+        with self.assertRaises(ValueError):
+            tags.clean([str(i) for i in range(13)])
+        self.assertEqual(self.c.call("POST", "/api/note/a/tags", {"tags": ["#Orion", "juridique"]})[0], 200)
+        self.assertEqual(self.app.store.get("a")["tags"], ["Orion", "juridique"])
+        self.assertEqual(self.c.call("POST", "/api/note/b/tags", {"tags": ["orion"]})[0], 200)
+        self.assertEqual(self.c.call("GET", "/api/tags")[1]["tags"], [{"tag": "Orion", "count": 2}, {"tag": "juridique", "count": 1}])
+        self.assertEqual(self.c.call("POST", "/api/note/a/tags", {"tags": "nope"})[0], 400)
+        self.assertEqual(self.c.call("POST", "/api/note/a/tags", {"tags": [str(i) for i in range(13)]})[0], 400)
+        status, out = self.c.call("POST", "/api/tags/add", {"ids": ["a", "b", "nope"], "tag": "A suivre"})
+        self.assertEqual((status, out["count"]), (200, 2))
+        self.assertEqual(self.app.store.get("b")["tags"], ["orion", "A suivre"])
+        self.assertEqual(self.c.call("POST", "/api/tags/add", {"ids": ["a"], "tag": "a SUIVRE", "remove": True})[1]["count"], 1)  # case does not matter
+        self.assertEqual(self.app.store.get("a")["tags"], ["Orion", "juridique"])
+        self.assertEqual(self.c.call("POST", "/api/tags/add", {"ids": ["a"], "tag": "  "})[0], 400)
+        self.assertEqual(self.c.call("POST", "/api/note/a/tags", {"tags": ["x"]}, cookie=False)[0], 403)
+
+    def test_search_finds_notes_by_tag_alone_or_with_words(self):
+        self.c.call("POST", "/api/note/a/tags", {"tags": ["Orion", "legal matters"]})
+        self.c.call("POST", "/api/note/b/tags", {"tags": ["Orion"]})
+        ids = lambda q: sorted(r["id"] for r in self.c.call("GET", "/api/search?q=" + q.replace(" ", "+").replace("#", "%23"))[1]["results"])
+        self.assertEqual(ids("#orion"), ["a", "b"])
+        self.assertEqual(ids("#ORION+acme"), ["a"])  # the tag narrows, the word searches
+        self.assertEqual(ids("#legal"), [])  # a tag is a whole word: "legal matters" is found by its words
+        self.assertEqual(ids("legal+matters"), ["a"])
+        self.assertEqual(ids("#orion+#legal+matters"), [])
+        self.assertEqual(ids("#nothing"), [])
+
+    def test_tags_suggested_from_the_existing_ones_only_when_asked_for(self):
+        from unittest import mock
+
+        from cairn import config, jobs, llm
+
+        existing = [{"tag": "Orion", "count": 3}, {"tag": "juridique", "count": 2}, {"tag": "Famille", "count": 1}]
+        note = {"title": "T", "tags": ["Famille"], "summary": {"tldr": "A dispute about the permit", "actions": [{"what": "Call the lawyer"}]}}
+        seen = []
+
+        def chat(system, user, schema=None, **kw):
+            seen.append(schema)
+            return json.dumps({"tags": ["Orion", "juridique", "invented", "Orion"]})
+
+        with mock.patch.object(llm, "chat", side_effect=chat):
+            self.assertEqual(llm.suggest_tags(note, existing), ["Orion", "juridique"])  # no invention, no duplicate
+            self.assertEqual(seen[0]["properties"]["tags"]["items"]["enum"], ["Orion", "juridique"])  # the tag the note has is not offered again
+            self.assertEqual(llm.suggest_tags(note, []), [])
+            self.assertEqual(llm.suggest_tags({"title": "T", "summary": {}}, existing), [])
+        with mock.patch.object(llm, "chat", return_value="not json"):
+            self.assertEqual(llm.suggest_tags(note, existing), [])
+        job, store = RetryAndResumeTest()._jobs(a={"status": "done", "clean": "words " * 20, "tags": ["Famille"]})
+        summary = {"title": "T", "tldr": "A dispute", "actions": []}
+        for on in (False, True):
+            with mock.patch.object(jobs.config, "load_settings", return_value={"vocabulary": [], "templates": [], "tags_suggest": on}), \
+                    mock.patch.object(llm, "summarize", return_value=dict(summary)), mock.patch.object(job.store, "tag_counts", return_value=existing), \
+                    mock.patch.object(llm, "suggest_tags", return_value=["Orion"]):
+                note = store.get("a")
+                note.pop("tag_suggestions", None)
+                job._summarize(note, "mid", "en")
+            self.assertEqual(note.get("tag_suggestions"), ["Orion"] if on else None)
+        with mock.patch.object(jobs.config, "load_settings", return_value={"vocabulary": [], "templates": [], "tags_suggest": True}), \
+                mock.patch.object(llm, "summarize", return_value=dict(summary)), mock.patch.object(job.store, "tag_counts", return_value=existing), \
+                mock.patch.object(llm, "suggest_tags", side_effect=RuntimeError("model down")):
+            note = store.get("a")
+            job._summarize(note, "mid", "en")  # the note is written all the same
+        self.assertNotIn("tag_suggestions", note)
+        self.assertEqual(self.c.call("POST", "/api/settings", {"tags_suggest": True})[0], 200)
+        self.assertEqual(self.c.call("POST", "/api/settings", {"tags_suggest": "yes"})[0], 400)
+        self.c.call("POST", "/api/settings", {"tags_suggest": False})
+
+    def test_a_suggestion_is_accepted_or_dismissed_by_the_person(self):
+        note = dict(self.app.store.get("a"), tag_suggestions=["Orion", "juridique"])
+        self.app.store.save(note)
+        self.c.call("POST", "/api/note/a/tags", {"tags": ["Orion"]})  # accepted: it leaves the suggestions
+        self.assertEqual(self.app.store.get("a")["tag_suggestions"], ["juridique"])
+        self.c.call("POST", "/api/note/a/tags", {"dismiss": True})
+        self.assertNotIn("tag_suggestions", self.app.store.get("a"))
+        self.assertEqual(self.app.store.get("a")["tags"], ["Orion"])
+
+    def test_tags_show_in_every_export(self):
+        from cairn import render
+
+        note = dict(self.app.store.get("a"), tags=["Orion", "legal matters"])
+        self.assertIn("#Orion #legal-matters", render.to_markdown(note))
+        self.assertIn("#Orion #legal-matters", render.to_text(note))
+        self.assertIn("#legal-matters", render.to_html(note))
+
     def test_follow_up_email_is_written_once_and_redone_on_request(self):
         from cairn import llm
         calls = []

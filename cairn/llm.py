@@ -281,6 +281,28 @@ def followup(note, lang):
     return {"subject": str(data.get("subject") or "").strip()[:200], "body": body}
 
 
+def suggest_tags(note, existing):
+    """At most 3 of the person's existing tags that fit a finished note, none when none fits. `existing` is [{"tag", "count"}]."""
+    names = [x["tag"] for x in existing or []]
+    have = {t.casefold() for t in note.get("tags") or []}
+    names = [n for n in names if n.casefold() not in have]
+    summary = note.get("summary") or {}
+    if not names or not summary.get("tldr"):
+        return []
+    facts = {"title": note.get("title") or "", "summary": summary.get("tldr") or "", "key_points": summary.get("key_points") or [],
+             "actions": [a.get("what") for a in summary.get("actions") or [] if isinstance(a, dict)]}
+    schema = {"type": "object", "properties": {"tags": {"type": "array", "maxItems": 3, "items": {"type": "string", "enum": names}}}, "required": ["tags"]}
+    system = ("You file notes. From the list of tags given by the person, pick at most 3 that clearly fit the note, and none when none fits. "
+              "Only use tags from this list: %s." % ", ".join(names[:60]))
+    raw = chat(system, json.dumps(facts, ensure_ascii=False), schema=schema, num_ctx=4096, timeout=120)
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        return []
+    picked = data.get("tags") if isinstance(data, dict) else None
+    return [t for t in dict.fromkeys(picked or []) if t in names][:3]
+
+
 def summarize(text, level, lang, progress=None, vocabulary=None, instructions=None):
     """Structured note: title, type, TL;DR, actions and, depending on the level, more."""
     if len(text.split()) < 5:
