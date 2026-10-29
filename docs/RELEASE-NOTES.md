@@ -1,20 +1,30 @@
 # Release notes
 
-## 0.2.1: faster, steadier, and it learns your names
+## 0.3.0: faster, steadier, and it learns your names
 
-- **Your names, finally spelled right.** Add the people, places and terms Whisper gets wrong. Cairn fixes them in the transcript, spells them right in the summary, and lists every change so you can undo it.
-- **Speakers identified 4.5 times faster.** The graphics chip of your Mac does the work, with the same result. One button goes back to the processor.
-- **Walk away, it finishes.** Processing starts the moment the copy ends, the Mac stays awake, and a failed recording is retried by itself without redoing what is already done.
-- **Problems show in seconds, not after an hour.** The summary model is checked before any long job, and an engine that freezes is cut off.
-- **Made for a 16 GB Mac.** Memory is freed between steps: the speaker pass takes 22 s instead of 82 s.
-- **Stop means stop.** A speaker pass ends at once, and an interrupted recording goes back to waiting instead of spinning for ever.
-- **One recording, one recording.** With automatic processing off, processing a single note no longer launches the whole queue.
-- **Fix who said what, afterwards.** Redo the speakers of a finished note and rename them.
-- **Speaker identification works with pyannote 4.** Every pass used to fail at the very end.
-- **What you see is what is installed.** Models and About show real sizes, the Ollama version installed and running, and the right names.
-- **Errors that say what is wrong.** A model without structured output is named as such. Qwen3.5 9B waits until Ollama supports it.
-- **Know where the time goes.** Each note keeps the duration of every step, never its content.
-- **Measured, not guessed.** Identifying speakers during the transcription saved 4 s and cost 1.4 GB of swap, so Cairn does not do it.
+**Your names, finally spelled right**
+- Tell Cairn the people, places and terms Whisper keeps getting wrong. It fixes them in the transcript and in the summary, and lists every change so you can undo it.
+
+**Speed you feel**
+- **Speakers identified 4.5 times faster.** Your Mac's graphics chip does the work, same result. One button goes back to the processor.
+- **Starts the moment the copy ends.** No waiting, no clicking.
+- **Made for a 16 GB Mac.** The speaker pass takes 22 seconds instead of 82.
+
+**Walk away, it finishes**
+- **The Mac stays awake** until your notes are ready.
+- **A failed recording tries again by itself,** and never redoes what is already done.
+- **A problem shows in seconds, not after an hour.** The summary model is checked before any long job, and a frozen engine is cut off.
+- **Stop means stop,** and an interrupted recording goes back to waiting instead of spinning for ever.
+
+**Fix who said what, afterwards**
+- Redo the speakers of a finished note and rename them. Speaker identification also works with pyannote 4, where every pass used to fail at the very end.
+
+**Honest about your machine**
+- Models and About show what is really installed: real sizes, the Ollama version installed and running, the right names.
+- A model that cannot give structured output is named as such, and Qwen3.5 9B waits until Ollama supports it.
+- Each note keeps how long every step took, never its content.
+- Processing one recording no longer launches the whole queue when automatic processing is off.
+- Identifying speakers during the transcription saved 4 seconds and cost 1.4 GB of swap, so Cairn does not do it.
 
 ## 0.2: who said what
 
