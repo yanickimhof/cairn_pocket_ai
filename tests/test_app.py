@@ -338,7 +338,7 @@ class AppTest(unittest.TestCase):
     def test_10_models_on_demand(self):
         status, listing = self.c.call("GET", "/api/models")
         self.assertEqual(status, 200)
-        self.assertEqual([m["id"] for m in listing["llm"]], ["qwen3:4b", "qwen3:8b", "qwen3.5:9b", "qwen3:14b"])
+        self.assertEqual([m["id"] for m in listing["llm"]], ["qwen3:4b", "qwen3:8b", "qwen3:14b"])
         self.assertEqual([m["id"] for m in listing["speech"]], ["turbo", "large"])
         self.assertFalse(any(m["installed"] for m in listing["llm"]))
         # nothing is downloaded without an explicit confirmation
@@ -365,24 +365,21 @@ class AppTest(unittest.TestCase):
         self.assertFalse([m for m in self.c.call("GET", "/api/models")[1]["llm"] if m["id"] == "qwen3:4b"][0]["installed"])
 
 
-    def test_10b_new_model_needs_recent_ollama(self):
-        from cairn import llm
-        self.assertTrue(llm.at_least("0.40.11", "0.17.5"))
-        self.assertTrue(llm.at_least("0.17.5", "0.17.5"))
-        self.assertTrue(llm.at_least("0.17.5-rc1", "0.17.5"))
-        self.assertFalse(llm.at_least("0.9.0", "0.17.5"))
-        self.assertFalse(llm.at_least("0", "0.17.5"))
-        self.assertTrue(llm.at_least("", "0.17.5"))
-        # the stub server reports version 0: the download is refused with a clear message, nothing is pulled
-        self.assertEqual(self.c.call("POST", "/api/models/install", {"kind": "llm", "id": "qwen3.5:9b", "confirm": True})[0], 202)
-        for _ in range(50):
-            job = self.c.call("GET", "/api/models")[1]["job"]
-            if job["state"] != "running":
-                break
-            time.sleep(0.1)
-        self.assertEqual(job["state"], "error")
-        self.assertIn("Ollama 0.17.5 or newer", job["error"])
-        self.assertNotIn("qwen3.5:9b", StubModel.pulled)
+    def test_10b_a_model_needing_a_newer_ollama_is_refused_clearly(self):
+        from unittest import mock
+
+        from cairn import llm, models
+
+        for found, minimum, expected in (("0.40.11", "0.17.5", True), ("0.17.5", "0.17.5", True), ("0.17.5-rc1", "0.17.5", True),
+                                         ("0.9.0", "0.17.5", False), ("0", "0.17.5", False), ("", "0.17.5", True)):
+            self.assertEqual(llm.at_least(found, minimum), expected, (found, minimum))
+        downloader = models.Downloader()
+        downloader.job = {"state": "running", "pct": 0}
+        with mock.patch.object(llm, "version", return_value="0.40.11"), mock.patch.object(models.urllib.request, "urlopen") as opened:
+            downloader._pull_llm({"id": "x:9b", "label": "X 9B", "min_ollama": "999.0"})
+        self.assertEqual(downloader.job["state"], "error")
+        self.assertIn("Ollama 999.0 or newer", downloader.job["error"])
+        opened.assert_not_called()  # nothing was downloaded
 
     def test_12_skip_and_process_one(self):
         notes = self.c.call("GET", "/api/state")[1]["notes"]
@@ -1308,7 +1305,7 @@ class AboutHelpersTest(unittest.TestCase):
         entry = lambda i: next(m for m in catalog.LLM if m["id"] == i)
         self.assertEqual(server._llm_component("qwen3:8b", entry("qwen3:8b"), 5)["name"], "Qwen3")
         self.assertEqual(server._llm_component("qwen3:8b", entry("qwen3:8b"), 5)["ver"], "8B")
-        qwen35 = server._llm_component("qwen3.5:9b", entry("qwen3.5:9b"), 7)
+        qwen35 = server._llm_component("qwen3.5:9b", {"label": "Qwen3.5 9B"}, 7)
         self.assertEqual((qwen35["name"], qwen35["ver"]), ("Qwen3.5", "9B"))
         self.assertEqual(server._llm_component("mine:1b", None, 0)["ok"], False)
 

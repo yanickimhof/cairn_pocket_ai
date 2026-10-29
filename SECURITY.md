@@ -13,7 +13,7 @@ Use GitHub's private vulnerability reporting (Security tab, "Report a vulnerabil
 | Python | 3.11 | About 90 MB | uv | Kept in the Cairn folder |
 | Python packages | Pinned in `requirements/` | About 1 GB | PyPI | Versions and SHA-256 hashes pinned, installed with `--require-hashes` |
 | Model server (Ollama) | Latest | 0.2 to 1.7 GB, by system | ollama.com | Code signature checked before use (macOS: also accepted as notarized by the system; Windows: signed by Ollama), installed for your user only |
-| Language model | Qwen3 4B (`qwen3:4b`, default). On demand: Qwen3 8B (5.2 GB), Qwen3.5 9B (7.6 GB, needs Ollama 0.17.5 or newer), Qwen3 14B (9.3 GB) | 2.5 GB | Ollama registry | Layers verified by digest |
+| Language model | Qwen3 4B (`qwen3:4b`, default). On demand: Qwen3 8B (5.2 GB), 14B (9.3 GB) | 2.5 GB | Ollama registry | Layers verified by digest |
 | Speech model | Whisper large-v3-turbo. On demand: large-v3 (3.1 GB) | 1.6 GB | Hugging Face | Fixed revision (a commit of the repository), downloaded once, then offline (`HF_HUB_OFFLINE=1`) |
 
 About 5.5 GB in total on a clean Mac and 7 GB on Windows (estimates). An existing Ollama and Qwen3 model are reused. Optional models download only when you confirm in the app. The install page shows the exact minimum version and sizes for your system.

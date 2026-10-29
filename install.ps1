@@ -110,10 +110,6 @@ if (-not (Server-Up)) {
   for ($i = 0; $i -lt 60 -and -not (Server-Up); $i++) { Start-Sleep -Seconds 1 }
   if (-not (Server-Up)) { Fail 'The model server did not start.' }
 }
-if ($Llm -like 'qwen3.5*') {
-  try { $raw = (Invoke-RestMethod "http://$OllamaAddr/api/version" -TimeoutSec 5).version } catch { $raw = '' }
-  if ($raw -match '^(\d+\.\d+\.\d+)' -and [version]$Matches[1] -lt [version]'0.17.5') { Fail "$Llm needs Ollama 0.17.5 or newer, found $raw. Update Ollama and run the installer again." }
-}
 if (-not $env:CAIRN_LLM) {
   $have = (& $Ollama list 2>$null) -split "`n" | ForEach-Object { ($_ -split '\s+')[0] }
   if ($have -contains 'qwen3:8b') { $Llm = 'qwen3:8b'; Say "Found $Llm in your Ollama: using it, nothing to download" }
