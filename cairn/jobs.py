@@ -8,7 +8,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import awake, config, diarize, llm, pocket, privacy, score, speech, system, vocab
+from . import awake, config, diarize, llm, pocket, privacy, score, speech, system, templates, vocab
 from .notes import guess_date, make_id
 
 
@@ -368,11 +368,16 @@ class Jobs:
             self._set(part=index + 1, parts=total, call=(index, total, starts[-1], max(usual, 5.0)) if total > 1 else None,
                       pct=0 if total > 1 else None)
 
-        summary = llm.summarize(text, level, lang, progress, vocabulary=vocab.spellings(config.load_settings().get("vocabulary")))
+        settings = config.load_settings()
+        custom = templates.find(settings.get("templates"), note.get("template") or settings.get("template_default"))
+        summary = llm.summarize(text, level, lang, progress, vocabulary=vocab.spellings(settings.get("vocabulary")),
+                                instructions=custom["prompt"] if custom else None)
         note["summary"], note["lang"] = summary, lang
         heard = note.get("heard")
         note["fidelity"], note["fidelity_basis"] = score.fidelity_detail(summary, text, words_ok=heard in (None, lang))
-        if note.get("template") in llm.TEMPLATES:
+        if custom:
+            summary["custom"], summary["template_name"] = custom["id"], custom["name"]
+        elif note.get("template") in llm.TEMPLATES:
             summary["template"] = note["template"]
         if summary.get("title") and not note.get("renamed"):
             note["title"] = summary["title"]

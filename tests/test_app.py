@@ -2080,5 +2080,107 @@ class LibraryTest(unittest.TestCase):
             llm.chat, llm.preflight = keep
 
 
+class TemplatesTest(unittest.TestCase):
+    """The person's own note templates: a name and an instruction."""
+
+    def test_templates_are_checked_and_given_an_id(self):
+        from cairn import templates
+
+        out = templates.parse([{"name": "  Client   report ", "prompt": "goals,  decisions, risks"}, {"name": "Weekly", "prompt": "what moved"}])
+        self.assertEqual([(t["name"], t["prompt"]) for t in out], [("Client report", "goals, decisions, risks"), ("Weekly", "what moved")])
+        self.assertTrue(all(t["id"].startswith("c-") for t in out) and out[0]["id"] != out[1]["id"])
+        again = templates.parse(out)  # an id is kept when it is valid
+        self.assertEqual([t["id"] for t in again], [t["id"] for t in out])
+        self.assertEqual(templates.find(out, out[1]["id"])["name"], "Weekly")
+        self.assertIsNone(templates.find(out, "c-nope"))
+        for bad in ("x", [1], [{"name": "A"}], [{"prompt": "b"}], [{"name": "x" * 41, "prompt": "p"}], [{"name": "A", "prompt": "p" * 801}],
+                    [{"name": "A", "prompt": "p"}, {"name": "a", "prompt": "q"}], [{"name": str(i), "prompt": "p"} for i in range(21)]):
+            with self.assertRaises(ValueError):
+                templates.parse(bad)
+        dup = templates.parse([{"id": "c-same", "name": "A", "prompt": "p"}, {"id": "c-same", "name": "B", "prompt": "p"}])
+        self.assertNotEqual(dup[0]["id"], dup[1]["id"])  # two templates never share an id
+
+    def test_the_settings_keep_templates_and_one_default(self):
+        from unittest import mock
+
+        from cairn import config
+
+        with mock.patch.object(config, "home", return_value=Path(tempfile.mkdtemp())):
+            saved = config.save_settings({"templates": [{"name": "Client report", "prompt": "goals, risks"}]})
+            tid = saved["templates"][0]["id"]
+            self.assertEqual(config.load_settings()["template_default"], "")
+            self.assertEqual(config.save_settings({"template_default": tid})["template_default"], tid)
+            with self.assertRaises(ValueError):
+                config.save_settings({"template_default": "c-unknown"})
+            self.assertEqual(config.save_settings({"templates": []})["template_default"], "")  # the default went with its template
+            with self.assertRaises(ValueError):
+                config.save_settings({"templates": [{"name": "", "prompt": "x"}]})
+
+    def test_the_summary_model_is_given_the_instruction(self):
+        from unittest import mock
+
+        from cairn import llm
+
+        seen = []
+        with mock.patch.object(llm, "chat", side_effect=lambda system, *a, **k: seen.append(system) or '{"title": "T", "tldr": "x", "actions": []}'):
+            llm.summarize("one two three four five six", "mid", "en", instructions="goals, decisions, risks")
+            llm.summarize("one two three four five six", "mid", "en")
+        self.assertIn("goals, decisions, risks", seen[0])
+        self.assertNotIn("asked for this kind of note", seen[1])
+
+    def test_a_note_is_written_with_the_chosen_or_the_default_template(self):
+        from unittest import mock
+
+        from cairn import jobs, llm
+
+        job, store = RetryAndResumeTest()._jobs(a={"status": "done", "clean": "words " * 20}, b={"status": "done", "clean": "words " * 20, "template": "call"},
+                                                c={"status": "done", "clean": "words " * 20, "template": "c-mine"})
+        custom = [{"id": "c-mine", "name": "My report", "prompt": "goals, risks"}, {"id": "c-dflt", "name": "Default one", "prompt": "the basics"}]
+        given = {}
+
+        def summarize(text, level, lang, progress=None, vocabulary=None, instructions=None):
+            return {"title": "T", "tldr": "x", "actions": [], "template": "meeting"}
+
+        settings = {"vocabulary": [], "templates": custom, "template_default": "c-dflt"}
+        with mock.patch.object(jobs.config, "load_settings", return_value=settings), mock.patch.object(llm, "summarize", side_effect=lambda *a, **k: given.update(k) or summarize(*a, **k)):
+            for note_id in "abc":
+                note = store.get(note_id)
+                job._summarize(note, "mid", "en")
+                given[note_id] = (given.pop("instructions"), note["summary"].get("template_name"), note["summary"]["template"])
+        self.assertEqual(given["a"], ("the basics", "Default one", "meeting"))  # nothing chosen: the default applies
+        self.assertEqual(given["b"], (None, None, "call"))  # a built-in type chosen by hand wins over the default
+        self.assertEqual(given["c"], ("goals, risks", "My report", "meeting"))
+
+    def test_a_template_is_chosen_on_a_note_and_shown_in_the_exports(self):
+        from unittest import mock
+
+        from cairn import config, render
+
+        custom = [{"id": "c-mine", "name": "My <report>", "prompt": "goals"}]
+        with mock.patch.object(config, "load_settings", return_value=dict(config.DEFAULT_SETTINGS, templates=custom)):
+            tmp = tempfile.mkdtemp()
+            os.environ.update(CAIRN_HOME=tmp, CAIRN_POCKET_DIR=tmp + "/none", CAIRN_ENGINE="mlx", CAIRN_LLM="stub:1b", OLLAMA_HOST="127.0.0.1:9", CAIRN_WHISPER_MODEL=tmp)
+            from cairn import server
+
+            app, httpd = server.make_server(18795)
+            threading.Thread(target=httpd.serve_forever, daemon=True).start()
+            client = Client(app, httpd)
+            try:
+                app.store.save({"id": "n", "status": "done", "title": "T", "date": "2026-10-01T10:00:00", "summary": {"template": "meeting", "title": "T", "tldr": "x", "actions": []}})
+                self.assertEqual(client.call("POST", "/api/note/n/template", {"template": "c-mine"})[0], 200)
+                note = app.store.get("n")
+                self.assertEqual((note["template"], note["summary"]["custom"], note["summary"]["template_name"]), ("c-mine", "c-mine", "My <report>"))
+                self.assertIn("My &lt;report", render.to_markdown(note))  # the export already neutralises angle brackets
+                self.assertIn("My &lt;report&gt;", render.to_html(note))
+                self.assertEqual(client.call("POST", "/api/note/n/template", {"template": "call"})[0], 200)  # back to a built-in type
+                note = app.store.get("n")
+                self.assertEqual(note["summary"]["template"], "call")
+                self.assertNotIn("template_name", note["summary"])
+                self.assertNotIn("custom", note["summary"])
+                self.assertEqual(client.call("POST", "/api/note/n/template", {"template": "c-unknown"})[0], 400)
+            finally:
+                httpd.shutdown()
+
+
 if __name__ == "__main__":
     unittest.main()

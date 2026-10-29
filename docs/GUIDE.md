@@ -33,6 +33,14 @@ Off by default. Settings has the Hugging Face token (right above the Pocket sess
 - **Stop:** interrupts the current job at once, speaker identification included.
 - **If something fails:** a recording is tried again by itself, up to three attempts in all, after 5 then 10 minutes, and a transcript or speaker pass already made is never redone. Before any long job Cairn checks that the summary model answers, so a missing or incompatible model shows within seconds. A speech engine that stops moving for five minutes is cut off. On macOS the computer stays awake while a job runs. The note shows the reason, and **Process** tries it again.
 
+## Your own note templates
+
+Settings, **My note templates** (the plus) creates a template: a name and an instruction in everyday words, for example *Client report: goals, decisions, risks, next steps*. The instruction is given to the summary model, which follows it for what the note contains and how it reads. Nothing is invented: a field stays empty when the recording does not say.
+
+- **On a note:** the template button (the second one, next to the pencil) goes through the built-in types, then through your templates. Choosing one of yours writes the note again with it, and the template is kept if the note is redone. Its name replaces the type in the exports.
+- **The star** makes a template the one used for every new note that has no choice of its own. Tap it again to go back to the automatic type.
+- **Editing or deleting** a template does not change the notes already written with it.
+
 ## One note, one set of choices
 
 Each recording has its own **level of detail** (short, standard, detailed), its own **language** (FR or EN, the interface language by default) and its own **type** (meeting, call, presentation, idea, note; chosen by the model). Tap a button on the note to change its choice: each tap moves to the next one. Your choices are kept.

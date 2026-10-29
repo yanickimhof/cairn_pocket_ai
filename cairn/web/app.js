@@ -11,6 +11,7 @@
       off: "Non", on: "Oui",
       devGpuHint: "Identification des interlocuteurs sur la puce graphique (au moins 4 fois plus rapide, même résultat). Cliquer pour utiliser le processeur.", devCpuHint: "Identification des interlocuteurs sur le processeur. Cliquer pour utiliser la puce graphique.",
       taskWhat: "Action", taskWho: "Qui", taskWhen: "Quand", taskEditHint: "Modifier l'action", taskDelHint: "Supprimer l'action", taskDelAsk: "Supprimer cette action ?",
+      tplMine: "Mes modèles de note", tplEditHint: "Créer ou modifier un modèle de note", tplName: "Nom du modèle", tplPrompt: "Ex. : compte rendu client : objectifs, décisions, risques, prochaines étapes", tplStar: "Utiliser pour toutes les nouvelles notes", tplDelAsk: "Supprimer ce modèle ?", tplNone: "Aucun modèle pour l'instant",
       find: "Rechercher", findPlaceholder: "Un mot, un nom, un chiffre", findNone: "Aucun résultat", tasks: "Toutes mes actions", tasksNone: "Aucune action pour l'instant", tasksCopy: "Copier les actions à faire", tasksUnassigned: "Sans responsable", tasksCopied: "Actions copiées",
       listenHint: "Écouter à partir d'ici", mailHint: "Écrire le mail de suivi", mailTitle: "Mail de suivi", mailWriting: "Rédaction du mail…", mailCopy: "Copier le mail", mailOpen: "Ouvrir dans l'app Mail", mailRedo: "Réécrire le mail",
       vocab: "Vocabulaire", vocabHint: "Noms de personnes, de lieux et termes rares, un par ligne. Cairn corrige dans la transcription les mots qui leur ressemblent et impose leur orthographe au résumé. « Sion, Cion, Scyon => Acme » remplace toujours chacun par Acme (=>, -> et : fonctionnent). « Science Day => ACME Day | awards, ceremony » ne remplace qu'à côté de ces mots.",
@@ -66,6 +67,7 @@
       off: "Off", on: "On",
       devGpuHint: "Speaker identification runs on the graphics chip (at least 4 times faster, same result). Click to use the processor.", devCpuHint: "Speaker identification runs on the processor. Click to use the graphics chip.",
       taskWhat: "Action", taskWho: "Who", taskWhen: "When", taskEditHint: "Edit the action", taskDelHint: "Delete the action", taskDelAsk: "Delete this action?",
+      tplMine: "My note templates", tplEditHint: "Create or edit a note template", tplName: "Template name", tplPrompt: "E.g. client report: goals, decisions, risks, next steps", tplStar: "Use for every new note", tplDelAsk: "Delete this template?", tplNone: "No template yet",
       find: "Search", findPlaceholder: "A word, a name, a number", findNone: "No result", tasks: "All my actions", tasksNone: "No action yet", tasksCopy: "Copy the open actions", tasksUnassigned: "Nobody yet", tasksCopied: "Actions copied",
       listenHint: "Listen from here", mailHint: "Write the follow-up email", mailTitle: "Follow-up email", mailWriting: "Writing the email…", mailCopy: "Copy the email", mailOpen: "Open in the Mail app", mailRedo: "Write it again",
       vocab: "Vocabulary", vocabHint: "Names of people and places and rare terms, one per line. Cairn corrects close variants in the transcript and imposes their spelling on the summary. \"Sion, Cion, Scyon => Acme\" always replaces each of them with Acme (=>, -> and : all work). \"Science Day => ACME Day | awards, ceremony\" replaces only near those words.",
@@ -119,6 +121,8 @@
     tasks: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6h10"></path><path d="M10 12h10"></path><path d="M10 18h10"></path><path d="m3.5 6 1.5 1.5L7.5 5"></path><path d="m3.5 12 1.5 1.5 2.5-2.5"></path><path d="m3.5 18 1.5 1.5 2.5-2.5"></path></svg>',
     mail: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"></rect><path d="m4.5 8 7.5 5.5L19.5 8"></path></svg>',
     calendar: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="3"></rect><path d="M4 10h16"></path><path d="M8.5 3.5v4"></path><path d="M15.5 3.5v4"></path></svg>',
+    star: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B5B5BA" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.8 2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.8 6.9 19.5l1-5.7-4.1-4 5.7-.8z"></path></svg>',
+    starOn: '<svg width="20" height="20" viewBox="0 0 24 24" fill="#C86D51" stroke="#C86D51" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.8 2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.8 6.9 19.5l1-5.7-4.1-4 5.7-.8z"></path></svg>',
     circle: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B5B5BA" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle></svg>',
     chip: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect><rect x="9.5" y="9.5" width="5" height="5" rx="1"></rect><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"></path></svg>',
     bolt: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"></path></svg>',
@@ -161,7 +165,7 @@
   var S = {
     ui: null, hidden: true, settingsOpen: false, aboutOpen: false, open: null, edit: null, draft: "", exp: null,
     delConfirm: false, rr: "mid", rl: "en", sp: "auto", server: null, full: {}, about: null, upd: null,
-    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: "", vocabEdit: false, vocabDraft: "", pickMode: false, pick: {}, vFrom: "", vTo: "", vRange: false, taskEdit: null, taskDel: null, findOpen: false, findQ: "", findRes: null, tasksOpen: false, tasks: null
+    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: "", vocabEdit: false, vocabDraft: "", pickMode: false, pick: {}, vFrom: "", vTo: "", vRange: false, taskEdit: null, taskDel: null, tplOpen: false, tplEdit: null, tplDel: null, findOpen: false, findQ: "", findRes: null, tasksOpen: false, tasks: null
   };
   var lastView = "";
   var toastTimer = null;
@@ -347,6 +351,10 @@
           '" aria-label="' + esc(t.vocabRange) + '"><button type="button" class="ib sm blue" data-a="vocabRange"' + tip(t.vocabRange) + ">" + I.checkW + "</button></div>";
       }
     }
+    var tpls = st.settings.templates || [];
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.tplEditHint) + '><span class="text" style="font-size:14px">' + esc(t.tplMine) + (tpls.length ? " \u00b7 " + tpls.length : "") +
+      '</span><button type="button" class="ib" data-a="tplAsk"' + tip(t.tplEditHint) + ">" + (S.tplOpen ? I.x : (tpls.length ? I.pencil : I.plus)) + "</button></div>";
+    if (S.tplOpen) { h += viewTemplates(t, st); }
     h += '<div class="hr"></div><div class="setrow"' + tip(t.hfTokenHint) + ">" + I.hf;
     if (st.settings.hf_token) {
       var gpu = (st.settings.diarize_device || "auto") !== "cpu";
@@ -456,11 +464,17 @@
     idea: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
     other: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>'
   };
+  TPL_ICON.custom = '<path d="m12 3.5 2.3 5.4 5.7.9-4.2 4 1 5.7-4.8-2.8-4.8 2.8 1-5.7-4.2-4 5.7-.9z"/>';
+  function myTemplates() { return (S.server && S.server.settings && S.server.settings.templates) || []; }
   function noteTpl(full) { var k = full && full.summary && full.summary.template; return TPL.indexOf(k) >= 0 ? k : "other"; }
+  function noteTplKey(full) {  // a built-in type, or the id of one of the person's own templates
+    var c = full && full.summary && full.summary.custom;
+    return c && myTemplates().some(function (x) { return x.id === c; }) ? c : noteTpl(full);
+  }
   function tplButton(full, t) {
     if (!full || !full.summary) { return ""; }
-    var k = noteTpl(full);
-    return '<button type="button" class="ib" data-a="cycleTpl"' + tip(t.tplHint + " : " + t.tpl[k]) + '><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + TPL_ICON[k] + "</svg></button>";
+    var k = noteTplKey(full), mine = myTemplates().filter(function (x) { return x.id === k; })[0];
+    return '<button type="button" class="ib" data-a="cycleTpl"' + tip(t.tplHint + " : " + (mine ? mine.name : t.tpl[k])) + '><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (mine ? TPL_ICON.custom : TPL_ICON[k]) + "</svg></button>";
   }
 
   function viewDetail(n, t) {
@@ -583,6 +597,25 @@
     });
     return h + "</div>";
   }
+  function viewTemplates(t, st) {
+    var list = st.settings.templates || [], dflt = st.settings.template_default || "", ed = S.tplEdit, h = '<div class="tpls">';
+    list.forEach(function (x, i) {
+      if (ed && ed.idx === i) { return; }
+      h += '<div class="trow"><button type="button" class="tick" data-a="tplStar" data-v="' + i + '"' + tip(t.tplStar) + ' aria-pressed="' + (x.id === dflt) + '">' + (x.id === dflt ? I.starOn : I.star) + '</button><button type="button" class="tmid tbtn" data-a="tplEdit" data-v="' + i + '"' +
+        tip(x.prompt) + '><span class="text">' + esc(x.name) + '</span></button><button type="button" class="ib sm plain" data-a="tplDelAsk" data-v="' + i + '"' + tip(t.taskDelHint) + ">" + I.trash + "</button></div>";
+      if (S.tplDel === i) {
+        h += '<div class="row gap8 tconfirm"><span class="small" style="margin-right:auto">' + esc(t.tplDelAsk) + '</span><button type="button" class="ib sm" data-a="tplDelNo"' + tip(t.pickCancel) + ">" + I.x + '</button><button type="button" class="ib sm red" data-a="tplDelGo"' + tip(t.taskDelHint) + ">" + I.checkW + "</button></div>";
+      }
+    });
+    if (ed) {
+      h += '<div class="tedit"><input id="tplName" type="text" maxlength="40" value="' + esc(ed.name) + '" placeholder="' + esc(t.tplName) + '" aria-label="' + esc(t.tplName) + '"><textarea id="tplPrompt" rows="4" maxlength="800" placeholder="' + esc(t.tplPrompt) + '" aria-label="' + esc(t.tplPrompt) + '">' + esc(ed.prompt) +
+        '</textarea><div class="row gap8" style="justify-content:flex-end"><button type="button" class="ib sm" data-a="tplCancel"' + tip(t.pickCancel) + ">" + I.x + '</button><button type="button" class="ib sm blue" data-a="tplSave"' + tip(t.saveName) + ">" + I.checkW + "</button></div></div>";
+    } else {
+      h += '<div class="row" style="justify-content:flex-end;padding:4px 0 10px"><span class="small" style="margin-right:auto">' + (list.length ? "" : esc(t.tplNone)) + '</span><button type="button" class="ib sm" data-a="tplNew"' + tip(t.tplEditHint) + ">" + I.plus + "</button></div>";
+    }
+    return h + "</div>";
+  }
+
   function veil(t) { return '<div class="list veil">' + I.eyeOff + "<span>" + esc(t.hiddenNote) + "</span></div>"; }
   function viewTasks(t) {
     if (S.hidden) { return veil(t); }
@@ -921,6 +954,29 @@
       S.tasksOpen = !S.tasksOpen;
       if (S.tasksOpen) { S.settingsOpen = false; S.aboutOpen = false; S.findOpen = false; loadTasks(); }
     },
+    tplAsk: function () { S.tplOpen = !S.tplOpen; S.tplEdit = null; S.tplDel = null; },
+    tplNew: function () { S.tplEdit = { idx: -1, name: "", prompt: "" }; },
+    tplEdit: function (v) { var x = myTemplates()[parseInt(v, 10)]; if (x) { S.tplEdit = { idx: parseInt(v, 10), name: x.name, prompt: x.prompt }; S.tplDel = null; } },
+    tplCancel: function () { S.tplEdit = null; },
+    tplSave: function () {
+      var ed = S.tplEdit;
+      if (!ed || !ed.name.trim() || !ed.prompt.trim()) { return; }
+      var list = myTemplates().map(function (x) { return { id: x.id, name: x.name, prompt: x.prompt }; });
+      if (ed.idx >= 0 && list[ed.idx]) { list[ed.idx].name = ed.name; list[ed.idx].prompt = ed.prompt; } else { list.push({ name: ed.name, prompt: ed.prompt }); }
+      S.tplEdit = null;
+      api("POST", "/api/settings", { templates: list }).then(refresh).catch(function (e) { flash(T().error + e.message); });
+    },
+    tplDelAsk: function (v) { S.tplDel = parseInt(v, 10); S.tplEdit = null; },
+    tplDelNo: function () { S.tplDel = null; },
+    tplDelGo: function () {
+      var i = S.tplDel; S.tplDel = null;
+      var list = myTemplates().filter(function (x, k) { return k !== i; });
+      api("POST", "/api/settings", { templates: list }).then(refresh).catch(function (e) { flash(T().error + e.message); });
+    },
+    tplStar: function (v) {
+      var x = myTemplates()[parseInt(v, 10)];
+      if (x) { api("POST", "/api/settings", { template_default: (S.server.settings.template_default === x.id) ? "" : x.id }).then(refresh).catch(function (e) { flash(T().error + e.message); }); }
+    },
     taskEdit: function (v) { var a = S.tasks && S.tasks[parseInt(v, 10)]; if (a) { S.taskEdit = { i: parseInt(v, 10), what: a.what, who: a.who || "", when: a.when || "" }; S.taskDel = null; } },
     taskCancel: function () { S.taskEdit = null; },
     taskSave: function () {
@@ -989,9 +1045,12 @@
     cycleTpl: function () {
       var id = S.open, full = S.full[id];
       if (!full) { return; }
-      var next = TPL[(TPL.indexOf(noteTpl(full)) + 1) % TPL.length];
-      api("POST", "/api/note/" + encodeURIComponent(id) + "/template", { template: next }).then(function () { delete S.full[id]; return refresh(); })
-        .catch(function (e) { flash(T().error + e.message); });
+      var order = TPL.concat(myTemplates().map(function (x) { return x.id; })), next = order[(order.indexOf(noteTplKey(full)) + 1) % order.length];
+      api("POST", "/api/note/" + encodeURIComponent(id) + "/template", { template: next }).then(function () {
+        delete S.full[id];
+        if (TPL.indexOf(next) < 0) { return A.rerun(); }  // one of the person's templates is an instruction: the note is written again with it
+        return refresh();
+      }).catch(function (e) { flash(T().error + e.message); });
     },
     cycle: function (v) {
       var order = v === "lvl" ? ["short", "mid", "full"] : v === "sp" ? ["auto", "fr", "en"] : ["fr", "en"], cur = v === "lvl" ? S.rr : v === "sp" ? S.sp : S.rl;
@@ -1135,6 +1194,8 @@
     if (ev.target.id === "keyInput") { S.keyDraft = ev.target.value; }
     if (ev.target.id === "hfInput") { S.hfDraft = ev.target.value; }
     if (ev.target.id === "vocabInput") { S.vocabDraft = ev.target.value; }
+    if (S.tplEdit && ev.target.id === "tplName") { S.tplEdit.name = ev.target.value; }
+    if (S.tplEdit && ev.target.id === "tplPrompt") { S.tplEdit.prompt = ev.target.value; }
     if (S.taskEdit && ev.target.id === "tkWhat") { S.taskEdit.what = ev.target.value; }
     if (S.taskEdit && ev.target.id === "tkWho") { S.taskEdit.who = ev.target.value; }
     if (S.taskEdit && ev.target.id === "tkWhen") { S.taskEdit.when = ev.target.value; }
@@ -1144,7 +1205,7 @@
     if (ev.target.id === "spkInput") { S.spkDraft = ev.target.value; }
   });
   document.addEventListener("keydown", function (ev) {
-    if (ev.key === "Escape") { closeText(); if (S.exp) { S.exp = null; render(); } if (S.taskEdit) { S.taskEdit = null; render(); } }
+    if (ev.key === "Escape") { closeText(); if (S.exp) { S.exp = null; render(); } if (S.taskEdit) { S.taskEdit = null; render(); } if (S.tplEdit) { S.tplEdit = null; render(); } }
     if (ev.key === "Enter" && ev.target.id === "tkWhat") { A.taskSave(); render(); }
     if (ev.key === "Enter" && ev.target.id === "nameInput") { A.saveName(); }
     if (ev.key === "Enter" && ev.target.id === "folderInput") { A.folderSave(); }

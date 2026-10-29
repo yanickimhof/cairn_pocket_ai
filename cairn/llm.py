@@ -272,7 +272,7 @@ def followup(note, lang):
     return {"subject": str(data.get("subject") or "").strip()[:200], "body": body}
 
 
-def summarize(text, level, lang, progress=None, vocabulary=None):
+def summarize(text, level, lang, progress=None, vocabulary=None, instructions=None):
     """Structured note: title, type, TL;DR, actions and, depending on the level, more."""
     if len(text.split()) < 5:
         return {"empty": True, "template": "other", "title": "", "tldr": "", "actions": []}
@@ -287,6 +287,9 @@ def summarize(text, level, lang, progress=None, vocabulary=None):
     if vocabulary:
         system += (" Spell these names and terms exactly as listed, and use the listed spelling whenever the transcript has a close "
                    "variant of one of them: %s." % "; ".join(vocabulary[:300]))
+    if instructions:
+        system += (" The person asked for this kind of note: %s. Follow it for what the fields contain and how they read, "
+                   "and keep inventing nothing." % instructions)
     raw = chat(system, source, schema=_schema(level), num_ctx=_ctx(source))
     try:
         data = json.loads(raw)

@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
-from . import battery, catalog, config, diarize, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, speech, vocab
+from . import battery, catalog, config, diarize, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, speech, templates, vocab
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -622,11 +622,17 @@ def make_handler(app):
                 return self._json(200, {"ok": True})
             if method == "POST" and action == "template":
                 kind = body.get("template")
-                if kind not in llm.TEMPLATES:
+                custom = templates.find(config.load_settings().get("templates"), kind)
+                if kind not in llm.TEMPLATES and not custom:
                     raise ApiError(400, "bad_template")
                 note = app.get_note(note_id)
                 note["template"] = kind  # the person's choice, kept when the note is redone
-                note["summary"] = dict(note.get("summary") or {}, template=kind)
+                summary = {k: v for k, v in (note.get("summary") or {}).items() if k not in ("custom", "template_name")}
+                if custom:  # the note is written again with its instruction (the page asks for it)
+                    summary.update(custom=custom["id"], template_name=custom["name"])
+                else:
+                    summary["template"] = kind
+                note["summary"] = summary
                 app.store.save(note)
                 return self._json(200, {"ok": True})
             if method == "POST" and action == "rerun":

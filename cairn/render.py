@@ -52,7 +52,9 @@ def _meta(note, lab):
     if note.get("duration"):
         parts.append(stamp(note["duration"]))
     summary = note.get("summary") or {}
-    if summary.get("template") in lab["templates"]:
+    if summary.get("template_name"):
+        parts.append(summary["template_name"])
+    elif summary.get("template") in lab["templates"]:
         parts.append(lab["templates"][summary["template"]])
     parts += ["%s %d %%" % (text, value) for text, value in _scores(note, lab)]
     return " · ".join(parts)
@@ -163,7 +165,9 @@ def to_html(note, transcript=True, fragment=False):
         chips.append(e(note["date"].replace("T", " ")[:16]))
     if note.get("duration"):
         chips.append(e(stamp(note["duration"])))
-    if s.get("template") in lab["templates"]:
+    if s.get("template_name"):
+        chips.append(e(s["template_name"]))
+    elif s.get("template") in lab["templates"]:
         chips.append(e(lab["templates"][s["template"]]))
     if chips or _scores(note, lab):
         body.append(

@@ -7,7 +7,7 @@ import tempfile
 import threading
 from pathlib import Path
 
-from . import catalog, vocab
+from . import catalog, templates, vocab
 
 VERSION = "0.3.0"
 REPO = "yanickimhof/cairn_pocket_ai"
@@ -17,7 +17,7 @@ LOOPBACK = re.compile(r"127\.0\.0\.1:\d{2,5}")
 DEFAULT_LLM = "qwen3:4b"
 LEVELS = ("short", "mid", "full")
 LANGS = ("fr", "en")
-DEFAULT_SETTINGS = {"ui": None, "audio_dir": None, "llm": None, "speech": None, "autocheck": True, "autoimport": True, "autoprocess": False, "pocket_key": None, "diarize": False, "diarize_device": "auto", "vocabulary": [], "hf_token": None}
+DEFAULT_SETTINGS = {"ui": None, "audio_dir": None, "llm": None, "speech": None, "autocheck": True, "autoimport": True, "autoprocess": False, "pocket_key": None, "diarize": False, "diarize_device": "auto", "vocabulary": [], "templates": [], "template_default": "", "hf_token": None}
 
 _lock = threading.RLock()
 
@@ -117,6 +117,14 @@ def save_settings(patch):
                 current["diarize_device"] = value
             elif key == "vocabulary":
                 current["vocabulary"] = vocab.parse(value)
+            elif key == "templates":
+                current["templates"] = templates.parse(value)
+                if current.get("template_default") and not templates.find(current["templates"], current["template_default"]):
+                    current["template_default"] = ""  # the template that was the default is gone
+            elif key == "template_default":
+                if value and not templates.find(current.get("templates"), value):
+                    raise ValueError("Unknown template.")
+                current["template_default"] = value or ""
             elif key == "hf_token":
                 # a Hugging Face access token, used only to download the gated diarization model once.
                 # Not sent anywhere by Cairn beyond that one download; never logged. Empty clears it.

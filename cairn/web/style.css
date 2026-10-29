@@ -167,3 +167,5 @@ a.ib{text-decoration:none}
 .tedit input{width:100%;min-width:0;min-height:40px;padding:6px 12px;border-radius:10px;border:1.5px solid var(--blue);background:#fff;color:var(--ink);font-size:15px;outline:none}
 .tconfirm{padding:0 0 8px 40px;align-items:center}
 .trow .ib.sm{flex:0 0 38px}
+.tpls{padding:0 0 4px}
+.tedit textarea{width:100%;padding:8px 12px;border-radius:10px;border:1.5px solid var(--blue);background:#fff;color:var(--ink);font:inherit;font-size:15px;outline:none;resize:vertical}

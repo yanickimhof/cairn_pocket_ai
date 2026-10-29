@@ -181,6 +181,33 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   await settle();
   check(calls.some((c) => c === "POST /api/vocabulary/apply") && page.innerHTML.indexOf('data-a="pickTog"') === -1, "the chosen notes are sent, the list comes back");
 
+  // note templates of your own: a name and an instruction, one of them can be the default
+  fx.state.settings.templates = [{ id: "c-mine-1", name: "Client report", prompt: "goals, risks" }];
+  fx.state.settings.template_default = "";
+  timers.splice(0).forEach((fn) => fn());
+  await settle();
+  click({ "data-a": "settings" });
+  await settle();
+  check(page.innerHTML.indexOf('data-a="tplAsk"') !== -1, "the settings offer the templates");
+  click({ "data-a": "tplAsk" });
+  await settle();
+  check(page.innerHTML.indexOf('data-a="tplStar"') !== -1 && page.innerHTML.indexOf("Client report") !== -1 && page.innerHTML.indexOf('data-a="tplNew"') !== -1, "the templates are listed with their star");
+  click({ "data-a": "tplNew" });
+  await settle();
+  check(page.innerHTML.indexOf('id="tplName"') !== -1 && page.innerHTML.indexOf('id="tplPrompt"') !== -1, "a new template opens its two fields");
+  (listeners.input || []).forEach((fn) => fn({ target: { id: "tplName", value: "Weekly" } }));
+  (listeners.input || []).forEach((fn) => fn({ target: { id: "tplPrompt", value: "what moved this week" } }));
+  click({ "data-a": "tplSave" });
+  await settle();
+  check(calls.some((c) => c === "POST /api/settings") && page.innerHTML.indexOf('id="tplName"') === -1, "the template is saved");
+  click({ "data-a": "tplDelAsk", "data-v": "0" });
+  await settle();
+  check(page.innerHTML.indexOf('data-a="tplDelGo"') !== -1, "deleting a template asks first");
+  click({ "data-a": "tplDelNo" });
+  click({ "data-a": "tplAsk" });
+  click({ "data-a": "settings" });
+  await settle();
+
   // a running job shows its progress on the right row
   fx.state.job = { running: true, kind: "import", step: "transcribing", id: waiting.id, done: 0, total: 1, pct: 40, errors: [] };
   timers.splice(0).forEach((fn) => fn());
