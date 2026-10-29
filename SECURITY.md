@@ -8,7 +8,7 @@ Use GitHub's private vulnerability reporting (Security tab, "Report a vulnerabil
 
 | Component | Version | Size | From | Protection |
 |---|---|---|---|---|
-| Cairn files | The release named in the install command (`v0.3.0`), or the tag in `CAIRN_REF` | Under 1 MB | GitHub | HTTPS only (TLS 1.2 or later), fixed release rather than a moving branch |
+| Cairn files | The release named in the install command (`v0.4.0`), or the tag in `CAIRN_REF` | Under 1 MB | GitHub | HTTPS only (TLS 1.2 or later), fixed release rather than a moving branch |
 | Python manager (uv) | 0.11.32 | About 30 MB | astral.sh | Official installer at a fixed version, kept in the Cairn folder, your shell profile is untouched |
 | Python | 3.11 | About 90 MB | uv | Kept in the Cairn folder |
 | Python packages | Pinned in `requirements/` | About 1 GB | PyPI | Versions and SHA-256 hashes pinned, installed with `--require-hashes` |
@@ -32,14 +32,14 @@ About 5.5 GB in total on a clean Mac and 7 GB on Windows (estimates). An existin
 An internal review, not a third-party audit.
 
 - **Automated, on every change:** unit and end-to-end tests with a stub speech engine and model server, a test that loads and drives the page script, shell and Python static analysis (shellcheck, bandit), a scan for secrets and personal paths, and a complete install and application test on macOS and Windows.
-- **Reviewed by hand and by test:** the local API (session, Host check, change header, content security policy), path handling on the Pocket (links are not followed), escaping of every export format, the update check, the installers and their downloads, the response to a disconnected Pocket, a stopped model server, a full disk, a corrupted note and a deleted recording.
+- **Reviewed by hand and by test:** the local API (session, Host check, change header, content security policy), the audio of a note served to the page only as an audio file listed in that note, by byte ranges, path handling on the Pocket (links are not followed), escaping of every export format, the update check, the installers and their downloads, the response to a disconnected Pocket, a stopped model server, a full disk, a corrupted note and a deleted recording.
 - **Accessibility:** automated WCAG 2.1 AA checks (axe-core) on every screen, light and dark, and a keyboard walk. A test with a screen reader has not been done.
 - **Dependencies:** pinned by hash, watched by Dependabot. Open alerts and why they do not apply are listed below.
 
 ## Known limits
 
 - The network guard works inside the program. A proxy set in the environment (`HTTPS_PROXY` pointing at this computer) would carry connections through that proxy: the daily privacy check observes the real connections and reports it.
-- Dependabot reports `setuptools` (legacy wheel installation) and `mlx` (`load_gguf`, `load`). Cairn never calls them: it loads fixed speech models, no GGUF file, and installs only hashed wheels. Updating `mlx` means rebuilding the pinned package list for macOS 14, the minimum system, and is planned. `torch` ships only if you turn on speaker identification (below); Cairn calls it solely through the pyannote pipeline, never `torch.jit.script` directly.
+- Dependabot reported `setuptools` (legacy wheel installation) and `mlx` (`load_gguf`, `load`). Cairn never called them: it loads fixed speech models, no GGUF file, and installs only hashed wheels. The pinned package list is built for macOS 14 and later (`mlx` 0.32, `torch` 2.15, `setuptools` 84), which closes these advisories in the packages you install. `torch` ships only if you turn on speaker identification (below); Cairn calls it solely through the pyannote pipeline, never `torch.jit.script` directly.
 - The Pocket battery reading (macOS) runs as a separate small program (Bluetooth only, read only), outside the in-program network guard. It opens no network connection, and the daily privacy check still covers the app and the speech engine. The optional Pocket status reading (firmware, state, storage, from your own session key) runs the same way, in its own small program, sending only the documented read commands.
 - Speaker identification is off by default and optional. Installing its model is the one case where Cairn reaches the network beyond the daily version check: it runs `pip install pyannote.audio` and downloads the model's weights from Hugging Face, using the token you provide, in a separate process outside the in-program network guard (the same pattern as installing a speech or summary model). Once installed, recognition runs fully offline.
 - A summary written by a language model can contain errors: the fidelity indicator catches invented numbers and names, not every mistake.
@@ -50,7 +50,7 @@ An internal review, not a third-party audit.
 Piping a script into a shell means trusting it. To read it first:
 
 ```
-curl --proto '=https' --tlsv1.2 -fsSLO https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.3.0/install.sh
+curl --proto '=https' --tlsv1.2 -fsSLO https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.4.0/install.sh
 less install.sh
 bash install.sh
 ```

@@ -22,8 +22,23 @@ Cairn tells the speakers apart, and you name each voice.
 **Notes that get to the point.**
 A summary, the actions, the key points and the decisions, at the level of detail you choose.
 
+**Your note, your format.**
+Write a template once, a name and an instruction, and every note follows it.
+
+**Find it, then hear it.**
+Search every word of every note, filter by tag, and tap a time stamp to listen from that line.
+
+**Tags, not folders.**
+Organize with free words, and let Cairn suggest them from your own.
+
+**All your actions, one list.**
+Every action from every note, by person. Tick, correct, copy.
+
+**The follow-up email, written.**
+One tap drafts it from the note, ready for your mail app.
+
 **Your names, spelled right.**
-Teach Cairn the people and places it gets wrong, and it corrects them everywhere.
+Teach Cairn names and places, even only in the right context, and update your notes in one tap.
 
 **A score you can trust.**
 Every note shows how faithful it is to what was said, and flags the passages to check.
@@ -51,7 +66,7 @@ What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
 |---|---|
 | ![HTML export](docs/screenshots/html-export.png) | ![Email](docs/screenshots/email.png) |
 
-> **Status: v0.3.0, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
+> **Status: v0.4.0, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
 
 ## Install
 
@@ -60,13 +75,13 @@ Paste one command in a terminal. It detects your system and installs everything 
 bash or zsh:
 
 ```
-curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.3.0/install.sh | bash
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.4.0/install.sh | bash
 ```
 
 PowerShell:
 
 ```
-irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.3.0/install.ps1 | iex
+irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.4.0/install.ps1 | iex
 ```
 
 | | Minimum | Recommended |
@@ -95,7 +110,7 @@ You need neither the Pocket desktop app nor a Pocket account on the computer.
 
 > **Speaker identification (optional):** in Settings, add your Hugging Face token, install its model (Settings > Models), then switch it on to see who's speaking in the transcript and the note. Speakers can be given a real name from the transcript view, and an older recording can be rediarized on demand. Off by default, fully local once installed; see [docs/GUIDE.md](docs/GUIDE.md#speaker-identification-diarization-optional) for setup, including the Hugging Face access you need to accept once. On a Mac with Apple silicon it runs on the graphics chip by default, at least four times faster with the same result; Settings can switch it to the processor.
 
-> **Names and places (optional):** in Settings, add the names of people and places and the rare terms you use to Vocabulary, one per line. Cairn writes close variants as listed in the transcript, tells the summary the spelling, and shows every correction on the note. `Sion => Acme` always replaces one word with another.
+> **Names and places (optional):** in Settings, add the names of people and places and the rare terms you use to Vocabulary, one per line. Cairn writes close variants as listed in the transcript, tells the summary the spelling, and shows every correction on the note. `Sion, Cion => Acme` always replaces each spelling, and `Science Day => ACME Day | awards, ceremony` only near those words. One tap then updates the notes that need it.
 
 > **Choose your models (optional):** the default install uses Whisper large-v3-turbo and Qwen3 4B. In Settings > Models you can switch the speech model to Whisper large-v3 (3.1 GB, slower, 16 GB of memory advised) and the summary model to Qwen3 8B or 14B. Nothing downloads until you confirm, and a model already in your Ollama is reused. Sizes shown for installed models are the real ones on your computer.
 
@@ -104,8 +119,9 @@ You need neither the Pocket desktop app nor a Pocket account on the computer.
 1. Start Cairn: open `~/Cairn/Cairn.app` (macOS), the Start menu shortcut or `Cairn.cmd` (Windows), or run `~/Cairn/bin/cairn`. A page opens, served only by your computer and protected by a session key.
 2. Connect your Pocket. Cairn copies and verifies the new recordings and lists them as waiting, so you see everything and decide what to process.
 3. Press the central button (its badge counts what is waiting) to process the queue, or tap one recording. Cairn transcribes with Whisper, then titles and summarizes with a local model (a Qwen model through Ollama), at the level of detail, in the language and with the type you choose for each recording. Settings can import and process by themselves.
-4. Each note shows two indicators, the fidelity of the note to its transcript and the speech engine's confidence in the raw transcript, and highlights the passages worth checking. Rename, copy or export it (Markdown, HTML, to `~/Cairn/Exports`).
-5. Delete a recording when you no longer want it: it goes from the Pocket and from your computer in one step, for good, because the Pocket has no protection of its own.
+4. Each note shows two indicators, the fidelity of the note to its transcript and the speech engine's confidence in the raw transcript, and highlights the passages worth checking. Rename, tag, copy or export it (Markdown, HTML, to `~/Cairn/Exports`), tap a time stamp to hear the recording from that line, or write the follow-up email.
+5. The magnifier searches every note (`#tag` filters), and the checklist icon gathers all your actions in one list.
+6. Delete a recording when you no longer want it: it goes from the Pocket and from your computer in one step, for good, because the Pocket has no protection of its own.
 
 Models, speed, background mode, web app and other details: [docs/GUIDE.md](docs/GUIDE.md). Install options, update and troubleshooting: [docs/INSTALL.md](docs/INSTALL.md).
 

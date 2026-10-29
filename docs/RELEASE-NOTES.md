@@ -63,7 +63,7 @@ No account, no cloud, no telemetry. Cairn checks every day that nothing leaves y
 **Always there.**
 Runs quietly in the background, in English or French.
 
-## Coming next
+## Later
 
 **Linux, and installs without Internet.**
 
