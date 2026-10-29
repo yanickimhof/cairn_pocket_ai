@@ -7,7 +7,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import awake, config, diarize, llm, pocket, privacy, score, speech
+from . import awake, config, diarize, llm, pocket, privacy, score, speech, vocab
 from .notes import guess_date, make_id
 
 
@@ -288,7 +288,7 @@ class Jobs:
         try:
             spoken = note.get("speech_lang") if note.get("speech_lang") in config.LANGS else None  # None: the engine detects it
             key = speech.model_key()
-            if note.get("segments") and note.get("transcribed_key") == key and (note.get("transcribed_lang") or None) == spoken:
+            if self._transcript_current(note, spoken, key):
                 reused.append("transcribing")  # already transcribed with this model and language: that work is never redone
             else:
                 if settings.get("diarize") and diarize.available() and diarize.parallel_ok():
@@ -322,7 +322,15 @@ class Jobs:
                         diarize.assign(note["segments"], turns, lang)
                         note["diarized"] = True
                         keep()
-            note["clean"] = "\n\n".join(speech.raw_lines(note["segments"]))  # the recognized text is already punctuated
+            terms = settings.get("vocabulary") or []
+            fixes = vocab.apply(note["segments"], terms)  # always run: it puts the original word back when an entry was removed
+            note["vocab_key"] = vocab.key(terms)
+            if fixes:
+                note["vocab_fixes"] = fixes
+            else:
+                note.pop("vocab_fixes", None)
+            names = note.get("speaker_names") or {}
+            note["clean"] = "\n\n".join(speech.raw_lines(diarize.renamed(note["segments"], names) if names else note["segments"]))
             step("summarizing")
             began = time.time()
             self._summarize(note, level, lang)
@@ -354,6 +362,16 @@ class Jobs:
             if waiting_pass is not None:  # the transcription failed or was stopped: the speaker pass is of no use now
                 waiting_pass.cancel()
 
+    @staticmethod
+    def _transcript_current(note, spoken, key):
+        """Was the transcript kept with the note made with the speech model and language in use now?"""
+        if not note.get("segments"):
+            return False
+        if note.get("transcribed_key"):
+            return note["transcribed_key"] == key and (note.get("transcribed_lang") or None) == spoken
+        made_with = (note.get("models") or {}).get("speech")  # a finished note from before this was recorded
+        return bool(made_with and made_with == speech.model_name() and (note.get("speech_lang_used") or None) == spoken)
+
     def _summarize(self, note, level, lang):
         text = note.get("clean") or ""
         total = llm.parts_of(text)
@@ -366,7 +384,7 @@ class Jobs:
             self._set(part=index + 1, parts=total, call=(index, total, starts[-1], max(usual, 5.0)) if total > 1 else None,
                       pct=0 if total > 1 else None)
 
-        summary = llm.summarize(text, level, lang, progress)
+        summary = llm.summarize(text, level, lang, progress, vocabulary=vocab.spellings(config.load_settings().get("vocabulary")))
         note["summary"], note["lang"] = summary, lang
         heard = note.get("heard")
         note["fidelity"], note["fidelity_basis"] = score.fidelity_detail(summary, text, words_ok=heard in (None, lang))
@@ -389,7 +407,9 @@ class Jobs:
         note = self.store.get(note_id)
         spoken_changed = note.get("speech_lang") != note.get("speech_lang_used")
         again = ((bool(made_with) and made_with != speech.model_name()) or spoken_changed) and os.path.exists(note.get("audio", ""))
-        if again:
+        words_changed = (bool(note.get("segments")) and os.path.exists(note.get("audio", ""))
+                         and note.get("vocab_key", "") != vocab.key(config.load_settings().get("vocabulary")))
+        if again or words_changed:  # the transcript and the speakers are kept unless the speech model or language changed
             self._start("import", self._one, note_id)
         else:
             self._start("rerun", self._rerun, note_id, level)

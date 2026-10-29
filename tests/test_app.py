@@ -1532,6 +1532,105 @@ class DiarizeDeviceTest(unittest.TestCase):
             self.assertEqual(seen["CAIRN_DIARIZE_DEVICE"], expected)
 
 
+class VocabularyTest(unittest.TestCase):
+    def test_entries_are_parsed_and_bounded(self):
+        from cairn import vocab
+
+        self.assertEqual(vocab.parse("Acme\nSpringfield; Acme, Yverdon\n\n  Gros-de-Vaud "), ["Acme", "Springfield", "Yverdon", "Gros-de-Vaud"])
+        self.assertEqual(vocab.parse(["A name", "a name"]), ["A name"])
+        self.assertEqual(vocab.parse(""), [])
+        with self.assertRaises(ValueError):
+            vocab.parse("x" * 61)
+        with self.assertRaises(ValueError):
+            vocab.parse([str(i) + "abcd" for i in range(vocab.MAX_TERMS + 1)])
+        with self.assertRaises(ValueError):
+            vocab.parse(12)
+
+    def test_close_variants_are_corrected_and_other_words_are_not(self):
+        from cairn import vocab
+
+        fixed = lambda terms, text: vocab.fix_text(text, terms)[0]
+        self.assertEqual(fixed(["Acme"], "The Sion awards"), "The Acme awards")
+        self.assertEqual(fixed(["Springfield"], "à Eschalens et Échalens"), "à Springfield et Springfield")
+        self.assertEqual(fixed(["Globex"], "chez Kudelsky et Koudelski"), "chez Globex et Globex")
+        self.assertEqual(fixed(["Yverdon"], "à Iverdon"), "à Yverdon")
+        # a different name, a common word, a word that already is the entry: left alone
+        self.assertEqual(fixed(["Laurent"], "Laurence et Laurent"), "Laurence et Laurent")
+        self.assertEqual(fixed(["Lise"], "les enfants"), "les enfants")
+        self.assertEqual(fixed(["Marc"], "mars et Marc"), "mars et Marc")
+        self.assertEqual(fixed(["Acme"], "Acme et acme"), "Acme et acme")
+
+    def test_exact_rules_always_apply(self):
+        from cairn import vocab
+
+        text, found = vocab.fix_text("à Sion puis sion encore", ["Sion => Acme"])
+        self.assertEqual(text, "à Acme puis Acme encore")
+        self.assertEqual(len(found), 2)
+        self.assertEqual(vocab.spellings(["Sion => Acme", "Springfield", "Acme"]), ["Acme", "Springfield"])
+
+    def test_the_original_is_kept_and_comes_back_when_an_entry_is_removed(self):
+        from cairn import vocab
+
+        segments = [{"start": 0, "end": 2, "text": "The Sion awards"}, {"start": 2, "end": 4, "text": "nothing here"}]
+        fixes = vocab.apply(segments, ["Acme"])
+        self.assertEqual(fixes, [{"from": "Sion", "to": "Acme", "count": 1}])
+        self.assertEqual((segments[0]["text"], segments[0]["orig"]), ("The Acme awards", "The Sion awards"))
+        self.assertNotIn("orig", segments[1])
+        self.assertEqual(vocab.apply(segments, ["Acme"]), fixes)  # running it again changes nothing
+        self.assertEqual(vocab.apply(segments, []), [])
+        self.assertEqual(segments[0]["text"], "The Sion awards")
+        self.assertNotIn("orig", segments[0])
+
+    def test_the_setting_is_validated_and_the_summary_is_given_the_spellings(self):
+        from unittest import mock
+
+        from cairn import config, llm
+
+        with mock.patch.object(config, "home", return_value=Path(tempfile.mkdtemp())):
+            self.assertEqual(config.load_settings()["vocabulary"], [])
+            self.assertEqual(config.save_settings({"vocabulary": "Acme\nSion => Acme"})["vocabulary"], ["Acme", "Sion => Acme"])
+            with self.assertRaises(ValueError):
+                config.save_settings({"vocabulary": "x" * 99})
+        seen = []
+        with mock.patch.object(llm, "chat", side_effect=lambda system, *a, **k: seen.append(system) or '{"title": "T", "tldr": "x", "actions": []}'):
+            llm.summarize("one two three four five six", "mid", "en", vocabulary=["Acme", "Springfield"])
+            llm.summarize("one two three four five six", "mid", "en")
+        self.assertIn("Acme; Springfield", seen[0])
+        self.assertNotIn("Spell these names", seen[1])
+
+    def test_corrections_are_kept_with_the_note_and_speaker_names_survive(self):
+        from unittest import mock
+
+        from cairn import jobs
+
+        segments = [{"start": 0.0, "end": 2.0, "text": "The Sion awards today.", "logprob": -0.2, "speaker": "Speaker 1"}]
+        job, store = RetryAndResumeTest()._jobs(a={"status": "done", "segments": segments, "duration": 2.0, "lang": "en",
+                                                   "transcribed_key": "k", "transcribed_lang": "", "speaker_names": {"Speaker 1": "Marc"}})
+        with mock.patch.object(jobs.speech, "model_key", return_value="k"), mock.patch.object(jobs.speech, "model_name", return_value="W"), \
+                mock.patch.object(jobs.config, "install_config", return_value={"llm": "m"}), mock.patch.object(job, "_summarize"):
+            job._process("a", {"ui": "en", "diarize": False, "vocabulary": ["Acme"]})
+        note = store.get("a")
+        self.assertEqual(note["vocab_fixes"], [{"from": "Sion", "to": "Acme", "count": 1}])
+        self.assertIn("Marc: The Acme awards today.", note["clean"])
+        self.assertEqual(note["segments"][0]["orig"], "The Sion awards today.")
+        self.assertEqual(note["timings"]["reused"], ["transcribing"])
+
+    def test_a_changed_vocabulary_redoes_the_words_without_transcribing_again(self):
+        from unittest import mock
+
+        from cairn import jobs, vocab
+
+        job, store = RetryAndResumeTest()._jobs(a={"status": "done", "segments": [{"start": 0, "end": 1, "text": "x"}], "vocab_key": vocab.key([]),
+                                                   "models": {"speech": "W"}, "speech_lang_used": None, "level": "mid", "lang": "en"})
+        started = []
+        for terms, expected in ((["Acme"], "_one"), ([], "_rerun")):
+            started.clear()
+            with mock.patch.object(jobs.speech, "model_name", return_value="W"), mock.patch.object(jobs.config, "load_settings", return_value={"vocabulary": terms}), \
+                    mock.patch.object(job, "_start", side_effect=lambda kind, target, *a: started.append(target.__name__)):
+                self.assertFalse(job.start_rerun("a", "mid"))  # False: the audio is not transcribed again
+            self.assertEqual(started, [expected])
+
+
 class SpeedTest(unittest.TestCase):
     def test_a_speaker_pass_can_be_stopped_at_once(self):
         import subprocess

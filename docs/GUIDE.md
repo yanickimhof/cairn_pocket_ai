@@ -63,6 +63,16 @@ The default install is the smallest that gives good results: Whisper large-v3-tu
 
 For sharper notes, open **Settings, Models**, pick a larger model (Qwen3 8B or 14B, Whisper large-v3), confirm the download, then press **Use**. Nothing downloads without your click, and a model can be removed from the same screen to free disk space. If Qwen3 8B is already in your Ollama, Cairn uses it. It never modifies your existing Ollama or models.
 
+## Names and places
+
+Rare names and places are the speech engine's weak spot, and the summary then repeats the error. In **Settings, Vocabulary**, list them, one per line.
+
+- A name on its own, such as `Acme`: a word that sounds close to it in the transcript is written as listed (`Sion` becomes `Acme`). Cairn leaves alone a different name (`Laurence` is not turned into `Laurent`) and common words.
+- An exact rule, such as `Sion => Acme`: that word is always replaced. Use it for an error that keeps coming back.
+- The summary is also told the spelling to use.
+- Every correction is listed under the note, and the original word is kept: removing an entry puts it back. Keep entries distinctive: if you speak of both Sion the town and Acme the association, use an exact rule only where it is safe.
+- A new vocabulary applies to recordings processed afterwards. To apply it to a finished note, use the redo button: the transcript and the speakers are kept, only the words and the summary are redone.
+
 ## Speed
 
 The speech model stays loaded between recordings and is released after five idle minutes.

@@ -2,6 +2,11 @@
 
 ## v0.2.1: done
 
+- Personal vocabulary for rare names and places: close variants are corrected in the transcript, the summary is told the spelling, every correction is listed on the note and reversible
+- A failed recording is retried by itself a few times only, with a growing delay, and a transcript or speaker pass already made is never redone
+- The summary model is checked before any long work, so a problem shows in seconds and not after a transcription; a speech engine that stops moving is cut off; the computer is kept awake during a job (macOS)
+- The time spent in each step is kept with the note and logged, without any content
+- Faster: the speaker pass runs while the recording is transcribed (16 GB or more), automatic processing starts as soon as the copy is done, checks are more frequent
 - Models and About show what is really installed on this computer: real sizes, installed and running Ollama versions, correct model names
 - Speaker rediarization and renaming
 - Processing one recording no longer carries on with the whole queue when automatic processing is off

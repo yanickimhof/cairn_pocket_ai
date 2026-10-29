@@ -10,6 +10,7 @@
       aboutLegal: "v{v} · © 2026 Yanick Imhof · Licence MIT · Non affilié à Pocket.", uiLang: "Langue de l’interface",
       off: "Non", on: "Oui",
       devGpuHint: "Identification des interlocuteurs sur la puce graphique (au moins 4 fois plus rapide, même résultat). Cliquer pour utiliser le processeur.", devCpuHint: "Identification des interlocuteurs sur le processeur. Cliquer pour utiliser la puce graphique.",
+      vocab: "Vocabulaire", vocabHint: "Noms de personnes, de lieux et termes rares, un par ligne. Cairn corrige dans la transcription les mots qui leur ressemblent et impose leur orthographe au résumé. « Sion => Acme » remplace toujours Sion par Acme.", vocabPlaceholder: "Un nom ou un terme par ligne", vocabSaved: "Vocabulaire enregistré", vocabFixes: "Corrections du vocabulaire",
       processedIn: "traité en", notInstalled: "Non installé", getIt: "Installer", refText: "Acheter un Pocket : 10 % de réduction", refNote: "Lien de parrainage facultatif. L’offre dépend uniquement de Pocket et peut changer.",
       models: "Modèles", modelsHint: "Choisir ou ajouter des modèles", modelsSpeech: "Transcription", modelsLlm: "Résumés", modelsDiar: "Identification des interlocuteurs",
       hfToken: "Jeton Hugging Face", hfTokenHint: "Nécessaire une seule fois pour télécharger le modèle de diarisation (gratuit, compte Hugging Face requis ; il faut aussi accepter l'accès au modèle sur huggingface.co). Jamais utilisé ailleurs.",
@@ -59,6 +60,7 @@
       aboutLegal: "v{v} · © 2026 Yanick Imhof · MIT license · Not affiliated with Pocket.", uiLang: "Interface language",
       off: "Off", on: "On",
       devGpuHint: "Speaker identification runs on the graphics chip (at least 4 times faster, same result). Click to use the processor.", devCpuHint: "Speaker identification runs on the processor. Click to use the graphics chip.",
+      vocab: "Vocabulary", vocabHint: "Names of people and places and rare terms, one per line. Cairn corrects close variants in the transcript and imposes their spelling on the summary. \"Sion => Acme\" always replaces Sion with Acme.", vocabPlaceholder: "One name or term per line", vocabSaved: "Vocabulary saved", vocabFixes: "Vocabulary corrections",
       processedIn: "processed in", notInstalled: "Not installed", getIt: "Install", refText: "Get a Pocket: 10 % off", refNote: "Optional referral link. The offer is set by Pocket alone and may change.",
       models: "Models", modelsHint: "Choose or add models", modelsSpeech: "Transcription", modelsLlm: "Summaries", modelsDiar: "Speaker identification",
       hfToken: "Hugging Face token", hfTokenHint: "Needed once to download the diarization model (free, a Hugging Face account is required, and you must accept access to the model on huggingface.co). Never used anywhere else.",
@@ -144,7 +146,7 @@
   var S = {
     ui: null, hidden: true, settingsOpen: false, aboutOpen: false, open: null, edit: null, draft: "", exp: null,
     delConfirm: false, rr: "mid", rl: "en", sp: "auto", server: null, full: {}, about: null, upd: null,
-    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: ""
+    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: "", vocabEdit: false, vocabDraft: ""
   };
   var lastView = "";
   var toastTimer = null;
@@ -312,6 +314,13 @@
       [["0", t.off, false], ["1", t.on, true]].map(function (o) {
         return '<button type="button" data-a="autoprocess" data-v="' + o[0] + '" class="' + bg((st.settings.autoprocess === true) === o[2]).trim() + '">' + esc(o[1]) + "</button>";
       }).join("") + "</div></div>";
+    var terms = st.settings.vocabulary || [];
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.vocabHint) + '><span class="text" style="font-size:14px">' + esc(t.vocab) + (terms.length ? " · " + terms.length : "") +
+      '</span><button type="button" class="ib" data-a="vocabAsk"' + tip(t.vocabHint) + ">" + (terms.length ? I.pencil : I.plus) + "</button></div>";
+    if (S.vocabEdit) {
+      h += '<div class="name" style="margin:0 0 6px;align-items:flex-start"><textarea id="vocabInput" rows="5" placeholder="' + esc(t.vocabPlaceholder) + '" aria-label="' + esc(t.vocab) + '">' + esc(S.vocabDraft) +
+        '</textarea><button type="button" class="ib blue" data-a="vocabSave"' + tip(t.saveName) + ">" + I.checkW + "</button></div>";
+    }
     h += '<div class="hr"></div><div class="setrow"' + tip(t.hfTokenHint) + ">" + I.hf;
     if (st.settings.hf_token) {
       var gpu = (st.settings.diarize_device || "auto") !== "cpu";
@@ -468,6 +477,10 @@
       if (full.models && full.models.llm) { info.push(full.models.llm); }
       if (full.elapsed) { info.push(t.processedIn + " " + fmtDur(full.elapsed)); }
       if (info.length) { h += '<div class="small" style="margin-top:10px">' + esc(info.join(" · ")) + "</div>"; }
+      var vf = full.vocab_fixes || [];
+      if (vf.length) {
+        h += '<div class="small" style="margin-top:6px">' + esc(t.vocabFixes + " : " + vf.map(function (f) { return f.from + " \u2192 " + f.to + (f.count > 1 ? " \u00d7" + f.count : ""); }).join(", ")) + "</div>";
+      }
       h += "</div>";
     }
     return h + "</div>";
@@ -825,6 +838,15 @@
     diarize: function (v) {
       api("POST", "/api/settings", { diarize: v === "1" }).then(refresh).catch(function (e) { flash(T().error + e.message); });
     },
+    vocabAsk: function () {
+      S.vocabEdit = !S.vocabEdit;
+      S.vocabDraft = S.vocabEdit ? (S.server.settings.vocabulary || []).join("\n") : "";
+    },
+    vocabSave: function () {
+      var t = T();
+      api("POST", "/api/settings", { vocabulary: S.vocabDraft }).then(function () { S.vocabEdit = false; flash(t.vocabSaved); refresh(); })
+        .catch(function (e) { flash(t.error + e.message); });
+    },
     hfAsk: function () {
       S.hfEdit = !S.hfEdit;
       S.hfDraft = S.hfEdit ? (S.server.settings.hf_token || "") : "";
@@ -879,6 +901,7 @@
     if (ev.target.id === "folderInput") { S.folderDraft = ev.target.value; }
     if (ev.target.id === "keyInput") { S.keyDraft = ev.target.value; }
     if (ev.target.id === "hfInput") { S.hfDraft = ev.target.value; }
+    if (ev.target.id === "vocabInput") { S.vocabDraft = ev.target.value; }
     if (ev.target.id === "spkInput") { S.spkDraft = ev.target.value; }
   });
   document.addEventListener("keydown", function (ev) {

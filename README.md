@@ -64,6 +64,8 @@ You need neither the Pocket desktop app nor a Pocket account on the computer.
 
 > **Speaker identification (optional):** in Settings, add your Hugging Face token, install its model (Settings > Models), then switch it on to see who's speaking in the transcript and the note. Speakers can be given a real name from the transcript view, and an older recording can be rediarized on demand. Off by default, fully local once installed; see [docs/GUIDE.md](docs/GUIDE.md#speaker-identification-diarization-optional) for setup, including the Hugging Face access you need to accept once. On a Mac with Apple silicon it runs on the graphics chip by default, at least four times faster with the same result; Settings can switch it to the processor.
 
+> **Names and places (optional):** in Settings, add the names of people and places and the rare terms you use to Vocabulary, one per line. Cairn writes close variants as listed in the transcript, tells the summary the spelling, and shows every correction on the note. `Sion => Acme` always replaces one word with another.
+
 > **Choose your models (optional):** the default install uses Whisper large-v3-turbo and Qwen3 4B. In Settings > Models you can switch the speech model to Whisper large-v3 (3.1 GB, slower, 16 GB of memory advised) and the summary model to Qwen3 8B or 14B. Nothing downloads until you confirm, and a model already in your Ollama is reused. Sizes shown for installed models are the real ones on your computer.
 
 ## Use it

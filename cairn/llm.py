@@ -225,7 +225,7 @@ def _condense(text, lang, progress=None):
     return "\n".join(out)
 
 
-def summarize(text, level, lang, progress=None):
+def summarize(text, level, lang, progress=None, vocabulary=None):
     """Structured note: title, type, TL;DR, actions and, depending on the level, more."""
     if len(text.split()) < 5:
         return {"empty": True, "template": "other", "title": "", "tldr": "", "actions": []}
@@ -237,6 +237,9 @@ def summarize(text, level, lang, progress=None):
         "Provide %s. Be factual and concise. Invent nothing: leave a field empty when the transcript does not say. "
         "Actions name who does what and by when only when the transcript says so." % (NAMES[lang], _FIELDS[level])
     )
+    if vocabulary:
+        system += (" Spell these names and terms exactly as listed, and use the listed spelling whenever the transcript has a close "
+                   "variant of one of them: %s." % "; ".join(vocabulary[:300]))
     raw = chat(system, source, schema=_schema(level), num_ctx=_ctx(source))
     try:
         data = json.loads(raw)
