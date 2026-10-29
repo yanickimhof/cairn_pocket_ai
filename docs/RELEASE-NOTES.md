@@ -1,36 +1,74 @@
 # Release notes
 
-## 0.3: faster, steadier, and it knows your names
+## 0.3
 
-- **Your names, spelled right.** Add the names and places Whisper misses. Cairn fixes them in the transcript and the summary, and shows every change.
-- **Speakers 4.5 times faster.** Your Mac's graphics chip does the work, same result.
-- **Who said what, fixed afterwards.** Redo the speakers of any note and rename them.
-- **Hands free.** It starts when the copy ends, keeps the Mac awake, and retries a failure by itself.
-- **No hour lost.** A problem shows in seconds, a frozen engine is cut off, Stop really stops.
-- **Light on memory.** A 16 GB Mac is enough: the speaker pass drops from 82 to 22 seconds.
-- **What you see is what you have.** Models and About show real sizes and versions.
+**Your names, spelled right.**
+Teach Cairn the names and places it gets wrong. Every transcript and summary then spells them your way.
 
-## 0.2: who said what
+**Speakers, 4.5 times faster.**
+Cairn now uses your Mac's graphics chip to tell who is speaking. Same result, a fraction of the time.
 
-- **Who said what.** Speakers told apart on your computer, installed only when you want it.
-- **Your Pocket at a glance.** Firmware, state and storage, read only.
-- **The right version, every install.**
+**Fix who said what.**
+A voice got the wrong label? Redo the speakers of any note and give each one a name.
 
-## 0.1: the first stable release
+**It keeps going without you.**
+Cairn starts as soon as your recordings are copied, keeps your Mac awake, and tries again if something fails. Your notes are ready when you are.
 
-- **One command to install** on macOS and Windows, self test included.
-- **Plug in, it imports.** Resumable, checked byte for byte.
-- **Notes that get to the point.** Title, TL;DR, actions, key points, the template chosen for you.
-- **Two scores per recording.** Transcript confidence and note fidelity.
-- **Your way.** Level of detail and language per recording, redo at will.
-- **Out in one click.** Copy, Markdown, HTML.
-- **Full control.** Process, skip, restore or stop any recording. One delete clears the Pocket and the computer.
-- **Light to install, big on demand.** Larger models added or removed from the app.
-- **Private, provably.** Network guard, daily privacy check, secure mode, no telemetry.
-- **Always there.** Background mode, installable web app, FR and EN, Pocket battery on macOS.
+**Easy on your Mac.**
+Memory is freed between steps, so even a 16 GB Mac stays quick.
+
+**Always honest.**
+Models and About show exactly what is installed on your Mac, sizes and versions included.
+
+## 0.2
+
+**Who said what.**
+Cairn tells speakers apart, entirely on your Mac.
+
+**Your Pocket at a glance.**
+Firmware, state and storage, one look away.
+
+**Always the latest.**
+The install command now installs the newest release.
+
+## 0.1
+
+**Install in one line.**
+One command sets up everything on macOS or Windows, then checks that it works.
+
+**Plug in your Pocket.**
+Recordings are copied and verified, and pick up where they stopped if you unplug.
+
+**Notes that get to the point.**
+A title, a summary, the actions and the key points, in the format that fits: meeting, call, presentation or idea.
+
+**Know how far to trust it.**
+Every note shows how close it is to what was said.
+
+**Your language, your level of detail.**
+Choose for each recording, and redo a note any time.
+
+**Share in one click.**
+Copy it, or export to Markdown or HTML.
+
+**You stay in control.**
+Process, skip or stop any recording. Delete once and it is gone from the Pocket and your Mac.
+
+**Light to install, powerful on demand.**
+Start small, add bigger models when you want them, remove them whenever you like.
+
+**Private, and provably.**
+No account, no cloud, no telemetry. Cairn checks every day that nothing leaves your Mac.
+
+**Always there.**
+Runs quietly in the background, in English or French.
 
 ## Coming next
 
-- **Linux** and **install without Internet.**
-- **Any folder of audio**, and **more languages.**
-- **A faster speech engine**, a **screen reader test**, and a **component list** with every release.
+**Linux, and installs without Internet.**
+
+**Any folder of audio, and more languages.**
+
+**A faster speech engine.**
+
+**Easier for everyone.** Tested with screen readers, with a full list of what each release contains.
