@@ -58,13 +58,21 @@ What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
 |---|---|---|
 | ![Secure mode](docs/screenshots/secure-mode.png) | ![Recordings, with live progress](docs/screenshots/recordings.png) | ![Note](docs/screenshots/note.png) |
 
-| Settings | Models on demand | About |
+| Find anything | Hear what was said | Tags |
 |---|---|---|
-| ![Settings](docs/screenshots/settings.png) | ![Models](docs/screenshots/models.png) | ![About](docs/screenshots/about.png) |
+| ![Search](docs/screenshots/find.png) | ![Transcript with the recording](docs/screenshots/listen.png) | ![Tags](docs/screenshots/tags.png) |
 
-| Export to HTML (transcript folded) | Copy for an email |
-|---|---|
-| ![HTML export](docs/screenshots/html-export.png) | ![Email](docs/screenshots/email.png) |
+| All your actions | The follow-up email | Settings |
+|---|---|---|
+| ![All actions](docs/screenshots/actions.png) | ![Follow-up email](docs/screenshots/followup.png) | ![Settings](docs/screenshots/settings.png) |
+
+| Your vocabulary | Your note templates | Models on demand |
+|---|---|---|
+| ![Vocabulary](docs/screenshots/vocabulary.png) | ![Note templates](docs/screenshots/templates.png) | ![Models](docs/screenshots/models.png) |
+
+| About | Export to HTML (transcript folded) | Copy for an email |
+|---|---|---|
+| ![About](docs/screenshots/about.png) | ![HTML export](docs/screenshots/html-export.png) | ![Email](docs/screenshots/email.png) |
 
 > **Status: v0.4.0, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
 
