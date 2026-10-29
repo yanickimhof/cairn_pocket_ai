@@ -1263,6 +1263,38 @@ class UnitTest(unittest.TestCase):
 
 
 
+class FailureMessagesTest(unittest.TestCase):
+    def test_a_model_without_structured_output_is_named_as_such(self):
+        import io
+        import urllib.error
+        from unittest import mock
+
+        from cairn import llm
+
+        refusal = urllib.error.HTTPError("http://127.0.0.1:11434/api/chat", 501, "Not Implemented", {},
+                                         io.BytesIO(b'{"error":"structured output is unavailable"}'))
+        with mock.patch.object(llm, "_post", side_effect=refusal), \
+                mock.patch.object(llm.config, "install_config", return_value={"llm": "some:9b"}):
+            with self.assertRaises(llm.LLMError) as caught:
+                llm.chat("system", "user", schema={"type": "object"})
+        self.assertIn("structured output", str(caught.exception))
+        self.assertNotIn("not reachable", str(caught.exception))
+
+    def test_speaker_turns_from_both_pyannote_result_shapes(self):
+        from types import SimpleNamespace
+
+        from cairn import diarize_worker
+
+        class Annotation:
+            def itertracks(self, yield_label=False):
+                return iter([(SimpleNamespace(start=0.0, end=1.234), None, "SPEAKER_00"),
+                             (SimpleNamespace(start=1.5, end=3.0), None, "SPEAKER_01")])
+
+        expected = [{"start": 0.0, "end": 1.23, "speaker": "SPEAKER_00"}, {"start": 1.5, "end": 3.0, "speaker": "SPEAKER_01"}]
+        self.assertEqual(diarize_worker.speaker_turns(Annotation()), expected)  # pyannote 3
+        self.assertEqual(diarize_worker.speaker_turns(SimpleNamespace(speaker_diarization=Annotation())), expected)  # pyannote 4
+
+
 class AboutHelpersTest(unittest.TestCase):
     def test_ollama_version_installed_and_running(self):
         from cairn import llm

@@ -13,6 +13,16 @@ import sys
 from pathlib import Path
 
 
+def speaker_turns(diarization):
+    """Speaker turns from a pipeline result. pyannote 4 returns an object that holds the annotation in
+    `speaker_diarization`; earlier versions return the annotation itself."""
+    annotation = getattr(diarization, "speaker_diarization", diarization)
+    return [
+        {"start": round(turn.start, 2), "end": round(turn.end, 2), "speaker": speaker}
+        for turn, _, speaker in annotation.itertracks(yield_label=True)
+    ]
+
+
 def main():
     if len(sys.argv) != 2:
         print("usage: diarize_worker.py <audio path>", file=sys.stderr)
@@ -33,10 +43,11 @@ def main():
     except Exception as error:  # a bad file, a pipeline error, out of memory, and so on
         print("%s: %s" % (type(error).__name__, str(error)[:200]), file=sys.stderr)
         return 1
-    turns = [
-        {"start": round(turn.start, 2), "end": round(turn.end, 2), "speaker": speaker}
-        for turn, _, speaker in diarization.itertracks(yield_label=True)
-    ]
+    try:
+        turns = speaker_turns(diarization)
+    except AttributeError as error:  # a result shape this version does not know
+        print("%s: %s" % (type(error).__name__, str(error)[:200]), file=sys.stderr)
+        return 1
     print(json.dumps(turns))
     return 0
 

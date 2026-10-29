@@ -6,6 +6,8 @@
 - Models and About show what is really installed on this computer: real sizes, installed and running Ollama versions, correct model names
 - Speaker rediarization and renaming
 - Processing one recording no longer carries on with the whole queue when automatic processing is off
+- Speaker identification works with pyannote 4, which returns its result in a different shape and made every pass fail at the end
+- A model that cannot give structured output with the Ollama now running is named as such, instead of "model server not reachable"
 
 ## v0.2: done
 

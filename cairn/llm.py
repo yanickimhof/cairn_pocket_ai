@@ -135,6 +135,11 @@ def chat(system, user, schema=None, num_ctx=8192):
         except urllib.error.HTTPError as error:
             if error.code == 400 and body.pop("think", None) is not None:  # model without thinking mode
                 data = _post("/api/chat", body)
+            elif error.code == 501 and schema:  # the server cannot give structured output for this model
+                raise LLMError(
+                    "This model cannot return structured notes with the Ollama now running (structured output "
+                    "unavailable). Choose another model in Settings > Models, or update Ollama and restart it."
+                ) from error
             else:
                 raise
     except (urllib.error.URLError, OSError) as error:
