@@ -513,6 +513,9 @@
       if (s.key_points && s.key_points.length) {
         h += "<div><b>" + esc(t.points) + "</b><ul>" + s.key_points.map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ul></div>";
       }
+      (s.sections || []).forEach(function (x) {
+        h += "<div><b>" + esc(x.heading) + "</b><div>" + esc(x.text) + "</div></div>";
+      });
       var info = [];
       if (full.models && full.models.speech) { info.push(full.models.speech); }
       if (full.models && full.models.llm) { info.push(full.models.llm); }

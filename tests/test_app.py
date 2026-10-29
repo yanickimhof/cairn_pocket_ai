@@ -2128,6 +2128,30 @@ class TemplatesTest(unittest.TestCase):
         self.assertIn("goals, decisions, risks", seen[0])
         self.assertNotIn("asked for this kind of note", seen[1])
 
+    def test_a_template_asks_for_its_own_sections_which_every_export_and_the_search_show(self):
+        from unittest import mock
+
+        from cairn import llm, render, score, search
+
+        schema = llm._schema("mid", True)
+        self.assertIn("sections", schema["required"])
+        self.assertNotIn("key_points", schema["properties"])  # the sections replace the usual fields
+        self.assertNotIn("sections", llm._schema("mid")["properties"])
+        reply = {"template": "meeting", "title": "T", "tldr": "x", "actions": [],
+                 "sections": [{"heading": " Goals ", "text": "Deliver the portal by March 15"}, {"heading": "", "text": "no heading"}, {"heading": "Risks", "text": "-"}, "bad"]}
+        with mock.patch.object(llm, "chat", return_value=json.dumps(reply)):
+            summary = llm.summarize("one two three four five six", "mid", "en", instructions="goals, risks")
+        self.assertEqual(summary["sections"], [{"heading": "Goals", "text": "Deliver the portal by March 15"}, {"heading": "Risks", "text": "-"}])
+        note = {"id": "n", "title": "T", "status": "done", "summary": dict(summary, template_name="Client report"), "clean": "We will deliver the portal by March 15."}
+        self.assertIn("## Goals\n\nDeliver the portal by March 15", render.to_markdown(note))
+        self.assertIn("Goals:\nDeliver the portal by March 15", render.to_text(note))
+        self.assertIn("Deliver the portal by March 15", render.to_html(note))
+        self.assertGreater(len(score.anchors(note["summary"])), len(score.anchors(dict(note["summary"], sections=[]))))  # what a section states is checked against the transcript
+        folder = Path(tempfile.mkdtemp())
+        config_write = __import__("cairn.config", fromlist=["write_json"]).write_json
+        config_write(folder / "n.json", note)
+        self.assertEqual([r["id"] for r in search.find(folder, "portal")], ["n"])
+
     def test_a_note_is_written_with_the_chosen_or_the_default_template(self):
         from unittest import mock
 

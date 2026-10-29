@@ -38,6 +38,8 @@ def _pieces(summary):
         out += [x for x in summary.get(key) or [] if isinstance(x, str)]
     for action in summary.get("actions") or []:
         out += [str(action.get(k)) for k in ("what", "who", "when") if action.get(k)]
+    for section in summary.get("sections") or []:
+        out += [str(section.get(k)) for k in ("heading", "text") if section.get(k) and section.get(k) != "-"]
     for topic in summary.get("topics") or []:
         out += [str(topic.get(k)) for k in ("name", "summary") if topic.get(k)]
     return out

@@ -35,7 +35,7 @@ Off by default. Settings has the Hugging Face token (right above the Pocket sess
 
 ## Your own note templates
 
-Settings, **My note templates** (the plus) creates a template: a name and an instruction in everyday words, for example *Client report: goals, decisions, risks, next steps*. The instruction is given to the summary model, which follows it for what the note contains and how it reads. Nothing is invented: a field stays empty when the recording does not say.
+Settings, **My note templates** (the plus) creates a template: a name and an instruction in everyday words, for example *Client report: goals, decisions, risks, next steps*. The summary model writes the note as the sections your instruction names, in that order, after the TL;DR and the actions. A section the recording says nothing about shows a dash: nothing is invented. The sections appear in the note and in every export.
 
 - **On a note:** the template button (the second one, next to the pencil) goes through the built-in types, then through your templates. Choosing one of yours writes the note again with it, and the template is kept if the note is redone. Its name replaces the type in the exports.
 - **The star** makes a template the one used for every new note that has no choice of its own. Tap it again to go back to the automatic type.

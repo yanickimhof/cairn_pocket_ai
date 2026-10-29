@@ -38,6 +38,8 @@ def _pieces(note):
         line = " ".join(str(action.get(k) or "") for k in ("what", "who", "when")).strip()
         if line:
             out.append(("summary", None, line))
+    for section in summary.get("sections") or []:
+        out.append(("summary", None, "%s %s" % (section.get("heading") or "", section.get("text") or "")))
     for key in ("key_points", "decisions"):
         for item in summary.get(key) or []:
             out.append(("summary", None, str(item)))

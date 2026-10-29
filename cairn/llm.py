@@ -200,11 +200,14 @@ def _ctx(text):
     return 8192 if len(text.split()) < 3500 else 16384
 
 
-def _schema(level):
+def _schema(level, custom=False):
     text = {"type": "string"}
     lst = {"type": "array", "items": {"type": "string"}}
     action = {"type": "object", "properties": {"what": text, "who": text, "when": text}, "required": ["what"]}
     props = {"template": {"type": "string", "enum": TEMPLATES}, "title": text, "tldr": text, "actions": {"type": "array", "items": action}}
+    if custom:  # the person's own template: the sections it asks for, in its order, instead of the usual fields
+        props["sections"] = {"type": "array", "items": {"type": "object", "properties": {"heading": text, "text": text}, "required": ["heading", "text"]}}
+        return {"type": "object", "properties": props, "required": ["template", "title", "tldr", "actions", "sections"]}
     if level in ("mid", "full"):
         props.update({"context": text, "key_points": lst, "decisions": lst})
     if level == "full":
@@ -214,6 +217,12 @@ def _schema(level):
         }
     return {"type": "object", "properties": props, "required": ["template", "title", "tldr", "actions"]}
 
+
+_CUSTOM_FIELDS = {
+    "short": "a short title, the type of conversation, a 1 or 2 sentence TL;DR, the actions to take and the sections asked for, one line each",
+    "mid": "a short title, the type of conversation, a 1 or 2 sentence TL;DR, the actions to take and the sections asked for, a few sentences each",
+    "full": "a short title, the type of conversation, a TL;DR, the actions to take and the sections asked for, detailed",
+}
 
 _FIELDS = {
     "short": "a short title, the type of conversation, a 1 or 2 sentence TL;DR and the actions to take",
@@ -282,15 +291,17 @@ def summarize(text, level, lang, progress=None, vocabulary=None, instructions=No
     system = (
         "You write professional notes from the transcript of a recorded conversation. Write in %s. "
         "Provide %s. Be factual and concise. Invent nothing: leave a field empty when the transcript does not say. "
-        "Actions name who does what and by when only when the transcript says so." % (NAMES[lang], _FIELDS[level])
+        "Actions name who does what and by when only when the transcript says so."
+        % (NAMES[lang], _CUSTOM_FIELDS[level] if instructions else _FIELDS[level])
     )
     if vocabulary:
         system += (" Spell these names and terms exactly as listed, and use the listed spelling whenever the transcript has a close "
                    "variant of one of them: %s." % "; ".join(vocabulary[:300]))
     if instructions:
-        system += (" The person asked for this kind of note: %s. Follow it for what the fields contain and how they read, "
-                   "and keep inventing nothing." % instructions)
-    raw = chat(system, source, schema=_schema(level), num_ctx=_ctx(source))
+        system += (" The person asked for this kind of note: %s. Write it as the sections that ask names, one entry of `sections` each, "
+                   "with a short heading and its text, in the order of the request; a section the transcript says nothing about "
+                   "gets the text \"-\"." % instructions)
+    raw = chat(system, source, schema=_schema(level, bool(instructions)), num_ctx=_ctx(source))
     try:
         data = json.loads(raw)
     except ValueError as error:
@@ -303,4 +314,7 @@ def summarize(text, level, lang, progress=None, vocabulary=None, instructions=No
     for key in ("title", "tldr"):
         data[key] = str(data.get(key) or "").strip()
     data["actions"] = [a for a in data.get("actions") or [] if isinstance(a, dict) and a.get("what")]
+    if instructions:
+        data["sections"] = [{"heading": str(x.get("heading") or "").strip(), "text": str(x.get("text") or "").strip()}
+                            for x in data.get("sections") or [] if isinstance(x, dict) and str(x.get("heading") or "").strip()]
     return data

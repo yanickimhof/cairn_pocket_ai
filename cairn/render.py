@@ -83,6 +83,8 @@ def to_markdown(note, transcript=True):
     for key in ("key_points", "decisions"):
         if s.get(key):
             out += ["## " + lab[key], ""] + ["- " + x for x in s[key]] + [""]
+    for section in s.get("sections") or []:
+        out += ["## " + (section.get("heading") or ""), "", section.get("text") or "", ""]
     if s.get("topics"):
         out += ["## " + lab["topics"], ""]
         for topic in s["topics"]:
@@ -110,6 +112,8 @@ def to_text(note):
     for key in ("key_points", "decisions"):
         if s.get(key):
             out += [lab[key] + ":"] + ["- " + x for x in s[key]] + [""]
+    for section in s.get("sections") or []:
+        out += [(section.get("heading") or "") + ":", section.get("text") or "", ""]
     return "\n".join(out).strip() + "\n"
 
 
@@ -207,6 +211,8 @@ def to_html(note, transcript=True, fragment=False):
         if s.get(key):
             items = "".join('<li style="margin:5px 0">%s</li>' % e(x) for x in s[key])
             body.append('<h2 style="%s">%s</h2><ul style="padding-left:20px;margin:0">%s</ul>' % (h2, e(lab[key]), items))
+    for section in s.get("sections") or []:
+        body.append('<h2 style="%s">%s</h2><p style="margin:0">%s</p>' % (h2, e(section.get("heading") or ""), e(section.get("text") or "")))
     if s.get("topics"):
         body.append('<h2 style="%s">%s</h2>' % (h2, e(lab["topics"])))
         body += [
