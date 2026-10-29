@@ -158,7 +158,7 @@ class Store:
     def reset_interrupted(self):
         """Recordings left in the middle of processing by a previous run go back to waiting."""
         for row in self.slim():
-            if row.get("status") in ("transcribing", "cleaning", "summarizing"):
+            if row.get("status") in ("transcribing", "diarizing", "cleaning", "summarizing"):
                 note = self.get(row["id"])
                 note["status"] = "waiting"
                 note["step"] = ""

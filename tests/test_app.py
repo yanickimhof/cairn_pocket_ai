@@ -1261,6 +1261,17 @@ class UnitTest(unittest.TestCase):
 
 
 class FailureMessagesTest(unittest.TestCase):
+    def test_a_recording_interrupted_while_identifying_speakers_goes_back_to_waiting(self):
+        from cairn import notes
+
+        with tempfile.TemporaryDirectory() as tmp:
+            store = notes.Store(Path(tmp) / "Texts")
+            for name, status in (("a", "diarizing"), ("b", "summarizing"), ("c", "done"), ("d", "error")):
+                store.save({"id": name, "source": name, "status": status, "step": status, "date": "2026-10-27T10:00", "audio": ""})
+            store.reset_interrupted()
+            self.assertEqual({n: store.get(n)["status"] for n in "abcd"}, {"a": "waiting", "b": "waiting", "c": "done", "d": "error"})
+            self.assertEqual(store.get("a")["step"], "")
+
     def test_a_model_without_structured_output_is_named_as_such(self):
         import io
         import urllib.error

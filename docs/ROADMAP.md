@@ -6,6 +6,7 @@
 - Speaker rediarization and renaming
 - Processing one recording no longer carries on with the whole queue when automatic processing is off
 - Speaker identification works with pyannote 4, which returns its result in a different shape and made every pass fail at the end
+- A recording interrupted while identifying speakers goes back to waiting at the next start, instead of showing the spinner for ever
 - A model that cannot give structured output with the Ollama now running is named as such, instead of "model server not reachable"
 
 ## v0.2: done
