@@ -226,7 +226,7 @@
       (yes ? '<button type="button" class="ib red" data-a="' + yes + '"' + tip(t.confirmLabel) + ">" + I.checkW + "</button>" : "") + "</div></div>";
   }
 
-  function gb(bytes) { return (bytes / 1e9).toFixed(1) + " GB"; }
+  function gb(bytes) { return bytes < 1e9 ? Math.round(bytes / 1e6) + " MB" : (bytes / 1e9).toFixed(1) + " GB"; }
 
   function modelRow(kind, m, t, job) {
     var running = job && job.state === "running" && job.kind === kind && job.id === m.id;

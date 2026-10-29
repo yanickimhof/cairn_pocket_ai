@@ -38,15 +38,14 @@ class ApiError(Exception):
         self.status, self.message = status, message
 
 
-def _size(path):
-    total = 0
-    for root, _dirs, files in os.walk(path):
-        for name in files:
-            try:
-                total += os.path.getsize(os.path.join(root, name))
-            except OSError:
-                pass
-    return total
+_size = models.dir_size
+
+
+def _llm_component(llm_name, entry, size):
+    """Family and size label of the summary model, e.g. ("Qwen3", "8B") or ("Qwen3.5", "9B")."""
+    label = (entry or {}).get("label") or llm_name
+    family, _, rest = label.partition(" ")
+    return {"name": family, "ver": rest or llm_name, "size": size, "ok": bool(size), "fix": "llm"}
 
 
 def _gb(value):
@@ -151,8 +150,7 @@ class App:
         model_dir = Path(cfg["whisper_model"])
         speech = next((m for m in models.speech_entries() if m["id"] == models.selected_speech()), None)
         comps = [
-            {"name": "Qwen3", "ver": (llm_entry or {}).get("label", llm_name).replace("Qwen3 ", "") or llm_name,
-             "size": llm_size, "ok": bool(llm_size), "fix": "llm"},
+            _llm_component(llm_name, llm_entry, llm_size),
             {"name": "Whisper", "ver": (speech or {}).get("label", "").replace("Whisper ", "") or re.sub(
                 r"^(faster-)?whisper-|-ct2$|-mlx$", "", (cfg.get("whisper_repo") or model_dir.name).split("/")[-1]),
              "size": _size(model_dir) if model_dir.is_dir() else 0, "ok": model_dir.is_dir(), "fix": "speech"},
@@ -177,7 +175,8 @@ class App:
             version = "-"
             try:
                 out = subprocess.run([ollama, "--version"], capture_output=True, text=True, timeout=10, check=False)
-                version = (re.search(r"(\d+\.\d+(?:\.\d+)?)", out.stdout + out.stderr) or [None, "-"])[1]
+                installed, running = llm.parse_ollama_version(out.stdout + out.stderr)
+                version = installed + (" \u00b7 running " + running if running else "")
             except (OSError, subprocess.SubprocessError):
                 pass
             real = Path(os.path.realpath(ollama))

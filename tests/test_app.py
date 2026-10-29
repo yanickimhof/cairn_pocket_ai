@@ -1255,5 +1255,34 @@ class UnitTest(unittest.TestCase):
 
 
 
+class AboutHelpersTest(unittest.TestCase):
+    def test_ollama_version_installed_and_running(self):
+        from cairn import llm
+        self.assertEqual(llm.parse_ollama_version("ollama version is 0.40.11\n"), ("0.40.11", ""))
+        # a server started before an upgrade: the installed program is newer than the one running
+        self.assertEqual(llm.parse_ollama_version("ollama version is 0.40.10\nWarning: client version is 0.40.11\n"), ("0.40.11", "0.40.10"))
+        self.assertEqual(llm.parse_ollama_version("nothing useful"), ("-", ""))
+
+    def test_summary_model_is_named_by_family(self):
+        from cairn import catalog, server
+        entry = lambda i: next(m for m in catalog.LLM if m["id"] == i)
+        self.assertEqual(server._llm_component("qwen3:8b", entry("qwen3:8b"), 5)["name"], "Qwen3")
+        self.assertEqual(server._llm_component("qwen3:8b", entry("qwen3:8b"), 5)["ver"], "8B")
+        qwen35 = server._llm_component("qwen3.5:9b", entry("qwen3.5:9b"), 7)
+        self.assertEqual((qwen35["name"], qwen35["ver"]), ("Qwen3.5", "9B"))
+        self.assertEqual(server._llm_component("mine:1b", None, 0)["ok"], False)
+
+    def test_size_counts_real_files_once(self):
+        from cairn import models
+        with tempfile.TemporaryDirectory() as tmp:
+            blob = Path(tmp) / "blobs"
+            blob.mkdir()
+            (blob / "w").write_bytes(b"x" * 1000)
+            snap = Path(tmp) / "snapshots"
+            snap.mkdir()
+            os.symlink(blob / "w", snap / "link")
+            self.assertEqual(models.dir_size(tmp), 1000)
+
+
 if __name__ == "__main__":
     unittest.main()

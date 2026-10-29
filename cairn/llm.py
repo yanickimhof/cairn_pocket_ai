@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import shutil
 import urllib.error
 import urllib.request
@@ -58,6 +59,17 @@ def version():
         return str(_get("/api/version", timeout=2).get("version", ""))
     except (urllib.error.URLError, OSError, ValueError, LLMError):
         return ""
+
+
+def parse_ollama_version(text):
+    """Version shown by `ollama --version`: the installed program, and the server running now if it differs
+    ("ollama version is X" is the server, "Warning: client version is Y" the installed program)."""
+    server = re.search(r"ollama version is (\d+(?:\.\d+)+)", text)
+    client = re.search(r"client version is (\d+(?:\.\d+)+)", text)
+    installed = (client or server)
+    installed = installed.group(1) if installed else "-"
+    running = server.group(1) if server else ""
+    return installed, running if running and running != installed else ""
 
 
 def _numbers(text):

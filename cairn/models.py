@@ -31,8 +31,24 @@ def diar_installed():
     return (diar_dir() / MARK).exists()
 
 
+def dir_size(path):
+    """Bytes really used on disk by the files under `path`: links are not followed, so a cache that points to
+    its own files is not counted twice."""
+    total = 0
+    for root, _dirs, files in os.walk(path):
+        for name in files:
+            full = os.path.join(root, name)
+            try:
+                if not os.path.islink(full):
+                    total += os.path.getsize(full)
+            except OSError:
+                pass
+    return total
+
+
 def diar_entries():
-    return [dict(m, installed=diar_installed()) for m in catalog.DIAR]
+    installed = diar_installed()
+    return [dict(m, installed=installed, **({"bytes": dir_size(diar_dir())} if installed else {})) for m in catalog.DIAR]
 
 
 def speech_dir(model_id):
@@ -68,16 +84,21 @@ def selected_speech():
 
 
 def listing(job):
-    installed_llm = {m.get("name") for m in llm.models()}
+    sizes = {m.get("name"): m.get("size", 0) for m in llm.models()}
     chosen_llm = config.install_config()["llm"]
     chosen_speech = selected_speech()
+    # an installed model shows the size it really has on this computer; the catalog size is only an estimate
     out_llm = [
-        dict(m, installed=m["id"] in installed_llm, selected=m["id"] == chosen_llm) for m in catalog.LLM
+        dict(m, installed=m["id"] in sizes, selected=m["id"] == chosen_llm, **({"bytes": sizes[m["id"]]} if sizes.get(m["id"]) else {}))
+        for m in catalog.LLM
     ]
-    out_speech = [
-        dict({k: v for k, v in m.items() if k not in ("repo", "revision")}, installed=speech_installed(m), selected=m["id"] == chosen_speech)
-        for m in speech_entries()
-    ]
+    out_speech = []
+    for m in speech_entries():
+        have = speech_installed(m)
+        entry = {k: v for k, v in m.items() if k not in ("repo", "revision")}
+        if have and os.path.isdir(speech_path(m) or ""):
+            entry["bytes"] = dir_size(speech_path(m))
+        out_speech.append(dict(entry, installed=have, selected=m["id"] == chosen_speech))
     return {"llm": out_llm, "speech": out_speech, "diar": diar_entries(), "job": job, "server_up": llm.available()}
 
 
