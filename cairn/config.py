@@ -9,7 +9,7 @@ from pathlib import Path
 
 from . import catalog
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 REPO = "yanickimhof/cairn_pocket_ai"
 REFERRAL_URL = "https://referral.heypocketai.com/refer/39179caf?source=desktop_qr"
 AUDIO_EXT = (".mp3", ".wav", ".m4a", ".opus", ".ogg", ".flac")

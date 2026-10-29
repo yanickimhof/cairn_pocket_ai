@@ -1,5 +1,11 @@
 # Roadmap
 
+## v0.2.1: done
+
+- Qwen3.5 9B added to the optional language models; the installer and the download stop with a clear message if Ollama is too old for it
+- Models and About show what is really installed on this computer: real sizes, installed and running Ollama versions, correct model names
+- Speaker rediarization and renaming
+
 ## v0.2: done
 
 - Optional Pocket status (firmware, device state, storage used), read only, from your own session key
