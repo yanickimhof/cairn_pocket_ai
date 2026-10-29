@@ -10,18 +10,34 @@ No cloud, no account, no telemetry. Nothing leaves your machine.
 
 ## What Cairn does
 
-- **Plug in, it imports.** Connect your Pocket over USB-C and the recordings are copied by themselves.
-- **Every word, on your computer.** Whisper transcribes in your language. No upload, no minute limit.
-- **Who said what.** Speakers are told apart and named once. Four times faster on the graphics chip of an Apple silicon Mac.
-- **Notes you can act on.** A TL;DR, actions with an owner and a date, key points, decisions. Five templates.
-- **Your names, spelled right.** A personal vocabulary fixes rare names and places in the transcript and the summary.
-- **A score you can trust.** Fidelity and confidence on every note, doubtful passages flagged.
-- **Out in one click.** Markdown, HTML, text, or copied straight into an email.
-- **Your models, your choice.** Whisper large-v3 or turbo, Qwen3 4B, 8B or 14B, installed only when you want them.
-- **Built for long days.** A failed recording is retried by itself, finished work is never redone, the Mac stays awake.
-- **Private by design.** Offline, no account, no telemetry, and a secure mode that hides the screen.
+**Plug in, and it imports.**
+Connect your Pocket and your recordings are copied to your Mac, with nothing else to do.
 
-All of it runs on your machine. What is new in each version: [release notes](https://github.com/yanickimhof/cairn_pocket_ai/releases) and the [full history](docs/RELEASE-NOTES.md).
+**Every word, on your Mac.**
+Transcription in your language, with no upload and no time limit.
+
+**Who said what.**
+Cairn tells the speakers apart, and you name each voice.
+
+**Notes that get to the point.**
+A summary, the actions, the key points and the decisions, at the level of detail you choose.
+
+**Your names, spelled right.**
+Teach Cairn the people and places it gets wrong, and it corrects them everywhere.
+
+**A score you can trust.**
+Every note shows how faithful it is to what was said, and flags the passages to check.
+
+**Share in one click.**
+Copy it into an email, or export to Markdown, HTML or text.
+
+**Your models, your choice.**
+Pick the Whisper and Qwen models that suit your Mac, and add or remove them any time.
+
+**Private by design.**
+No account, no cloud, no telemetry. A secure mode hides your notes from the screen.
+
+What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
 
 | Secure by default | Your recordings | Your notes |
 |---|---|---|

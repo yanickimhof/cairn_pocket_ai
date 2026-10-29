@@ -12,7 +12,7 @@ Cairn now uses your Mac's graphics chip to tell who is speaking. Same result, a 
 A voice got the wrong label? Redo the speakers of any note and give each one a name.
 
 **It keeps going without you.**
-Cairn starts as soon as your recordings are copied, keeps your Mac awake, and tries again if something fails. Your notes are ready when you are.
+With automatic processing on, Cairn starts as soon as your recordings are copied, keeps your Mac awake, and tries again if something fails. Your notes are ready when you are.
 
 **Easy on your Mac.**
 Memory is freed between steps, so even a 16 GB Mac stays quick.
@@ -26,7 +26,7 @@ Models and About show exactly what is installed on your Mac, sizes and versions 
 Cairn tells speakers apart, entirely on your Mac.
 
 **Your Pocket at a glance.**
-Firmware, state and storage, one look away.
+Add your own session key to see its firmware, state and storage, read only.
 
 **Always the latest.**
 The install command now installs the newest release.
