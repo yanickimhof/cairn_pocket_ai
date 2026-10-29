@@ -21,7 +21,7 @@ No cloud, no account, no telemetry. Nothing leaves your machine.
 - **Built for long days.** A failed recording is retried by itself, finished work is never redone, the Mac stays awake.
 - **Private by design.** Offline, no account, no telemetry, and a secure mode that hides the screen.
 
-All of it runs on your machine. What is new in each version: [release notes](https://github.com/yanickimhof/cairn_pocket_ai/releases) and the [roadmap](docs/ROADMAP.md).
+All of it runs on your machine. What is new in each version: [release notes](https://github.com/yanickimhof/cairn_pocket_ai/releases) and the [full history](docs/RELEASE-NOTES.md).
 
 | Secure by default | Your recordings | Your notes |
 |---|---|---|
@@ -35,7 +35,7 @@ All of it runs on your machine. What is new in each version: [release notes](htt
 |---|---|
 | ![HTML export](docs/screenshots/html-export.png) | ![Email](docs/screenshots/email.png) |
 
-> **Status: v0.2.1, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [roadmap](docs/ROADMAP.md).
+> **Status: v0.2.1, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
 
 ## Install
 
