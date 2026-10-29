@@ -4,7 +4,7 @@ The command is in the [README](../README.md). It detects your system, installs e
 
 ## Options
 
-Set before the command: `CAIRN_HOME` (install folder), `CAIRN_LLM` (language model, default `qwen3:4b`), `CAIRN_WHISPER_REPO` (speech model), `CAIRN_REF` (branch or tag). Models too small to be useful (Whisper tiny or base, language models under 3B) are refused. An existing Ollama and its models are reused.
+Set before the command: `CAIRN_HOME` (install folder), `CAIRN_LLM` (language model, default `qwen3:4b`), `CAIRN_WHISPER_REPO` (speech model), `CAIRN_REF` (branch or tag). Models too small to be useful (Whisper tiny or base, language models under 3B) are refused. An existing Ollama and its models are reused; Qwen3.5 needs Ollama 0.17.5 or newer, and the installer stops with a message if yours is older.
 
 ## Update
 

@@ -52,6 +52,29 @@ def _get(path, timeout=5):
         return json.load(response)
 
 
+def version():
+    """Version of the running model server, e.g. "0.40.11", or "" if it cannot be read."""
+    try:
+        return str(_get("/api/version", timeout=2).get("version", ""))
+    except (urllib.error.URLError, OSError, ValueError, LLMError):
+        return ""
+
+
+def _numbers(text):
+    out = []
+    for piece in str(text).split("-")[0].split("."):
+        if not piece.isdigit():
+            break
+        out.append(int(piece))
+    return tuple(out)
+
+
+def at_least(found, minimum):
+    """True if version `found` is `minimum` or newer. An unreadable version is not held against the model:
+    the server's own error will say what is wrong."""
+    return not _numbers(found) or _numbers(found) >= _numbers(minimum)
+
+
 def find_ollama(cfg=None):
     """Path of the Ollama program (configured, on the PATH, or in a usual place), or None."""
     cfg = cfg or config.install_config()

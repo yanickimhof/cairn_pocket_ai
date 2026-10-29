@@ -338,7 +338,7 @@ class AppTest(unittest.TestCase):
     def test_10_models_on_demand(self):
         status, listing = self.c.call("GET", "/api/models")
         self.assertEqual(status, 200)
-        self.assertEqual([m["id"] for m in listing["llm"]], ["qwen3:4b", "qwen3:8b", "qwen3:14b"])
+        self.assertEqual([m["id"] for m in listing["llm"]], ["qwen3:4b", "qwen3:8b", "qwen3.5:9b", "qwen3:14b"])
         self.assertEqual([m["id"] for m in listing["speech"]], ["turbo", "large"])
         self.assertFalse(any(m["installed"] for m in listing["llm"]))
         # nothing is downloaded without an explicit confirmation
@@ -364,6 +364,25 @@ class AppTest(unittest.TestCase):
         self.assertEqual(self.c.call("POST", "/api/models/remove", {"kind": "llm", "id": "qwen3:4b", "confirm": True})[0], 200)
         self.assertFalse([m for m in self.c.call("GET", "/api/models")[1]["llm"] if m["id"] == "qwen3:4b"][0]["installed"])
 
+
+    def test_10b_new_model_needs_recent_ollama(self):
+        from cairn import llm
+        self.assertTrue(llm.at_least("0.40.11", "0.17.5"))
+        self.assertTrue(llm.at_least("0.17.5", "0.17.5"))
+        self.assertTrue(llm.at_least("0.17.5-rc1", "0.17.5"))
+        self.assertFalse(llm.at_least("0.9.0", "0.17.5"))
+        self.assertFalse(llm.at_least("0", "0.17.5"))
+        self.assertTrue(llm.at_least("", "0.17.5"))
+        # the stub server reports version 0: the download is refused with a clear message, nothing is pulled
+        self.assertEqual(self.c.call("POST", "/api/models/install", {"kind": "llm", "id": "qwen3.5:9b", "confirm": True})[0], 202)
+        for _ in range(50):
+            job = self.c.call("GET", "/api/models")[1]["job"]
+            if job["state"] != "running":
+                break
+            time.sleep(0.1)
+        self.assertEqual(job["state"], "error")
+        self.assertIn("Ollama 0.17.5 or newer", job["error"])
+        self.assertNotIn("qwen3.5:9b", StubModel.pulled)
 
     def test_12_skip_and_process_one(self):
         notes = self.c.call("GET", "/api/state")[1]["notes"]

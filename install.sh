@@ -126,6 +126,15 @@ if ! curl -fs "http://$OLLAMA_ADDR/api/version" >/dev/null 2>&1; then
   done
   curl -fs "http://$OLLAMA_ADDR/api/version" >/dev/null 2>&1 || die "The model server did not start. See $CAIRN_HOME/ollama.log"
 fi
+# Qwen3.5 needs a recent Ollama: stop with a clear message instead of a failed download.
+case "$LLM" in
+  qwen3.5*)
+    OLLAMA_VERSION="$(curl -fs "http://$OLLAMA_ADDR/api/version" | sed -n 's/.*"version":"\([0-9.]*\).*/\1/p')"
+    if [ -n "$OLLAMA_VERSION" ] && [ "$(printf '%s\n%s\n' "0.17.5" "$OLLAMA_VERSION" | sort -V | head -n 1)" != "0.17.5" ]; then
+      die "$LLM needs Ollama 0.17.5 or newer, found $OLLAMA_VERSION. Update Ollama and run the installer again."
+    fi
+    ;;
+esac
 # Already have a better Qwen3 in Ollama? Use it instead of downloading another model.
 if [ -z "${CAIRN_LLM:-}" ] && "$OLLAMA" list 2>/dev/null | awk '{print $1}' | grep -qx 'qwen3:8b'; then
   LLM="qwen3:8b"

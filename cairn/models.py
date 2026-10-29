@@ -117,6 +117,11 @@ class Downloader:
 
     def _pull_llm(self, entry):
         try:
+            minimum = entry.get("min_ollama")
+            if minimum:
+                found = llm.version()
+                if not llm.at_least(found, minimum):
+                    raise RuntimeError("%s needs Ollama %s or newer (found %s). Update Ollama, then try again." % (entry["label"], minimum, found))
             body = json.dumps({"model": entry["id"], "stream": True}).encode()
             request = urllib.request.Request(
                 "http://%s/api/pull" % llm._host(), data=body, headers={"Content-Type": "application/json"}

@@ -8,6 +8,7 @@ GB = 1_000_000_000
 LLM = [
     {"id": "qwen3:4b", "label": "Qwen3 4B", "bytes": int(2.5 * GB), "ram": 8, "tier": "light"},
     {"id": "qwen3:8b", "label": "Qwen3 8B", "bytes": int(5.2 * GB), "ram": 16, "tier": "standard"},
+    {"id": "qwen3.5:9b", "label": "Qwen3.5 9B", "bytes": int(6.6 * GB), "ram": 16, "tier": "standard", "min_ollama": "0.17.5"},
     {"id": "qwen3:14b", "label": "Qwen3 14B", "bytes": int(9.3 * GB), "ram": 32, "tier": "high"},
 ]
 
