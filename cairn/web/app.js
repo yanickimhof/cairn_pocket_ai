@@ -9,7 +9,7 @@
       aboutText: "Importez, transcrivez et résumez vos enregistrements Pocket, entièrement sur cet ordinateur. Aucun compte, aucun cloud, aucune télémétrie.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · Licence MIT · Non affilié à Pocket.", uiLang: "Langue de l’interface",
       off: "Non", on: "Oui",
-      diarDevice: "Interlocuteurs : calcul", diarDeviceHint: "Auto utilise la puce graphique du Mac quand elle est disponible (environ 4 fois plus rapide, même résultat). Processeur force le calcul sans elle.", devAuto: "Auto", devCpu: "Processeur",
+      devGpuHint: "Identification des interlocuteurs sur la puce graphique (environ 4 fois plus rapide, même résultat). Cliquer pour utiliser le processeur.", devCpuHint: "Identification des interlocuteurs sur le processeur. Cliquer pour utiliser la puce graphique.",
       processedIn: "traité en", notInstalled: "Non installé", getIt: "Installer", refText: "Acheter un Pocket : 10 % de réduction", refNote: "Lien de parrainage facultatif. L’offre dépend uniquement de Pocket et peut changer.",
       models: "Modèles", modelsHint: "Choisir ou ajouter des modèles", modelsSpeech: "Transcription", modelsLlm: "Résumés", modelsDiar: "Identification des interlocuteurs",
       hfToken: "Jeton Hugging Face", hfTokenHint: "Nécessaire une seule fois pour télécharger le modèle de diarisation (gratuit, compte Hugging Face requis ; il faut aussi accepter l'accès au modèle sur huggingface.co). Jamais utilisé ailleurs.",
@@ -58,7 +58,7 @@
       aboutText: "Import, transcribe and summarize your Pocket recordings, entirely on this computer. No account, no cloud, no telemetry.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · MIT license · Not affiliated with Pocket.", uiLang: "Interface language",
       off: "Off", on: "On",
-      diarDevice: "Speakers: compute", diarDeviceHint: "Auto uses the Mac's graphics chip when available (about 4 times faster, same result). Processor forces the computation without it.", devAuto: "Auto", devCpu: "Processor",
+      devGpuHint: "Speaker identification runs on the graphics chip (about 4 times faster, same result). Click to use the processor.", devCpuHint: "Speaker identification runs on the processor. Click to use the graphics chip.",
       processedIn: "processed in", notInstalled: "Not installed", getIt: "Install", refText: "Get a Pocket: 10 % off", refNote: "Optional referral link. The offer is set by Pocket alone and may change.",
       models: "Models", modelsHint: "Choose or add models", modelsSpeech: "Transcription", modelsLlm: "Summaries", modelsDiar: "Speaker identification",
       hfToken: "Hugging Face token", hfTokenHint: "Needed once to download the diarization model (free, a Hugging Face account is required, and you must accept access to the model on huggingface.co). Never used anywhere else.",
@@ -103,6 +103,8 @@
   };
 
   var I = {
+    chip: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect><rect x="9.5" y="9.5" width="5" height="5" rx="1"></rect><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"></path></svg>',
+    bolt: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"></path></svg>',
     info: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path></svg>',
     gear: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg>',
     doc: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v4h4"></path><path d="M10 12h5"></path><path d="M10 16h5"></path></svg>',
@@ -310,15 +312,13 @@
       [["0", t.off, false], ["1", t.on, true]].map(function (o) {
         return '<button type="button" data-a="autoprocess" data-v="' + o[0] + '" class="' + bg((st.settings.autoprocess === true) === o[2]).trim() + '">' + esc(o[1]) + "</button>";
       }).join("") + "</div></div>";
-    if (S.server && S.server.gpu && S.server.diar_installed) {
-      h += '<div class="hr"></div><div class="setrow"' + tip(t.diarDeviceHint) + '><span class="text" style="font-size:14px">' + esc(t.diarDevice) + '</span><div class="seg s38">' +
-        [["auto", t.devAuto], ["cpu", t.devCpu]].map(function (o) {
-          return '<button type="button" data-a="diarizeDevice" data-v="' + o[0] + '" class="' + bg((st.settings.diarize_device || "auto") === o[0]).trim() + '">' + esc(o[1]) + "</button>";
-        }).join("") + "</div></div>";
-    }
     h += '<div class="hr"></div><div class="setrow"' + tip(t.hfTokenHint) + ">" + I.hf;
     if (st.settings.hf_token) {
-      h += '<span class="row gap8"><button type="button" class="ib" data-a="hfAsk"' + tip(t.hfTokenOn) + ">" + I.pencil + '</button><div class="seg s38"' + tip(t.diarizeHint) + ">" +
+      var gpu = (st.settings.diarize_device || "auto") !== "cpu";
+      var devBtn = st.settings.diarize && S.server && S.server.gpu && S.server.diar_installed
+        ? '<button type="button" class="devbtn' + (gpu ? " gpu" : "") + '" data-a="diarizeDevice" data-v="' + (gpu ? "cpu" : "auto") + '"' + tip(gpu ? t.devGpuHint : t.devCpuHint) + ">" +
+          (gpu ? I.bolt : I.chip) + (gpu ? "GPU" : "CPU") + "</button>" : "";
+      h += '<span class="row gap8">' + devBtn + '<button type="button" class="ib" data-a="hfAsk"' + tip(t.hfTokenOn) + ">" + I.pencil + '</button><div class="seg s38"' + tip(t.diarizeHint) + ">" +
         [["0", t.off, false], ["1", t.on, true]].map(function (o) {
           return '<button type="button" data-a="diarize" data-v="' + o[0] + '" class="' + bg(!!st.settings.diarize === o[2]).trim() + '">' + esc(o[1]) + "</button>";
         }).join("") + "</div></span></div>";
@@ -496,7 +496,7 @@
       var open = S.open === n.id;
       var rowTip = running ? stepText(st.job, t) : (done || n.status === "error" ? t.rowHint : t.actionsHint);
       var subTip = done ? (n.mixed ? t.mixedHint : t.dateDur) : (running ? "" : t.durHint);
-      var bar = running ? (st.job.pct != null ? '<span class="pbar"><span style="width:' + st.job.pct + '%"></span></span>' : (st.job.step === "summarizing" ? '<span class="pbar ind"><span></span></span>' : "")) : "";
+      var bar = running ? (st.job.pct != null ? '<span class="pbar"><span style="width:' + st.job.pct + '%"></span></span>' : (st.job.step ? '<span class="pbar ind"><span></span></span>' : "")) : "";
       return '<div class="item"><button type="button" class="rowbtn" data-a="row" data-id="' + esc(n.id) + '" aria-expanded="' + open + '"' + tip(rowTip) + '><span class="st">' + statusIcon(n, st.job) +
         '</span><span class="mid"><span class="main">' + esc(main) + '</span><span class="sub"' + tip(subTip) + ">" + esc(sub) + "</span>" + bar + "</span>" + (done ? scorePills(n, t) : "") + "</button>" +
         (open && (done || n.status === "error") ? viewDetail(n, t) : "") +
