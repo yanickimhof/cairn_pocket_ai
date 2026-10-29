@@ -2,12 +2,17 @@
 
 import math
 import os
+import sys
 import threading
 import time
 from pathlib import Path
 
 from . import config, diarize, llm, pocket, privacy, score, speech
 from .notes import guess_date, make_id
+
+
+AUTO_ATTEMPTS = 3   # a recording that fails is retried by itself until it has failed this many times in all
+RETRY_DELAY = 300   # seconds, multiplied by the number of failures: the wait before an automatic retry
 
 
 class Busy(RuntimeError):
@@ -130,7 +135,7 @@ class Jobs:
         attempted = {note_id}
         self._set(total=1, done=0, id=note_id)
         if self._try(note_id, settings) and settings.get("autoprocess", False):
-            self._drain(settings, attempted)
+            self._drain(settings, attempted, automatic=True)
 
     def _try(self, note_id, settings):
         """Process one recording and keep going if it fails. Returns False when the job was cancelled."""
@@ -146,13 +151,23 @@ class Jobs:
             self._fail("%s: %s" % (note.get("title") or note_id, error))
         return not self.cancelled
 
-    def _drain(self, settings, attempted=None):
+    @staticmethod
+    def _due(note, automatic, now):
+        """A failed recording is retried by itself only a few times and not at once; asking for it by hand always works."""
+        if note.get("status") != "error" or not automatic:
+            return True
+        return int(note.get("attempts") or 0) < AUTO_ATTEMPTS and now >= float(note.get("retry_after") or 0)
+
+    def _drain(self, settings, attempted=None, automatic=False):
         """Process the waiting recordings, newest first. The queue is read again after each one,
-        so recordings put back while the job runs are picked up too."""
+        so recordings put back while the job runs are picked up too. When it was not asked for by hand
+        (automatic), a recording that keeps failing is left alone after a few tries."""
         attempted = set() if attempted is None else attempted
         while not self.cancelled:
+            now = time.time()
             pending = [n for n in self.store.slim()
-                       if n.get("status") in ("waiting", "error") and n["id"] not in attempted and os.path.exists(n.get("audio", ""))]
+                       if n.get("status") in ("waiting", "error") and n["id"] not in attempted and os.path.exists(n.get("audio", ""))
+                       and self._due(n, automatic, now)]
             if not pending:
                 break
             pending.sort(key=lambda n: n.get("date") or "", reverse=True)
@@ -182,7 +197,7 @@ class Jobs:
         self._start("queue", self._queue)
 
     def _queue(self):
-        self._drain(config.load_settings())
+        self._drain(config.load_settings(), automatic=True)
 
     def _import(self, process=True):
         settings = config.load_settings()
@@ -248,38 +263,63 @@ class Jobs:
             self._set(pct=value)
 
         started = time.time()
+        timings, reused = {}, []
         try:
-            step("transcribing")
             spoken = note.get("speech_lang") if note.get("speech_lang") in config.LANGS else None  # None: the engine detects it
-            result = speech.transcribe(note["audio"], progress=pct, **({"language": spoken} if spoken else {}))
-            quality, doubtful = speech.assess(result["segments"])
-            shares, mixed = speech.language_mix(result["segments"])
-            note.update(speech_lang_used=spoken, languages=shares, mixed=mixed,
-                segments=result["segments"], quality=quality, doubtful=doubtful, passages=len(doubtful),
-                duration=result["duration"] or note.get("duration"), lang=lang, heard=result.get("language"), error="",
-            )
-            keep()
+            key = speech.model_key()
+            if note.get("segments") and note.get("transcribed_key") == key and (note.get("transcribed_lang") or None) == spoken:
+                reused.append("transcribing")  # already transcribed with this model and language: that work is never redone
+            else:
+                step("transcribing")
+                began = time.time()
+                result = speech.transcribe(note["audio"], progress=pct, **({"language": spoken} if spoken else {}))
+                timings["transcribing"] = round(time.time() - began, 1)
+                quality, doubtful = speech.assess(result["segments"])
+                shares, mixed = speech.language_mix(result["segments"])
+                note.update(speech_lang_used=spoken, languages=shares, mixed=mixed,
+                    segments=result["segments"], quality=quality, doubtful=doubtful, passages=len(doubtful),
+                    duration=result["duration"] or note.get("duration"), lang=lang, heard=result.get("language"), error="",
+                    transcribed_key=key, transcribed_lang=spoken or "", diarized=False,
+                )
+                keep()
             if settings.get("diarize") and diarize.available():
-                step("diarizing")
-                state, turns = diarize.run(note["audio"])
-                if state == "ok":
-                    diarize.assign(note["segments"], turns, lang)
-                    keep()
+                if note.get("diarized"):
+                    reused.append("diarizing")
+                else:
+                    step("diarizing")
+                    began = time.time()
+                    state, turns = diarize.run(note["audio"], timeout=diarize.timeout_for(note.get("duration")))
+                    timings["diarizing"] = round(time.time() - began, 1)
+                    if state == "ok":
+                        diarize.assign(note["segments"], turns, lang)
+                        note["diarized"] = True
+                        keep()
             note["clean"] = "\n\n".join(speech.raw_lines(note["segments"]))  # the recognized text is already punctuated
             step("summarizing")
+            began = time.time()
             self._summarize(note, level, lang)
+            timings["summarizing"] = round(time.time() - began, 1)
+            if reused:
+                timings["reused"] = reused
             cfg = config.install_config()
             note.update(
-                status="done", step="", level=level, processed=time.strftime("%Y-%m-%dT%H:%M:%S"),
-                elapsed=int(time.time() - started), models={"speech": speech.model_name(), "llm": cfg["llm"]},
+                status="done", step="", error="", level=level, processed=time.strftime("%Y-%m-%dT%H:%M:%S"),
+                elapsed=int(time.time() - started), models={"speech": speech.model_name(), "llm": cfg["llm"]}, timings=timings,
             )
+            note.pop("attempts", None)
+            note.pop("retry_after", None)
             keep()
+            spent = " ".join("%s=%ss" % (k, v) for k, v in timings.items() if k != "reused")
+            print("timing: %s audio=%ds %s%s" % (str(note_id)[:14], int(note.get("duration") or 0), spent,
+                                               " reused=" + ",".join(reused) if reused else ""), file=sys.stderr, flush=True)
         except Gone:
             raise
         except Exception as error:
             if not self.store.exists(note_id):  # deleted while it was being processed
                 raise Gone(note_id) from error
-            note.update(status="error", step="", error=str(error))
+            attempts = int(note.get("attempts") or 0) + 1
+            note.update(status="error", step="", error=str(error), attempts=attempts,
+                        retry_after=time.time() + RETRY_DELAY * attempts, timings=timings)
             self.store.save(note)
             raise
 

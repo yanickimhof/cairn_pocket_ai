@@ -18,6 +18,11 @@ from . import config, models
 TIMEOUT = 1800  # a long recording can take a while the first time the model loads
 
 
+def timeout_for(duration):
+    """Seconds a pass may take: three times the recording plus five minutes, never under fifteen minutes."""
+    return max(900, int(3 * (duration or 0)) + 300)
+
+
 def available():
     return models.diar_installed()
 

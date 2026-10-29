@@ -1260,6 +1260,97 @@ class UnitTest(unittest.TestCase):
 
 
 
+class RetryAndResumeTest(unittest.TestCase):
+    def _jobs(self, **notes):
+        from cairn import jobs, notes as notes_module
+
+        folder = Path(tempfile.mkdtemp())
+        store = notes_module.Store(folder / "Texts")
+        for name, fields in notes.items():
+            audio = folder / (name + ".wav")
+            audio.write_bytes(b"x")
+            store.save(dict({"id": name, "source": name, "status": "waiting", "date": "2026-10-08T17:00", "audio": str(audio)}, **fields))
+        return jobs.Jobs(store), store
+
+    def test_automatic_retries_are_limited_and_spaced_but_asking_by_hand_always_works(self):
+        import time
+        from unittest import mock
+
+        from cairn import jobs
+
+        job, store = self._jobs(
+            fresh={"status": "waiting"},
+            soon={"status": "error", "attempts": 1, "retry_after": time.time() + 600},
+            due={"status": "error", "attempts": 1, "retry_after": time.time() - 5},
+            given_up={"status": "error", "attempts": jobs.AUTO_ATTEMPTS, "retry_after": 0},
+        )
+        seen = []
+
+        def fake(note_id, settings):
+            seen.append(note_id)
+            note = store.get(note_id)
+            note["status"] = "done"
+            store.save(note)
+
+        with mock.patch.object(job, "_process", side_effect=fake):
+            job._drain({}, automatic=True)
+        self.assertEqual(sorted(seen), ["due", "fresh"])
+        job2, store = self._jobs(given_up={"status": "error", "attempts": 9, "retry_after": time.time() + 9999})
+        seen.clear()
+        with mock.patch.object(job2, "_process", side_effect=fake):
+            job2._drain({})  # the person pressed the button
+        self.assertEqual(seen, ["given_up"])
+
+    def test_a_failure_counts_and_delays_the_next_automatic_try(self):
+        import time
+        from unittest import mock
+
+        from cairn import jobs
+
+        job, store = self._jobs(a={"status": "waiting"})
+        with mock.patch.object(jobs.speech, "model_key", return_value="k"), \
+                mock.patch.object(jobs.speech, "transcribe", side_effect=RuntimeError("boom")):
+            with self.assertRaises(RuntimeError):
+                job._process("a", {"ui": "en"})
+        note = store.get("a")
+        self.assertEqual((note["status"], note["attempts"], note["error"]), ("error", 1, "boom"))
+        self.assertGreater(note["retry_after"], time.time() + jobs.RETRY_DELAY - 5)
+
+    def _resume(self, saved, spoken=None):
+        from unittest import mock
+
+        from cairn import jobs
+
+        segments = [{"start": 0.0, "end": 2.0, "text": "Hello there everyone today.", "logprob": -0.2}]
+        job, store = self._jobs(a=dict({"status": "error", "error": "boom", "attempts": 1, "segments": segments, "duration": 2.0,
+                                        "lang": "en", "speech_lang": spoken}, **saved))
+        calls = []
+
+        def transcribe(*args, **kwargs):
+            calls.append(1)
+            return {"language": "en", "segments": segments, "duration": 2.0}
+
+        with mock.patch.object(jobs.speech, "model_key", return_value="mlx:large"), \
+                mock.patch.object(jobs.speech, "model_name", return_value="Whisper"), \
+                mock.patch.object(jobs.speech, "transcribe", side_effect=transcribe), \
+                mock.patch.object(jobs.config, "install_config", return_value={"llm": "m"}), \
+                mock.patch.object(job, "_summarize"):
+            job._process("a", {"ui": "en", "diarize": False})
+        return calls, store.get("a")
+
+    def test_a_transcript_already_made_with_this_model_is_not_made_again(self):
+        calls, note = self._resume({"transcribed_key": "mlx:large", "transcribed_lang": ""})
+        self.assertEqual(calls, [])
+        self.assertEqual(note["status"], "done")
+        self.assertEqual(note["timings"]["reused"], ["transcribing"])
+        self.assertNotIn("attempts", note)
+
+    def test_a_transcript_is_made_again_when_the_model_or_the_language_changed(self):
+        self.assertEqual(len(self._resume({"transcribed_key": "mlx:turbo", "transcribed_lang": ""})[0]), 1)
+        self.assertEqual(len(self._resume({"transcribed_key": "mlx:large", "transcribed_lang": "fr"})[0]), 1)
+        self.assertEqual(len(self._resume({})[0]), 1)  # a note made before this was recorded: not trusted
+
+
 class DiarizeDeviceTest(unittest.TestCase):
     def test_graphics_chip_only_when_allowed_and_available(self):
         from cairn import diarize_worker

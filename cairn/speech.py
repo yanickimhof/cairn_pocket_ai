@@ -163,6 +163,14 @@ def raw_lines(segments):
     ]
 
 
+def model_key():
+    """What identifies the speech model in use, for telling whether a transcript was made with it."""
+    from . import models
+
+    cfg = config.install_config()
+    return "%s:%s" % (cfg.get("engine"), models.selected_speech() or cfg.get("whisper_repo") or "")
+
+
 def model_name():
     """A readable name for the speech model in use, for the note's footer."""
     from . import models
