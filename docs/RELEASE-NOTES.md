@@ -69,6 +69,4 @@ Runs quietly in the background, in English or French.
 
 **Any folder of audio, and more languages.**
 
-**A faster speech engine.**
-
 **Easier for everyone.** Tested with screen readers, with a full list of what each release contains.
