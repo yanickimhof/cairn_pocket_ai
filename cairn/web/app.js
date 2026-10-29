@@ -9,6 +9,7 @@
       aboutText: "Importez, transcrivez et résumez vos enregistrements Pocket, entièrement sur cet ordinateur. Aucun compte, aucun cloud, aucune télémétrie.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · Licence MIT · Non affilié à Pocket.", uiLang: "Langue de l’interface",
       off: "Non", on: "Oui",
+      diarDevice: "Interlocuteurs : calcul", diarDeviceHint: "Auto utilise la puce graphique du Mac quand elle est disponible (environ 4 fois plus rapide, même résultat). Processeur force le calcul sans elle.", devAuto: "Auto", devCpu: "Processeur",
       processedIn: "traité en", notInstalled: "Non installé", getIt: "Installer", refText: "Acheter un Pocket : 10 % de réduction", refNote: "Lien de parrainage facultatif. L’offre dépend uniquement de Pocket et peut changer.",
       models: "Modèles", modelsHint: "Choisir ou ajouter des modèles", modelsSpeech: "Transcription", modelsLlm: "Résumés", modelsDiar: "Identification des interlocuteurs",
       hfToken: "Jeton Hugging Face", hfTokenHint: "Nécessaire une seule fois pour télécharger le modèle de diarisation (gratuit, compte Hugging Face requis ; il faut aussi accepter l'accès au modèle sur huggingface.co). Jamais utilisé ailleurs.",
@@ -57,6 +58,7 @@
       aboutText: "Import, transcribe and summarize your Pocket recordings, entirely on this computer. No account, no cloud, no telemetry.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · MIT license · Not affiliated with Pocket.", uiLang: "Interface language",
       off: "Off", on: "On",
+      diarDevice: "Speakers: compute", diarDeviceHint: "Auto uses the Mac's graphics chip when available (about 4 times faster, same result). Processor forces the computation without it.", devAuto: "Auto", devCpu: "Processor",
       processedIn: "processed in", notInstalled: "Not installed", getIt: "Install", refText: "Get a Pocket: 10 % off", refNote: "Optional referral link. The offer is set by Pocket alone and may change.",
       models: "Models", modelsHint: "Choose or add models", modelsSpeech: "Transcription", modelsLlm: "Summaries", modelsDiar: "Speaker identification",
       hfToken: "Hugging Face token", hfTokenHint: "Needed once to download the diarization model (free, a Hugging Face account is required, and you must accept access to the model on huggingface.co). Never used anywhere else.",
@@ -308,6 +310,12 @@
       [["0", t.off, false], ["1", t.on, true]].map(function (o) {
         return '<button type="button" data-a="autoprocess" data-v="' + o[0] + '" class="' + bg((st.settings.autoprocess === true) === o[2]).trim() + '">' + esc(o[1]) + "</button>";
       }).join("") + "</div></div>";
+    if (S.server && S.server.gpu && S.server.diar_installed) {
+      h += '<div class="hr"></div><div class="setrow"' + tip(t.diarDeviceHint) + '><span class="text" style="font-size:14px">' + esc(t.diarDevice) + '</span><div class="seg s38">' +
+        [["auto", t.devAuto], ["cpu", t.devCpu]].map(function (o) {
+          return '<button type="button" data-a="diarizeDevice" data-v="' + o[0] + '" class="' + bg((st.settings.diarize_device || "auto") === o[0]).trim() + '">' + esc(o[1]) + "</button>";
+        }).join("") + "</div></div>";
+    }
     h += '<div class="hr"></div><div class="setrow"' + tip(t.hfTokenHint) + ">" + I.hf;
     if (st.settings.hf_token) {
       h += '<span class="row gap8"><button type="button" class="ib" data-a="hfAsk"' + tip(t.hfTokenOn) + ">" + I.pencil + '</button><div class="seg s38"' + tip(t.diarizeHint) + ">" +
@@ -716,6 +724,7 @@
     ui: function (v) { S.ui = v; api("POST", "/api/settings", { ui: v }).then(refresh); },
     autoprocess: function (v) { api("POST", "/api/settings", { autoprocess: v === "1" }).then(refresh); },
     autoimport: function (v) { api("POST", "/api/settings", { autoimport: v === "1" }).then(refresh); },
+    diarizeDevice: function (v) { api("POST", "/api/settings", { diarize_device: v }).then(refresh); },
     autocheck: function (v) { api("POST", "/api/settings", { autocheck: v === "1" }).then(refresh); },
     settings: function () { S.settingsOpen = !S.settingsOpen; },
     about: function () {

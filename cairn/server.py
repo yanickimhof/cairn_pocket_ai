@@ -133,6 +133,7 @@ class App:
             "update": self.update_info,
             "privacy": _privacy_summary(),
             "diar_installed": models.diar_installed(),
+            "gpu": sys.platform == "darwin" and platform.machine() == "arm64",
             "totals": {"notes": len(everything), "done": sum(1 for n in everything if n.get("status") == "done"),
                        "waiting": sum(1 for n in everything if n.get("status") in ("waiting", "error"))},
         }

@@ -1260,6 +1260,47 @@ class UnitTest(unittest.TestCase):
 
 
 
+class DiarizeDeviceTest(unittest.TestCase):
+    def test_graphics_chip_only_when_allowed_and_available(self):
+        from cairn import diarize_worker
+
+        self.assertEqual(diarize_worker.choose_device("auto", True), "mps")
+        self.assertEqual(diarize_worker.choose_device("auto", False), "cpu")
+        self.assertEqual(diarize_worker.choose_device("cpu", True), "cpu")
+        self.assertEqual(diarize_worker.choose_device("whatever", True), "mps")
+
+    def test_setting_defaults_to_auto_and_is_validated(self):
+        from unittest import mock
+
+        from cairn import config
+
+        with mock.patch.object(config, "home", return_value=Path(tempfile.mkdtemp())):
+            self.assertEqual(config.load_settings()["diarize_device"], "auto")
+            self.assertEqual(config.save_settings({"diarize_device": "cpu"})["diarize_device"], "cpu")
+            with self.assertRaises(ValueError):
+                config.save_settings({"diarize_device": "tpu"})
+            self.assertEqual(config.load_settings()["diarize_device"], "cpu")
+
+    def test_the_choice_reaches_the_speaker_program(self):
+        from types import SimpleNamespace
+        from unittest import mock
+
+        from cairn import diarize
+
+        seen = {}
+
+        def fake_run(*args, **kwargs):
+            seen.update(kwargs["env"])
+            return SimpleNamespace(returncode=0, stdout="[]", stderr="")
+
+        for saved, expected in (({"diarize_device": "cpu"}, "cpu"), ({}, "auto"), ({"diarize_device": "x"}, "auto")):
+            with mock.patch.object(diarize.models, "diar_installed", return_value=True), \
+                    mock.patch.object(diarize.config, "load_settings", return_value=saved), \
+                    mock.patch.object(diarize.subprocess, "run", side_effect=fake_run):
+                self.assertEqual(diarize.run("a.mp3")[0], "ok")
+            self.assertEqual(seen["CAIRN_DIARIZE_DEVICE"], expected)
+
+
 class FailureMessagesTest(unittest.TestCase):
     def test_a_recording_interrupted_while_identifying_speakers_goes_back_to_waiting(self):
         from cairn import notes

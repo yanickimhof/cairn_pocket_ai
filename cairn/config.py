@@ -17,7 +17,7 @@ LOOPBACK = re.compile(r"127\.0\.0\.1:\d{2,5}")
 DEFAULT_LLM = "qwen3:4b"
 LEVELS = ("short", "mid", "full")
 LANGS = ("fr", "en")
-DEFAULT_SETTINGS = {"ui": None, "audio_dir": None, "llm": None, "speech": None, "autocheck": True, "autoimport": True, "autoprocess": False, "pocket_key": None, "diarize": False, "hf_token": None}
+DEFAULT_SETTINGS = {"ui": None, "audio_dir": None, "llm": None, "speech": None, "autocheck": True, "autoimport": True, "autoprocess": False, "pocket_key": None, "diarize": False, "diarize_device": "auto", "hf_token": None}
 
 _lock = threading.RLock()
 
@@ -113,6 +113,8 @@ def save_settings(patch):
                 current["audio_dir"] = str(folder)
             elif key == "diarize" and isinstance(value, bool):
                 current["diarize"] = value
+            elif key == "diarize_device" and value in ("auto", "cpu"):
+                current["diarize_device"] = value
             elif key == "hf_token":
                 # a Hugging Face access token, used only to download the gated diarization model once.
                 # Not sent anywhere by Cairn beyond that one download; never logged. Empty clears it.

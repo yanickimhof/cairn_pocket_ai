@@ -8,11 +8,12 @@ simply written without speaker labels, same as before this feature existed.
 """
 
 import json
+import os
 import subprocess  # nosec B404
 import sys
 from pathlib import Path
 
-from . import models
+from . import config, models
 
 TIMEOUT = 1800  # a long recording can take a while the first time the model loads
 
@@ -26,10 +27,12 @@ def run(audio_path, timeout=TIMEOUT):
     Each turn is {"start": float, "end": float, "speaker": "SPEAKER_00"}."""
     if not available():
         return "missing", None
+    device = config.load_settings().get("diarize_device", "auto")
+    env = dict(os.environ, CAIRN_DIARIZE_DEVICE=device if device in ("auto", "cpu") else "auto")
     try:
         done = subprocess.run(  # nosec B603
             [sys.executable, "-m", "cairn.diarize_worker", str(audio_path)], capture_output=True, text=True,
-            timeout=timeout, cwd=str(Path(__file__).resolve().parent.parent), check=False,
+            timeout=timeout, cwd=str(Path(__file__).resolve().parent.parent), check=False, env=env,
         )
     except (OSError, subprocess.SubprocessError):
         return "none", None
