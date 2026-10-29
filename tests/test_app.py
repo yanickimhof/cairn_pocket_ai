@@ -1016,7 +1016,7 @@ class SimpleNamespaceStore:
 
 
 class UnitTest(unittest.TestCase):
-    def test_process_now_then_continues_with_the_queue(self):
+    def _queue_with_one_put_back(self, autoprocess):
         import tempfile
         from unittest import mock
 
@@ -1040,9 +1040,17 @@ class UnitTest(unittest.TestCase):
             note["status"] = "done"
             store.save(note)
 
-        with mock.patch.object(job, "_process", side_effect=fake):
-            job._one("c")  # chosen first, then everything else that is waiting, including the one put back
-        self.assertEqual(order, ["c", "a", "b", "d"])
+        settings = dict(jobs.config.load_settings(), autoprocess=autoprocess)
+        with mock.patch.object(job, "_process", side_effect=fake), mock.patch.object(jobs.config, "load_settings", return_value=settings):
+            job._one("c")
+        return order
+
+    def test_process_now_continues_with_the_queue_when_automatic_processing_is_on(self):
+        # chosen first, then everything else that is waiting, including the one put back
+        self.assertEqual(self._queue_with_one_put_back(True), ["c", "a", "b", "d"])
+
+    def test_process_now_does_only_that_recording_when_automatic_processing_is_off(self):
+        self.assertEqual(self._queue_with_one_put_back(False), ["c"])
 
     def test_update_check_sees_prereleases(self):
         import io

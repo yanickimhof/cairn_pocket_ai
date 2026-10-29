@@ -124,11 +124,12 @@ class Jobs:
         self._start("import", self._one, note_id)
 
     def _one(self, note_id):
-        """Process the chosen recording first, then carry on with the others that are waiting."""
+        """Process the chosen recording. The others that are waiting follow only if automatic processing is on:
+        with it off, nothing is processed that the person did not ask for."""
         settings = config.load_settings()
         attempted = {note_id}
         self._set(total=1, done=0, id=note_id)
-        if self._try(note_id, settings):
+        if self._try(note_id, settings) and settings.get("autoprocess", False):
             self._drain(settings, attempted)
 
     def _try(self, note_id, settings):
