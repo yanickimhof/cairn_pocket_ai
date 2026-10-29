@@ -55,6 +55,13 @@ Each finished note shows up to three pills on its row, with an explanation on ho
 
 Both scores appear in the exports (Markdown, HTML, copy). Secure mode hides the list of notes until you reveal it.
 
+## Finding, listening, following up
+
+- **Search:** the magnifier in the header searches the title, the summary and the transcript of every finished note, without regard to accents. Every word you type must be there. Each result shows the lines found with your words marked: a transcript line opens the transcript at that moment, the others open the note. Secure mode hides the search like it hides the list.
+- **Listen:** when the recording is still on this computer, the transcript window has a player. Tap a time stamp to play from that line. The lines to check are highlighted, so a doubtful word is verified in seconds.
+- **All my actions:** the checklist icon lists the actions of every finished note, grouped by person, newest note first. Tick one when it is done: the tick is kept with its note. The copy button copies the open actions as text. If a note is redone and the wording of an action changes, it shows as open again.
+- **Follow-up email:** the envelope on a note writes a short email from its summary, in the language of the note, with the summary model. The draft is kept with the note: copy it, open it in your mail app, or write it again. Cairn never sends anything.
+
 ## Deleting
 
 The trash icon on a note deletes it for good, on the Pocket and on this computer: the file on the Pocket, and the audio, transcript and summary here. Cairn never reaches the Pocket cloud account or its apps: a recording kept there is yours to delete there. If the Pocket is not connected, its file is erased the next time it is. Exports already saved in `~/Cairn/Exports` are not touched. The Pocket has no protection of its own, which is why deleting there matters.
