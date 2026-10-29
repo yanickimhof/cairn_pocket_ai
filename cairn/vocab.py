@@ -45,7 +45,7 @@ def parse(value):
 
 def key(terms):
     """A short value that changes when the vocabulary does, kept with each note."""
-    return hashlib.sha1("\n".join(terms or []).encode("utf-8")).hexdigest()[:12]
+    return hashlib.sha1("\n".join(terms or []).encode("utf-8"), usedforsecurity=False).hexdigest()[:12]
 
 
 def spellings(terms):
