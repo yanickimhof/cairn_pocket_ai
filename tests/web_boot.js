@@ -23,9 +23,18 @@ const doc = {
   createElement: fakeNode,
 };
 const timers = [];
+const calls = [];
 function fetchStub(path, opt) {
+  calls.push(((opt && opt.method) || "GET") + " " + path);
   let body = {};
   if (path.split("?")[0] === "/api/state") { body = fx.state; }
+  else if (path.indexOf("/api/search") === 0) {
+    body = { results: [{ id: "n1", title: "Call", date: "2026-10-08T08:06:00", score: 3, hits: [{ where: "transcript", start: 12, parts: [{ t: "see the ", m: false }, { t: "acme", m: true }] }] }] };
+  }
+  else if (path === "/api/actions") {
+    body = { actions: [{ note: "n1", title: "Call", date: "2026-10-08T08:06:00", what: "Send the plan", who: "Sophie", when: "Friday", done: false },
+                       { note: "n2", title: "Check-in", date: "2026-10-07T08:06:00", what: "Call the supplier", who: "", when: "", done: true }] };
+  }
   else if (path.indexOf("/api/note/") === 0 && !(opt && opt.method === "POST")) { body = fx.note; }
   return Promise.resolve({
     ok: true, status: 200, json: () => Promise.resolve(body), text: () => Promise.resolve(""), blob: () => Promise.resolve({}),
@@ -101,6 +110,31 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   check(page.innerHTML.indexOf('data-a="autocheck"') !== -1, "settings are shown");
   check(page.innerHTML.indexOf('data-a="tr"') === -1 && page.innerHTML.indexOf('data-a="lvl"') === -1 && page.innerHTML.indexOf('data-a="polish"') === -1,
     "no global level, language or polish setting");
+
+  // search: a panel with a field, results with the searched words marked, a tap on a line opens the transcript there
+  click({ "data-a": "find" });
+  await settle();
+  check(page.innerHTML.indexOf('id="findInput"') !== -1 && page.innerHTML.indexOf('data-a="autocheck"') === -1, "the search opens and replaces the settings");
+  (listeners.input || []).forEach((fn) => fn({ target: { id: "findInput", value: "acme" } }));
+  timers.splice(0).forEach((fn) => fn());
+  await settle();
+  check(calls.some((c) => c === "GET /api/search?q=acme"), "typing searches");
+  check(page.innerHTML.indexOf("<mark>acme</mark>") !== -1 && page.innerHTML.indexOf('data-a="findGo"') !== -1, "the results mark the searched word");
+  check(page.innerHTML.indexOf('data-v="12"') !== -1, "a transcript result carries its moment");
+
+  // all actions, grouped by person, with the ticked ones at the end
+  click({ "data-a": "tasksToggle" });
+  await settle();
+  check(page.innerHTML.indexOf('id="findInput"') === -1 && page.innerHTML.indexOf("Sophie") !== -1 && page.innerHTML.indexOf('data-a="tick"') !== -1, "the actions list opens and replaces the search");
+  click({ "data-a": "tick", "data-v": "0" });
+  await settle();
+  check(calls.some((c) => c === "POST /api/note/n1/action"), "ticking an action is saved on its note");
+
+  // a finished note can write its follow-up email
+  click({ "data-a": "tasksToggle" });
+  click({ "data-a": "row", "data-id": done.id });
+  await settle();
+  check(page.innerHTML.indexOf('data-a="mailOpen"') !== -1, "a finished note offers its follow-up email");
 
   // a running job shows its progress on the right row
   fx.state.job = { running: true, kind: "import", step: "transcribing", id: waiting.id, done: 0, total: 1, pct: 40, errors: [] };

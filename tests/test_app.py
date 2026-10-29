@@ -1796,5 +1796,143 @@ class AboutHelpersTest(unittest.TestCase):
             self.assertEqual(models.dir_size(tmp), 1000)
 
 
+class LibraryTest(unittest.TestCase):
+    """Search across notes, listening to a recording, the list of all actions, the follow-up email."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        root = Path(cls.tmp.name)
+        os.environ.update(CAIRN_HOME=str(root / "Cairn"), CAIRN_POCKET_DIR=str(root / "none"), CAIRN_ENGINE="mlx", CAIRN_LLM="stub:1b",
+                          OLLAMA_HOST="127.0.0.1:9", CAIRN_WHISPER_MODEL=str(root))
+        from cairn import server
+
+        cls.server = server
+        cls.app, cls.httpd = server.make_server(18790)
+        threading.Thread(target=cls.httpd.serve_forever, daemon=True).start()
+        cls.c = Client(cls.app, cls.httpd)
+        audio = root / "Cairn" / "Audio"
+        audio.mkdir(parents=True)
+        cls.wav = audio / "a.wav"
+        tone(cls.wav, seconds=2)
+        cls.app.store.save({
+            "id": "a", "status": "done", "title": "Appel Acme", "date": "2026-10-01T10:00:00", "lang": "fr", "audio": str(cls.wav),
+            "summary": {"template": "call", "title": "Appel Acme", "tldr": "Budget de 300 000 francs approuv\u00e9",
+                        "actions": [{"what": "Envoyer le plan", "who": "Sophie", "when": "vendredi"}, {"what": "Appeler le fournisseur", "who": "Marc"}],
+                        "key_points": ["Certification en retard"], "decisions": ["Lancement en mars"]},
+            "segments": [{"start": 12.0, "end": 15.0, "text": "On a vu l'association Acme \u00e0 \u00c9vian", "speaker": "Speaker 1"}],
+            "speaker_names": {"Speaker 1": "Marc"}})
+        cls.app.store.save({
+            "id": "b", "status": "done", "title": "Point projet", "date": "2026-10-05T10:00:00", "lang": "en", "audio": str(root / "gone.wav"),
+            "summary": {"template": "meeting", "title": "Point projet", "tldr": "Nothing special", "actions": [{"what": "Envoyer le plan", "who": "Sophie"}]},
+            "segments": [{"start": 1.0, "end": 2.0, "text": "Hello everyone"}]})
+        cls.app.store.save({"id": "w", "status": "waiting", "title": "", "date": "2026-10-06T10:00:00", "audio": str(cls.wav)})
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.httpd.shutdown()
+        cls.tmp.cleanup()
+
+    def raw(self, path, headers=None):
+        conn = http.client.HTTPConnection("127.0.0.1", self.c.port, timeout=30)
+        conn.request("GET", path, None, dict({"Host": "127.0.0.1:%d" % self.c.port, "Cookie": self.c.cookie}, **(headers or {})))
+        resp = conn.getresponse()
+        data = resp.read()
+        out = (resp.status, dict(resp.getheaders()), data)
+        conn.close()
+        return out
+
+    def test_search_ignores_accents_and_needs_every_word(self):
+        status, body = self.c.call("GET", "/api/search?q=evian+acme")
+        self.assertEqual(status, 200)
+        self.assertEqual([r["id"] for r in body["results"]], ["a"])
+        hit = body["results"][0]["hits"][0]
+        self.assertEqual(hit["where"], "transcript")
+        self.assertEqual(hit["start"], 12.0)
+        self.assertIn("Marc", "".join(p["t"] for p in hit["parts"]))  # the speaker's chosen name is searched, not the raw label
+        self.assertEqual({p["t"].lower() for p in hit["parts"] if p["m"]}, {"acme", "\u00e9vian"})
+        self.assertEqual(self.c.call("GET", "/api/search?q=evian+nothingelse")[1]["results"], [])
+        self.assertEqual(self.c.call("GET", "/api/search?q=")[1]["results"], [])
+
+    def test_search_ranks_titles_first_and_skips_unfinished_notes(self):
+        ids = [r["id"] for r in self.c.call("GET", "/api/search?q=sophie")[1]["results"]]
+        self.assertEqual(sorted(ids), ["a", "b"])
+        self.assertNotIn("w", [r["id"] for r in self.c.call("GET", "/api/search?q=acme")[1]["results"]])
+        self.assertEqual(self.c.call("GET", "/api/search?q=acme")[1]["results"][0]["id"], "a")
+
+    def test_search_needs_the_session(self):
+        self.assertEqual(self.c.call("GET", "/api/search?q=acme", cookie=False)[0], 403)
+
+    def test_audio_is_served_whole_and_by_range(self):
+        size = self.wav.stat().st_size
+        whole = self.wav.read_bytes()
+        status, head, data = self.raw("/api/note/a/audio")
+        self.assertEqual((status, data), (200, whole))
+        self.assertEqual(head["Accept-Ranges"], "bytes")
+        self.assertEqual(head["Content-Type"], "audio/wav")
+        status, head, data = self.raw("/api/note/a/audio", {"Range": "bytes=100-199"})
+        self.assertEqual((status, data), (206, whole[100:200]))
+        self.assertEqual(head["Content-Range"], "bytes 100-199/%d" % size)
+        status, _, data = self.raw("/api/note/a/audio", {"Range": "bytes=-50"})
+        self.assertEqual((status, data), (206, whole[-50:]))
+        status, _, data = self.raw("/api/note/a/audio", {"Range": "bytes=%d-" % (size - 10)})
+        self.assertEqual((status, data), (206, whole[-10:]))
+        self.assertEqual(self.raw("/api/note/a/audio", {"Range": "bytes=%d-" % (size + 5)})[0], 416)
+
+    def test_audio_missing_or_not_audio_is_not_served(self):
+        self.assertEqual(self.raw("/api/note/b/audio")[0], 404)
+        note = self.app.get_note("a")
+        secret = Path(self.tmp.name) / "secret.txt"
+        secret.write_text("private")
+        self.app.store.save(dict(note, id="c", audio=str(secret)))
+        self.assertEqual(self.raw("/api/note/c/audio")[0], 404)
+        self.app.store.delete("c")
+        self.assertEqual(self.c.call("GET", "/api/note/a/audio", cookie=False)[0], 403)
+
+    def test_note_says_whether_its_audio_is_there(self):
+        self.assertTrue(self.c.call("GET", "/api/note/a")[1]["has_audio"])
+        self.assertFalse(self.c.call("GET", "/api/note/b")[1]["has_audio"])
+        self.assertNotIn("has_audio", self.app.store.get("a"))  # a view of the note, never saved with it
+
+    def test_all_actions_newest_note_first_and_ticked_ones_are_kept(self):
+        actions = self.c.call("GET", "/api/actions")[1]["actions"]
+        self.assertEqual([(a["note"], a["what"]) for a in actions], [("b", "Envoyer le plan"), ("a", "Envoyer le plan"), ("a", "Appeler le fournisseur")])
+        self.assertEqual(actions[1]["who"], "Sophie")
+        self.assertEqual(self.c.call("POST", "/api/note/a/action", {"what": "Envoyer le plan", "done": True})[0], 200)
+        actions = self.c.call("GET", "/api/actions")[1]["actions"]
+        self.assertEqual([a["done"] for a in actions], [False, True, False])  # only that note's action is ticked
+        self.c.call("POST", "/api/note/a/action", {"what": "Envoyer le plan", "done": False})
+        self.assertFalse(any(a["done"] for a in self.c.call("GET", "/api/actions")[1]["actions"]))
+        self.assertEqual(self.c.call("POST", "/api/note/a/action", {"what": ""})[0], 400)
+
+    def test_follow_up_email_is_written_once_and_redone_on_request(self):
+        from cairn import llm
+        calls = []
+
+        def fake_chat(system, user, schema=None, **kw):
+            calls.append((system, user))
+            return json.dumps({"subject": "Suite %d" % len(calls), "body": "Bonjour,\n\nMerci."})
+
+        keep = (llm.chat, llm.preflight)
+        llm.chat, llm.preflight = fake_chat, lambda *a, **k: None
+        try:
+            status, mail = self.c.call("POST", "/api/note/a/followup")
+            self.assertEqual((status, mail["subject"]), (200, "Suite 1"))
+            self.assertIn("French", calls[0][0])  # written in the language of the note
+            self.assertIn("Sophie", calls[0][1])
+            self.assertEqual(self.c.call("POST", "/api/note/a/followup")[1]["subject"], "Suite 1")  # kept with the note
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(self.c.call("POST", "/api/note/a/followup", {"redo": True})[1]["subject"], "Suite 2")
+            self.assertEqual(self.c.call("POST", "/api/note/w/followup")[0], 400)  # nothing to write about yet
+
+            def broken(*a, **k):
+                raise llm.LLMError("model down")
+
+            llm.preflight = broken
+            self.assertEqual(self.c.call("POST", "/api/note/b/followup")[0], 503)
+        finally:
+            llm.chat, llm.preflight = keep
+
+
 if __name__ == "__main__":
     unittest.main()

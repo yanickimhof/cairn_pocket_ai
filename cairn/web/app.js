@@ -10,6 +10,8 @@
       aboutLegal: "v{v} · © 2026 Yanick Imhof · Licence MIT · Non affilié à Pocket.", uiLang: "Langue de l’interface",
       off: "Non", on: "Oui",
       devGpuHint: "Identification des interlocuteurs sur la puce graphique (au moins 4 fois plus rapide, même résultat). Cliquer pour utiliser le processeur.", devCpuHint: "Identification des interlocuteurs sur le processeur. Cliquer pour utiliser la puce graphique.",
+      find: "Rechercher", findPlaceholder: "Un mot, un nom, un chiffre", findNone: "Aucun résultat", tasks: "Toutes mes actions", tasksNone: "Aucune action pour l'instant", tasksCopy: "Copier les actions à faire", tasksUnassigned: "Sans responsable", tasksCopied: "Actions copiées",
+      listenHint: "Écouter à partir d'ici", mailHint: "Écrire le mail de suivi", mailTitle: "Mail de suivi", mailWriting: "Rédaction du mail…", mailCopy: "Copier le mail", mailOpen: "Ouvrir dans l'app Mail", mailRedo: "Réécrire le mail",
       vocab: "Vocabulaire", vocabHint: "Noms de personnes, de lieux et termes rares, un par ligne. Cairn corrige dans la transcription les mots qui leur ressemblent et impose leur orthographe au résumé. « Sion => Acme » remplace toujours Sion par Acme.", vocabPlaceholder: "Un nom ou un terme par ligne", vocabSaved: "Vocabulaire enregistré", vocabFixes: "Corrections du vocabulaire",
       processedIn: "traité en", notInstalled: "Non installé", getIt: "Installer", refText: "Acheter un Pocket : 10 % de réduction", refNote: "Lien de parrainage facultatif. L’offre dépend uniquement de Pocket et peut changer.",
       models: "Modèles", modelsHint: "Choisir ou ajouter des modèles", modelsSpeech: "Transcription", modelsLlm: "Résumés", modelsDiar: "Identification des interlocuteurs",
@@ -60,6 +62,8 @@
       aboutLegal: "v{v} · © 2026 Yanick Imhof · MIT license · Not affiliated with Pocket.", uiLang: "Interface language",
       off: "Off", on: "On",
       devGpuHint: "Speaker identification runs on the graphics chip (at least 4 times faster, same result). Click to use the processor.", devCpuHint: "Speaker identification runs on the processor. Click to use the graphics chip.",
+      find: "Search", findPlaceholder: "A word, a name, a number", findNone: "No result", tasks: "All my actions", tasksNone: "No action yet", tasksCopy: "Copy the open actions", tasksUnassigned: "Nobody yet", tasksCopied: "Actions copied",
+      listenHint: "Listen from here", mailHint: "Write the follow-up email", mailTitle: "Follow-up email", mailWriting: "Writing the email…", mailCopy: "Copy the email", mailOpen: "Open in the Mail app", mailRedo: "Write it again",
       vocab: "Vocabulary", vocabHint: "Names of people and places and rare terms, one per line. Cairn corrects close variants in the transcript and imposes their spelling on the summary. \"Sion => Acme\" always replaces Sion with Acme.", vocabPlaceholder: "One name or term per line", vocabSaved: "Vocabulary saved", vocabFixes: "Vocabulary corrections",
       processedIn: "processed in", notInstalled: "Not installed", getIt: "Install", refText: "Get a Pocket: 10 % off", refNote: "Optional referral link. The offer is set by Pocket alone and may change.",
       models: "Models", modelsHint: "Choose or add models", modelsSpeech: "Transcription", modelsLlm: "Summaries", modelsDiar: "Speaker identification",
@@ -105,6 +109,10 @@
   };
 
   var I = {
+    search: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>',
+    tasks: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6h10"></path><path d="M10 12h10"></path><path d="M10 18h10"></path><path d="m3.5 6 1.5 1.5L7.5 5"></path><path d="m3.5 12 1.5 1.5 2.5-2.5"></path><path d="m3.5 18 1.5 1.5 2.5-2.5"></path></svg>',
+    mail: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"></rect><path d="m4.5 8 7.5 5.5L19.5 8"></path></svg>',
+    circle: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B5B5BA" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle></svg>',
     chip: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect><rect x="9.5" y="9.5" width="5" height="5" rx="1"></rect><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"></path></svg>',
     bolt: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"></path></svg>',
     info: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path></svg>',
@@ -146,7 +154,7 @@
   var S = {
     ui: null, hidden: true, settingsOpen: false, aboutOpen: false, open: null, edit: null, draft: "", exp: null,
     delConfirm: false, rr: "mid", rl: "en", sp: "auto", server: null, full: {}, about: null, upd: null,
-    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: "", vocabEdit: false, vocabDraft: ""
+    folderEdit: false, folderDraft: "", wasRunning: false, keyEdit: false, keyDraft: "", hfEdit: false, hfDraft: "", vocabEdit: false, vocabDraft: "", findOpen: false, findQ: "", findRes: null, tasksOpen: false, tasks: null
   };
   var lastView = "";
   var toastTimer = null;
@@ -452,6 +460,7 @@
     h += '<button type="button" class="ib blue" data-a="rerun"' + (jobBusy ? " disabled" : "") + tip(t.redoHint) + ">" + I.refreshW + "</button></div>";
     h += '<div class="row" style="gap:4px">' + tplButton(full, t);
     h += '<button type="button" class="ib" data-a="viewText" data-id="' + esc(n.id) + '"' + tip(t.viewText) + ">" + I.doc.replace("#6E6E73", "#1D1D1F") + "</button>";
+    h += '<button type="button" class="ib" data-a="mailOpen" data-id="' + esc(n.id) + '"' + tip(t.mailHint) + ">" + I.mail + "</button>";
     h += '<button type="button" class="ib" data-a="startRename"' + tip(t.rename) + ">" + I.pencil + "</button>";
     h += '<span class="pop"><button type="button" class="ib' + (S.exp === n.id ? " on" : "") + '" data-a="toggleExport"' + tip(t.exportHint) + ">" + I.down + "</button>" + exportList(n, t) + "</span>";
     h += '<button type="button" class="ib" data-a="askDelete"' + tip(t.deleteHint) + ">" + I.trash + "</button></div></div>";
@@ -517,6 +526,97 @@
     }).join("") + "</div>";
   }
 
+  function fmtStamp(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), r = sec % 60, pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    return (h ? h + ":" + pad(m) : m) + ":" + pad(r);
+  }
+  function stampSeconds(stamp) {
+    var p = String(stamp).split(":").map(Number), n = 0;
+    p.forEach(function (x) { n = n * 60 + x; });
+    return n;
+  }
+  function markedHtml(parts) {
+    return (parts || []).map(function (p) { return p.m ? "<mark>" + esc(p.t) + "</mark>" : esc(p.t); }).join("");
+  }
+  function runFind() {
+    var q = S.findQ.trim();
+    if (!q) { S.findRes = null; render(); return; }
+    api("GET", "/api/search?q=" + encodeURIComponent(q)).then(function (r) {
+      if (q === S.findQ.trim()) { S.findRes = r.results || []; render(); }
+    }).catch(function () { /* the next keystroke searches again */ });
+  }
+  function loadTasks() {
+    return api("GET", "/api/actions").then(function (r) { S.tasks = r.actions || []; render(); }).catch(function () { /* keep what is shown */ });
+  }
+  function viewFind(t) {
+    if (S.hidden) { return '<div class="card panel"><div class="small" style="padding:18px 0">' + esc(t.hiddenNote) + "</div></div>"; }
+    var h = '<div class="card panel"><div class="name" style="margin:14px 0 8px"><input id="findInput" type="search" autocomplete="off" placeholder="' + esc(t.findPlaceholder) + '" aria-label="' + esc(t.find) + '" value="' + esc(S.findQ) + '"></div>';
+    var res = S.findRes;
+    if (res && !res.length) { h += '<div class="small" style="padding:6px 2px 16px">' + esc(t.findNone) + "</div>"; }
+    (res || []).forEach(function (r) {
+      h += '<div class="fres"><button type="button" class="fhead" data-a="findGo" data-id="' + esc(r.id) + '"><span class="main">' + esc(r.title) + '</span><span class="sub">' + esc(fmtDate(r.date)) + "</span></button>";
+      r.hits.forEach(function (x) {
+        h += '<button type="button" class="fhit" data-a="findGo" data-id="' + esc(r.id) + '" data-v="' + (x.where === "transcript" && x.start != null ? x.start : "") + '">' +
+          (x.where === "transcript" && x.start != null ? '<span class="ts">' + fmtStamp(x.start) + "</span>" : "") + markedHtml(x.parts) + "</button>";
+      });
+      h += "</div>";
+    });
+    return h + "</div>";
+  }
+  function viewTasks(t) {
+    if (S.hidden) { return '<div class="card panel"><div class="small" style="padding:18px 0">' + esc(t.hiddenNote) + "</div></div>"; }
+    var list = S.tasks || [];
+    if (!list.length) { return '<div class="card panel"><div class="small" style="padding:18px 0">' + esc(S.tasks ? t.tasksNone : "…") + "</div></div>"; }
+    var groups = {}, order = [];
+    list.forEach(function (a, i) {
+      var who = a.who || "";
+      if (!groups[who]) { groups[who] = []; order.push(who); }
+      groups[who].push({ a: a, i: i });
+    });
+    order.sort(function (x, y) { return x === "" ? 1 : y === "" ? -1 : x.localeCompare(y); });
+    var h = '<div class="card panel"><div class="row between" style="padding:10px 0 2px"><span class="small">' + list.filter(function (a) { return !a.done; }).length + " / " + list.length +
+      '</span><button type="button" class="ib" data-a="tasksCopy"' + tip(t.tasksCopy) + ">" + I.copy.replace("#FFFFFF", "#1D1D1F") + "</button></div>";
+    order.forEach(function (who) {
+      h += '<div class="tgroup">' + esc(who || t.tasksUnassigned) + "</div>";
+      groups[who].sort(function (x, y) { return (x.a.done ? 1 : 0) - (y.a.done ? 1 : 0); }).forEach(function (e) {
+        var a = e.a;
+        h += '<div class="trow"><button type="button" class="tick" data-a="tick" data-v="' + e.i + '" aria-pressed="' + a.done + '">' + (a.done ? I.done : I.circle) + '</button><div class="tmid"><div class="text' + (a.done ? " tdone" : "") + '">' +
+          esc(a.what + (a.when ? " · " + a.when : "")) + '</div><div class="small">' + esc((a.title || "") + " · " + fmtDate(a.date)) + "</div></div></div>";
+      });
+    });
+    return h + "</div>";
+  }
+
+  function showMail(id, redo) {
+    var t = T();
+    closeText();
+    var box = document.createElement("div");
+    box.id = "txtview";
+    var draw = function (inner, draft) {
+      box.innerHTML = '<div class="mback" data-tx="close"></div><div class="mcard" role="dialog" aria-modal="true" aria-label="' + esc(t.mailTitle) + '"><div class="mhead"><div class="mtitle">' + esc(t.mailTitle) + '</div><div class="row gap8">' +
+        (draft ? '<button type="button" class="ib" data-tx="mcopy"' + tip(t.mailCopy) + ">" + I.copy.replace("#FFFFFF", "#1D1D1F") + "</button>" +
+          '<a class="ib" data-tx="mopen" href="mailto:?subject=' + encodeURIComponent(draft.subject) + "&body=" + encodeURIComponent(draft.body) + '"' + tip(t.mailOpen) + ">" + I.mail + "</a>" +
+          '<button type="button" class="ib" data-tx="mredo"' + tip(t.mailRedo) + ">" + I.refresh + "</button>" : "") +
+        '<button type="button" class="ib grey2" data-tx="close"' + tip(t.closeLbl) + ">" + I.x + '</button></div></div><div class="mbody">' + inner + "</div></div>";
+    };
+    draw('<p class="small">' + esc(t.mailWriting) + "</p>", null);
+    box.addEventListener("click", function (ev) {
+      var el = ev.target.closest("[data-tx]");
+      if (!el) { return; }
+      var tx = el.getAttribute("data-tx");
+      if (tx === "close") { closeText(); }
+      else if (tx === "mredo") { showMail(id, true); }
+      else if (tx === "mcopy") { navigator.clipboard.writeText(box.getAttribute("data-copy") || "").then(function () { flash(T().copied); }); }
+    });
+    document.body.appendChild(box);
+    document.body.style.overflow = "hidden";
+    api("POST", "/api/note/" + encodeURIComponent(id) + "/followup", redo ? { redo: true } : {}).then(function (d) {
+      box.setAttribute("data-copy", d.subject + "\n\n" + d.body);
+      draw('<p><b>' + esc(d.subject) + '</b></p><div class="mail">' + esc(d.body) + "</div>", d);
+    }).catch(function (e) { draw('<p class="small">' + esc(t.error + e.message) + "</p>", null); });
+  }
+
   function view() {
     var st = S.server;
     if (!st) { return ""; }
@@ -543,10 +643,14 @@
     if (st.battery && st.battery.level != null) { h += '<span class="bat"' + tip(t.batTip.replace("{n}", st.battery.level) + (charging ? t.batCharging : "")) + ">" + batteryIcon(st.battery.level, charging) + "</span>"; }
     h += "</div>";
     h += '<div class="row" style="gap:2px"><div style="margin-right:6px"' + tip(t.uiLang) + ">" + segLang("ui", ui(), "s34", t, "") + "</div>";
+    h += '<button type="button" class="ib plain' + bg(S.findOpen) + '" data-a="find"' + tip(t.find) + ">" + I.search + "</button>";
+    h += '<button type="button" class="ib plain' + bg(S.tasksOpen) + '" data-a="tasksToggle"' + tip(t.tasks) + ">" + I.tasks + "</button>";
     h += '<button type="button" class="ib plain' + (S.hidden ? " hiddenon" : "") + '" data-a="eye" aria-pressed="' + S.hidden + '"' + tip(S.hidden ? t.eyeShow : t.eyeHide) + ">" + (S.hidden ? I.eyeOff : I.eye) + "</button>";
     h += '<button type="button" class="ib plain' + bg(S.aboutOpen) + (st.update && st.update.available ? " upd" : "") + '" data-a="about"' + tip(t.about) + ">" + I.info + "</button>";
     h += '<button type="button" class="ib plain' + bg(S.settingsOpen) + '" data-a="settings"' + tip(t.settings) + ">" + I.gear + "</button></div></div>";
     if (S.settingsOpen) { h += viewSettings(t, st); }
+    if (S.findOpen) { h += viewFind(t); }
+    if (S.tasksOpen) { h += viewTasks(t); }
     if (S.aboutOpen) { h += viewAbout(t); }
     h += '<div class="side"><div class="hero"><div class="ring"' + (job.running ? tip(stepText(job, t)) : "") + '><svg class="arc" width="156" height="156" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="#E5E5EA" stroke-width="3"></circle>' +
       '<circle cx="50" cy="50" r="46" fill="none" stroke="#3368A0" stroke-width="3" stroke-linecap="round" stroke-dasharray="' + (ring * 289).toFixed(1) + ' 289" transform="rotate(-90 50 50)"></circle></svg>';
@@ -622,7 +726,7 @@
     return '<div class="spk"><div class="lbl">' + esc(t.participants) + '</div><div class="rows">' + rows + "</div></div>";
   }
 
-  function showText(id) {
+  function showText(id, start) {
     var t = T();
     api("GET", "/api/note/" + encodeURIComponent(id)).then(function (full) {
       var text = full.clean || "";
@@ -633,11 +737,12 @@
       var body = text.split(/\n+/).filter(function (x) { return x.trim(); }).map(function (line) {
         var hit = weak.some(function (w) { return line.indexOf(w) !== -1; });
         var m = line.match(/^\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*/);
-        var stamp = m ? '<span class="ts">' + esc(m[1]) + "</span>" : "";
+        var secs = m ? stampSeconds(m[1]) : null;
+        var stamp = m ? '<span class="ts"' + (full.has_audio ? ' data-tx="seek" data-s="' + secs + '"' + tip(t.listenHint) : "") + ">" + esc(m[1]) + "</span>" : "";
         var rest = m ? line.slice(m[0].length) : line;
         var sm = reNames && rest.match(reNames);
         var who = sm ? "<b>" + esc(sm[1]) + ": </b>" : "";
-        return "<p" + (hit ? ' class="dbt"' : "") + ">" + stamp + who + esc(sm ? rest.slice(sm[0].length) : rest) + "</p>";
+        return "<p" + (hit ? ' class="dbt"' : "") + (secs != null ? ' data-s="' + secs + '"' : "") + ">" + stamp + who + esc(sm ? rest.slice(sm[0].length) : rest) + "</p>";
       }).join("") || '<p class="small">' + esc(t.noText) + "</p>";
       closeText();
       var box = document.createElement("div");
@@ -646,6 +751,7 @@
         '<div class="mhead"><div class="mtitle">' + esc(full.title || id) + '</div><div class="row gap8">' +
         '<button type="button" class="ib" data-tx="copy"' + tip(t.copyText) + ">" + I.copy.replace("#FFFFFF", "#1D1D1F") + "</button>" +
         '<button type="button" class="ib grey2" data-tx="close"' + tip(t.closeLbl) + ">" + I.x + "</button></div></div>" +
+        (full.has_audio ? '<div class="mleg"><audio id="txtaudio" controls preload="metadata" src="/api/note/' + encodeURIComponent(id) + '/audio"></audio></div>' : "") +
         speakerPanel(id, full, t) +
         (full.quality != null ? '<div class="mleg">' + esc(t.rawLegend) + " : " + full.quality + " %</div>" : "") + (weak.length ? '<div class="mleg">' + esc(t.textLegend) + "</div>" : "") + '<div class="mbody">' + body + "</div></div>";
       box.addEventListener("click", function (ev) {
@@ -662,9 +768,21 @@
           return;
         }
         if (tx === "saveSpk") { saveSpeaker(id, el.getAttribute("data-raw")); return; }
+        if (tx === "seek") {
+          var player = document.getElementById("txtaudio");
+          if (player) { player.currentTime = parseFloat(el.getAttribute("data-s")) || 0; player.play().catch(function () { /* the browser asked for a click first */ }); }
+          return;
+        }
       });
       document.body.appendChild(box);
       document.body.style.overflow = "hidden";
+      if (start != null) {  // coming from a search: the line spoken at that moment is shown and marked
+        var lines = box.querySelectorAll(".mbody p[data-s]"), at = null;
+        for (var k = 0; k < lines.length; k += 1) { if (parseFloat(lines[k].getAttribute("data-s")) <= start + 0.5) { at = lines[k]; } }
+        if (at) { at.className += " sel"; at.scrollIntoView({ block: "center" }); }
+        var pl = document.getElementById("txtaudio");
+        if (pl) { pl.currentTime = start; }
+      }
       if (S.spkEdit && S.spkEdit.id === id) {
         var inp = document.getElementById("spkInput");
         if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
@@ -739,9 +857,36 @@
     autoimport: function (v) { api("POST", "/api/settings", { autoimport: v === "1" }).then(refresh); },
     diarizeDevice: function (v) { api("POST", "/api/settings", { diarize_device: v }).then(refresh); },
     autocheck: function (v) { api("POST", "/api/settings", { autocheck: v === "1" }).then(refresh); },
-    settings: function () { S.settingsOpen = !S.settingsOpen; },
+    settings: function () { S.settingsOpen = !S.settingsOpen; if (S.settingsOpen) { S.findOpen = false; S.tasksOpen = false; } },
+    find: function () {
+      S.findOpen = !S.findOpen;
+      if (S.findOpen) { S.settingsOpen = false; S.aboutOpen = false; S.tasksOpen = false; setTimeout(function () { var el = document.getElementById("findInput"); if (el) { el.focus(); } }, 50); }
+    },
+    findGo: function (v, id) {
+      if (v !== "" && v != null) { showText(id, parseFloat(v)); return; }
+      S.findOpen = false; S.open = id; S.hidden = false; S.edit = null; S.exp = null; S.delConfirm = false;
+      refresh().then(function () { loadFull(id); });
+    },
+    tasksToggle: function () {
+      S.tasksOpen = !S.tasksOpen;
+      if (S.tasksOpen) { S.settingsOpen = false; S.aboutOpen = false; S.findOpen = false; loadTasks(); }
+    },
+    tick: function (v) {
+      var a = S.tasks && S.tasks[parseInt(v, 10)];
+      if (!a) { return; }
+      a.done = !a.done;
+      api("POST", "/api/note/" + encodeURIComponent(a.note) + "/action", { what: a.what, done: a.done }).then(loadTasks).catch(function () { a.done = !a.done; });
+    },
+    tasksCopy: function () {
+      var lines = (S.tasks || []).filter(function (a) { return !a.done; }).map(function (a) {
+        return "- " + a.what + (a.who || a.when ? " (" + [a.who, a.when].filter(Boolean).join(", ") + ")" : "") + " · " + a.title;
+      });
+      navigator.clipboard.writeText(lines.join("\n")).then(function () { flash(T().tasksCopied); });
+    },
+    mailOpen: function (v, id) { showMail(id); },
     about: function () {
       S.aboutOpen = !S.aboutOpen;
+      if (S.aboutOpen) { S.findOpen = false; S.tasksOpen = false; }
       if (S.aboutOpen) { api("GET", "/api/about").then(function (a) { S.about = a; render(); }); }
     },
     eye: function () {
@@ -902,6 +1047,7 @@
     if (ev.target.id === "keyInput") { S.keyDraft = ev.target.value; }
     if (ev.target.id === "hfInput") { S.hfDraft = ev.target.value; }
     if (ev.target.id === "vocabInput") { S.vocabDraft = ev.target.value; }
+    if (ev.target.id === "findInput") { S.findQ = ev.target.value; clearTimeout(S.findTimer); S.findTimer = setTimeout(runFind, 250); }
     if (ev.target.id === "spkInput") { S.spkDraft = ev.target.value; }
   });
   document.addEventListener("keydown", function (ev) {

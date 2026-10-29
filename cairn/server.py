@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
-from . import battery, catalog, config, diarize, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, speech
+from . import battery, catalog, config, diarize, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, speech
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -27,7 +27,7 @@ COOKIE = "cairn_session"
 MAX_BODY = 1 << 20
 EXPORTS = {"md": ("text/markdown", ".md"), "html": ("text/html", ".html"), "text": ("text/plain", ".txt")}
 CSP = (
-    "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+    "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; "
     "connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 )
 
@@ -237,6 +237,21 @@ class App:
             heard = note.get("heard")
             note["fidelity"], note["fidelity_basis"] = score.fidelity_detail(note.get("summary"), note.get("clean"), words_ok=heard in (None, note.get("lang")))
         return note
+
+    def actions(self):
+        """Every action of every finished note, newest note first, with its done flag."""
+        out = []
+        for note in self.store.all():
+            if note.get("status") != "done":
+                continue
+            finished = set(note.get("actions_done") or [])
+            for action in (note.get("summary") or {}).get("actions") or []:
+                what = str(action.get("what") or "").strip()
+                if what:
+                    out.append({"note": note["id"], "title": note.get("title") or "", "date": note.get("date") or "", "what": what,
+                                "who": str(action.get("who") or "").strip(), "when": str(action.get("when") or "").strip(), "done": what in finished})
+        out.sort(key=lambda a: a["date"], reverse=True)
+        return out
 
     def export(self, note_id, fmt, transcript, fragment):
         note = self.get_note(note_id)
@@ -453,6 +468,10 @@ def make_handler(app):
                     return self._json(200, models.select(body.get("kind"), body.get("id")))
                 except ValueError as error:
                     raise ApiError(400, str(error))
+            if method == "GET" and path == "/api/search":
+                return self._json(200, {"results": search.find(app.store.folder, (query.get("q") or [""])[0][:200])})
+            if method == "GET" and path == "/api/actions":
+                return self._json(200, {"actions": app.actions()})
             if method == "POST" and path == "/api/pick-folder":
                 return self._json(200, app.pick_folder())
             match = re.fullmatch(r"/api/note/([A-Za-z0-9._-]+)(?:/(\w+))?", path)
@@ -460,9 +479,73 @@ def make_handler(app):
                 return self._note(method, match.group(1), match.group(2), body, query)
             raise ApiError(404, "not_found")
 
+        AUDIO_TYPES = {".mp3": "audio/mpeg", ".wav": "audio/wav", ".m4a": "audio/mp4", ".opus": "audio/ogg", ".ogg": "audio/ogg", ".flac": "audio/flac"}
+        AUDIO_CHUNK = 16 * 1024 * 1024
+
+        def _audio(self, note_id):
+            """The recording of a note, with byte ranges so the page can jump to any moment."""
+            note = app.get_note(note_id)
+            try:
+                path = Path(note.get("audio") or "").resolve(strict=True)
+            except (OSError, RuntimeError):
+                raise ApiError(404, "no_audio")
+            ctype = self.AUDIO_TYPES.get(path.suffix.lower())
+            if not ctype or not path.is_file():
+                raise ApiError(404, "no_audio")
+            size = path.stat().st_size
+            start, end, status = 0, size - 1, 200
+            found = re.fullmatch(r"bytes=(\d*)-(\d*)", (self.headers.get("Range") or "").strip())
+            if found and (found.group(1) or found.group(2)):
+                if found.group(1):
+                    start = int(found.group(1))
+                    end = int(found.group(2)) if found.group(2) else size - 1
+                else:
+                    start = max(0, size - int(found.group(2)))
+                if start >= size or start > end:
+                    return self._send(416, b"", "text/plain", {"Content-Range": "bytes */%d" % size})
+                end = min(end, size - 1, start + self.AUDIO_CHUNK - 1)
+                status = 206
+            with open(path, "rb") as handle:
+                handle.seek(start)
+                data = handle.read(end - start + 1)
+            extra = {"Accept-Ranges": "bytes"}
+            if status == 206:
+                extra["Content-Range"] = "bytes %d-%d/%d" % (start, end, size)
+            return self._send(status, data, ctype, extra)
+
         def _note(self, method, note_id, action, body, query):
             if method == "GET" and action is None:
-                return self._json(200, app.get_note(note_id))
+                note = app.get_note(note_id)
+                note["has_audio"] = os.path.isfile(note.get("audio") or "")
+                return self._json(200, note)
+            if method == "GET" and action == "audio":
+                return self._audio(note_id)
+            if method == "POST" and action == "action":
+                what = str(body.get("what") or "").strip()[:500]
+                if not what:
+                    raise ApiError(400, "bad_action")
+                note = app.get_note(note_id)
+                finished = [w for w in note.get("actions_done") or [] if w != what]
+                if body.get("done"):
+                    finished.append(what)
+                note["actions_done"] = finished[-300:]
+                app.store.save(note)
+                return self._json(200, {"ok": True})
+            if method == "POST" and action == "followup":
+                note = app.get_note(note_id)
+                if note.get("status") != "done" or not note.get("summary") or note["summary"].get("empty"):
+                    raise ApiError(400, "no_summary")
+                if note.get("followup") and not body.get("redo"):
+                    return self._json(200, note["followup"])
+                try:
+                    llm.preflight()
+                    draft = llm.followup(note, note.get("lang") if note.get("lang") in config.LANGS else "en")
+                except llm.LLMError as error:
+                    raise ApiError(503, str(error)[:300])
+                note = app.get_note(note_id)
+                note["followup"] = draft
+                app.store.save(note)
+                return self._json(200, draft)
             if method == "GET" and action == "export":
                 fmt = query.get("fmt", ["md"])[0]
                 ctype, text, ext = app.export(note_id, fmt, query.get("transcript", ["1"])[0] == "1", query.get("fragment", ["0"])[0] == "1")

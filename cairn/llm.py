@@ -243,6 +243,30 @@ def _condense(text, lang, progress=None):
     return "\n".join(out)
 
 
+_MAIL = {"type": "object", "properties": {"subject": {"type": "string"}, "body": {"type": "string"}}, "required": ["subject", "body"]}
+
+
+def followup(note, lang):
+    """A short follow-up email for a finished note: {"subject", "body"}."""
+    summary = note.get("summary") or {}
+    facts = {"title": note.get("title") or "", "summary": summary.get("tldr") or "", "actions": summary.get("actions") or [],
+             "key_points": summary.get("key_points") or [], "decisions": summary.get("decisions") or [],
+             "speakers": sorted({v for v in (note.get("speaker_names") or {}).values() if v})}
+    system = (
+        "You write the follow-up email sent after a meeting or call. Write in %s. Keep it short: a greeting, two or three sentences "
+        "on what was decided, the actions as a short list saying who does what and by when, and a closing line. No filler, no thanks for "
+        "their time, no invented detail. Plain text without markdown. The subject names the topic." % NAMES[lang]
+    )
+    raw = chat(system, json.dumps(facts, ensure_ascii=False), schema=_MAIL, num_ctx=4096, timeout=300)
+    try:
+        data = json.loads(raw)
+    except ValueError as error:
+        raise LLMError("The model did not return a usable email.") from error
+    if not isinstance(data, dict) or not str(data.get("body") or "").strip():
+        raise LLMError("The model did not return a usable email.")
+    return {"subject": str(data.get("subject") or "").strip()[:200], "body": str(data["body"]).strip()}
+
+
 def summarize(text, level, lang, progress=None, vocabulary=None):
     """Structured note: title, type, TL;DR, actions and, depending on the level, more."""
     if len(text.split()) < 5:
