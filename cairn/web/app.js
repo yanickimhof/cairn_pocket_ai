@@ -67,6 +67,7 @@
       vaultSetting: "Sécuriser le Pocket à la connexion", vaultSettingHint: "Chiffre les enregistrements du Pocket dès qu’il est branché, une fois le coffre créé avec le bouton de l’en-tête.",
       exportLabel: "Exporter", exportHint: "Copier ou exporter la fiche", copyRich: "Copier", copyRichHint: "Copier, prêt à coller dans un courriel",
       copiedRich: "Copié", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exporté en ",
+      addFiles: "Ajouter des fichiers audio", dropHere: "Déposez vos fichiers audio", uploading: "Envoi de {name}", filesAdded: "{n} fichier(s) ajouté(s)", filesDup: "{n} déjà présent(s)", fileBad: "Fichier refusé : ce n’est pas un enregistrement audio pris en charge",
       importLabel: "Importer et transcrire", importHint: "Importer et traiter les enregistrements", count: "Enregistrements sur le Pocket",
       batTip: "Batterie du Pocket : {n} %", batCharging: " · en charge (branché)",
       eyeShow: "Afficher la liste", eyeHide: "Masquer la liste", hiddenNote: "Mode sécurisé",
@@ -148,6 +149,7 @@
       vaultSetting: "Secure the Pocket on connection", vaultSettingHint: "Encrypts the recordings on the Pocket as soon as it is plugged in, once the vault was created with the button in the header.",
       exportLabel: "Export", exportHint: "Copy or export the note", copyRich: "Copy", copyRichHint: "Copy, ready to paste in an email",
       copiedRich: "Copied", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exported as ",
+      addFiles: "Add audio files", dropHere: "Drop your audio files", uploading: "Sending {name}", filesAdded: "{n} file(s) added", filesDup: "{n} already here", fileBad: "File refused: it is not a supported audio recording",
       importLabel: "Import and transcribe", importHint: "Import and process the recordings", count: "Recordings on the Pocket",
       batTip: "Pocket battery: {n}%", batCharging: " · charging (plugged in)",
       eyeShow: "Show the list", eyeHide: "Hide the list", hiddenNote: "Secure mode",
@@ -167,6 +169,7 @@
   };
 
   var I = {
+    addFile: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3.5H8A2.5 2.5 0 0 0 5.5 6v12A2.5 2.5 0 0 0 8 20.5h8a2.5 2.5 0 0 0 2.5-2.5V8z"></path><path d="M14 3.5V8h4.5"></path><path d="M12 11.5v5"></path><path d="M9.5 14h5"></path></svg>',
     search: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>',
     ask: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V15h-.5A1.5 1.5 0 0 1 5 13.5z"></path></svg>',
     tasks: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6h10"></path><path d="M10 12h10"></path><path d="M10 18h10"></path><path d="m3.5 6 1.5 1.5L7.5 5"></path><path d="m3.5 12 1.5 1.5 2.5-2.5"></path><path d="m3.5 18 1.5 1.5 2.5-2.5"></path></svg>',
@@ -276,6 +279,42 @@
         return data;
       });
     });
+  }
+  var AUDIO_EXT = /\.(wav|mp3|m4a|opus|ogg|flac)$/i;
+  function sendFiles(list) {
+    var queue = Array.prototype.slice.call(list || []), added = 0, dup = 0, bad = 0;
+    function finish() {
+      S.upload = null;
+      var msg = [];
+      if (added) { msg.push(T().filesAdded.replace("{n}", added)); }
+      if (dup) { msg.push(T().filesDup.replace("{n}", dup)); }
+      if (bad && !added && !dup) { msg.push(T().fileBad); }
+      if (msg.length) { flash(msg.join(" · ")); }
+      refresh().then(render);
+    }
+    function next() {
+      var f = queue.shift();
+      if (!f) { return finish(); }
+      if (!AUDIO_EXT.test(f.name)) { bad += 1; return next(); }
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/import/file");
+      xhr.setRequestHeader("X-Cairn", "1");
+      xhr.setRequestHeader("Content-Type", "application/octet-stream");
+      xhr.setRequestHeader("X-Filename", encodeURIComponent(f.name));
+      xhr.setRequestHeader("X-Last-Modified", String(f.lastModified || ""));
+      xhr.upload.onprogress = function (e) { if (e.lengthComputable) { S.upload = { name: f.name, pct: Math.round(100 * e.loaded / e.total) }; render(); } };
+      xhr.onload = function () {
+        var body = {};
+        try { body = JSON.parse(xhr.responseText); } catch (e) { body = {}; }
+        if (xhr.status === 200 && body.ok) { if (body.duplicate) { dup += 1; } else { added += 1; } } else { bad += 1; }
+        next();
+      };
+      xhr.onerror = function () { bad += 1; next(); };
+      S.upload = { name: f.name, pct: 0 };
+      render();
+      xhr.send(f);
+    }
+    next();
   }
   function fetchText(path) {
     return fetch(path).then(function (r) { if (!r.ok) { throw new Error("error"); } return r.text(); });
@@ -1095,6 +1134,7 @@
     h += "</div>";
     var other = ui() === "fr" ? "en" : "fr";
     h += '<div class="row" style="gap:2px">';
+    h += '<button type="button" class="ib plain" data-a="addFiles"' + tip(t.addFiles) + ">" + I.addFile + "</button>";
     h += '<button type="button" class="ib plain' + bg(S.findOpen) + '" data-a="find"' + tip(t.find) + ">" + I.search + "</button>";
     h += '<button type="button" class="ib plain langbtn" data-a="ui" data-v="' + other + '" data-tip="' + esc(t.uiLang + colon() + ui().toUpperCase() + " → " + other.toUpperCase()) + '" aria-label="' + esc(ui().toUpperCase() + ", " + t.uiLang) + '">' + esc(ui().toUpperCase()) + "</button>";
     h += '<button type="button" class="ib plain' + bg(S.tasksOpen) + '" data-a="tasksToggle"' + tip(t.tasks) + ">" + I.tasks + "</button>";
@@ -1106,6 +1146,7 @@
     if (S.findOpen) { h += viewFind(t); }
     if (S.tasksOpen) { h += viewTasks(t); }
     if (S.aboutOpen) { h += viewAbout(t); }
+    if (S.upload) { h += '<div class="upl" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + S.upload.pct + '"' + tip(t.uploading.replace("{name}", S.upload.name)) + '><i style="width:' + S.upload.pct + '%"></i></div>'; }
     h += '<div class="side"><div class="hero"><div class="ring"' + (job.running ? tip(stepText(job, t)) : "") + '><svg class="arc" width="156" height="156" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="#E5E5EA" stroke-width="3"></circle>' +
       '<circle cx="50" cy="50" r="46" fill="none" stroke="#3368A0" stroke-width="3" stroke-linecap="round" stroke-dasharray="' + (ring * 289).toFixed(1) + ' 289" transform="rotate(-90 50 50)"></circle></svg>';
     h += '<button type="button" class="import' + (job.running ? " busy" : "") + '" data-a="import"' + (canImport ? "" : " disabled") + tip(t.importHint) + ">" + I.downBig + "</button>";
@@ -1590,6 +1631,12 @@
       if (S.hidden) { S.open = null; S.full = {}; if (S.server) { S.server.notes = []; } }
       refresh();
     },
+    addFiles: function () {
+      var input = document.createElement("input");
+      input.type = "file"; input.multiple = true; input.accept = ".wav,.mp3,.m4a,.opus,.ogg,.flac,audio/*";
+      input.addEventListener("change", function () { sendFiles(input.files); });
+      input.click();
+    },
     import: function () {
       api("POST", "/api/import").then(refresh).catch(function (e) { flash(T().error + e.message); });
     },
@@ -1733,6 +1780,16 @@
     }
   };
 
+  var dragDepth = 0;
+  function hasFiles(ev) { return ev.dataTransfer && Array.prototype.indexOf.call(ev.dataTransfer.types || [], "Files") >= 0; }
+  document.addEventListener("dragenter", function (ev) { if (hasFiles(ev)) { dragDepth += 1; document.body.classList.add("dropping"); document.body.setAttribute("data-drop", T().dropHere); } });
+  document.addEventListener("dragover", function (ev) { if (hasFiles(ev)) { ev.preventDefault(); } });
+  document.addEventListener("dragleave", function (ev) { if (hasFiles(ev)) { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) { document.body.classList.remove("dropping"); } } });
+  document.addEventListener("drop", function (ev) {
+    if (!hasFiles(ev)) { return; }
+    ev.preventDefault(); dragDepth = 0; document.body.classList.remove("dropping");
+    sendFiles(ev.dataTransfer.files);
+  });
   document.addEventListener("click", function (ev) {
     if (S.exp && !ev.target.closest(".pop")) { S.exp = null; render(); }
     var el = ev.target.closest("[data-a]");

@@ -216,3 +216,6 @@ a.ib{text-decoration:none}
 .ask .askt:first-of-type .asq{padding-top:0}
 .asel{max-width:140px;border:0;border-radius:10px;background:var(--soft);color:var(--ink2);font-size:13px;padding:7px 10px}
 .ask{position:relative}.ask .askclear{position:absolute;top:6px;right:8px}.ask .askt:first-of-type .asq{padding-right:44px}
+
+.upl{height:3px;border-radius:2px;background:#E5E5EA;margin:0 0 12px;overflow:hidden}.upl i{display:block;height:100%;background:var(--blue);transition:width .2s}
+body.dropping::after{content:attr(data-drop);position:fixed;inset:14px;z-index:50;display:flex;align-items:center;justify-content:center;border:2px dashed var(--blue);border-radius:22px;background:rgba(245,245,247,.88);color:var(--blue);font-size:20px;font-weight:600;pointer-events:none}

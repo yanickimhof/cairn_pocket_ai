@@ -18,9 +18,9 @@ import urllib.request
 from http import cookies
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, quote, urlparse
+from urllib.parse import parse_qs, quote, unquote, urlparse
 
-from . import ask, battery, catalog, config, diarize, embed, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, speech, tags, templates, vault, vocab, vocabcheck, voices
+from . import ask, battery, catalog, config, diarize, embed, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, speech, tags, templates, upload, vault, vocab, vocabcheck, voices
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -701,6 +701,8 @@ def make_handler(app):
                     return self._static(url)
                 if not self._authorized():
                     raise ApiError(403, "forbidden")
+                if method == "POST" and url.path == "/api/import/file":
+                    return self._upload()
                 if method == "POST":
                     body = self._body()
                 else:
@@ -713,6 +715,27 @@ def make_handler(app):
                 pass
             except Exception:  # never leak a traceback or a path to the page
                 self._json(500, {"error": "server_error"})
+
+        def _upload(self):
+            """One audio file, sent as it is (not as JSON). The same guards as any change: session cookie, Host, and a header a
+            web page of another origin cannot add without Cairn's consent."""
+            if self.headers.get("X-Cairn") != "1" or self.headers.get("Content-Type", "").split(";")[0].strip() != "application/octet-stream":
+                raise ApiError(403, "forbidden")
+            try:
+                length = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                raise ApiError(400, "bad_length")
+            try:
+                note, duplicate = upload.receive(app.store, self.rfile, length, unquote(self.headers.get("X-Filename", ""))[:255],
+                                                 self.headers.get("X-Last-Modified"), config.load_settings()["audio_dir"])
+            except upload.Rejected as error:
+                raise ApiError(error.status, error.code)
+            if not duplicate and config.load_settings().get("autoprocess", False):
+                try:
+                    app.jobs.start_queue()
+                except jobs.Busy:
+                    pass  # the running job picks the new recording up when it reads the queue again
+            return self._json(200, {"ok": True, "id": note["id"], "duplicate": duplicate})
 
         def _ask(self, body):
             question = " ".join(str(body.get("q") or "").split())[: ask.MAX_QUESTION]

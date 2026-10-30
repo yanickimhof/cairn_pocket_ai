@@ -129,5 +129,114 @@ class ServerTest(unittest.TestCase):
         self.assertIn("SameSite=Strict", cookie)
 
 
+class UploadTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from tests.test_app import Client
+
+        cls.tmp = tempfile.TemporaryDirectory()
+        os.environ.update(CAIRN_HOME=str(Path(cls.tmp.name) / "Cairn"), CAIRN_ENGINE="mlx")
+        from cairn import server
+
+        cls.app, cls.httpd = server.make_server(18798)
+        threading.Thread(target=cls.httpd.serve_forever, daemon=True).start()
+        cls.c = Client(cls.app, cls.httpd)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.httpd.shutdown()
+        cls.httpd.server_close()
+        cls.tmp.cleanup()
+
+    def send(self, name, data, headers=None, cookie=True):
+        import http.client
+        from urllib.parse import quote
+
+        conn = http.client.HTTPConnection("127.0.0.1", self.app.port, timeout=30)
+        hdr = {"Host": "127.0.0.1:%d" % self.app.port, "X-Cairn": "1", "Content-Type": "application/octet-stream",
+               "X-Filename": quote(name), "X-Last-Modified": "1760000000000"}
+        if cookie:
+            hdr["Cookie"] = "cairn_session=" + self.app.token
+        hdr.update(headers or {})
+        conn.request("POST", "/api/import/file", data, hdr)
+        resp = conn.getresponse()
+        body = json.loads(resp.read() or b"{}")
+        conn.close()
+        return resp.status, body
+
+    def wav(self, seconds=1):
+        import io
+        import wave
+
+        buf = io.BytesIO()
+        with wave.open(buf, "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(8000)
+            w.writeframes(os.urandom(2 * 8000 * seconds))
+        return buf.getvalue()
+
+    def test_a_dropped_file_becomes_a_waiting_note(self):
+        status, body = self.send("Réunion 2026-10-12 09-30-00.wav", self.wav(2))
+        self.assertEqual((status, body["ok"], body["duplicate"]), (200, True, False))
+        note = self.app.store.get(body["id"])
+        self.assertEqual((note["status"], note["origin"], note["date"][:10]), ("waiting", "file", "2026-10-12"))
+        self.assertTrue(Path(note["audio"]).is_file())
+        self.assertNotIn("source", note)  # not a Pocket recording: deleting it never touches a Pocket
+        self.assertAlmostEqual(note["duration"], 2.0, places=1)
+
+    def test_the_same_file_is_not_added_twice(self):
+        data = self.wav(1)
+        first = self.send("a.wav", data)[1]
+        second = self.send("b.wav", data)[1]
+        self.assertTrue(second["duplicate"])
+        self.assertEqual(first["id"], second["id"])
+
+    def test_only_real_audio_is_taken(self):
+        self.assertEqual(self.send("notes.txt", b"hello")[0], 415)
+        self.assertEqual(self.send("fake.wav", b"MZ" + b"x" * 100)[0], 415)  # a program renamed .wav
+        self.assertEqual(self.send("empty.wav", b"")[0], 400)
+        left = list((Path(os.environ["CAIRN_HOME"]) / "Audio" / "Imported").glob(".upload-*"))
+        self.assertEqual(left, [])  # nothing is left behind by a refused file
+
+    def test_the_name_cannot_leave_the_audio_folder(self):
+        from cairn import upload
+
+        for hostile in ("../../etc/passwd.wav", "..\\..\\x.wav", "/abs/path/x.wav", "con.wav", "x.wav.exe"):
+            name = upload.safe_name(hostile)
+            self.assertNotIn("/", name)
+            self.assertNotIn("\\", name)
+            self.assertEqual(name, Path(name).name)  # one plain file name, nothing that points elsewhere
+            self.assertFalse(name.startswith("."))
+        self.assertEqual(upload.safe_name("x.wav.exe"), "")
+        status, body = self.send("../../escape.wav", self.wav(1))
+        note = self.app.store.get(body["id"])
+        self.assertEqual(Path(note["audio"]).parent.name, "Imported")
+
+    def test_it_needs_the_same_guards_as_any_change(self):
+        data = self.wav(1)
+        self.assertEqual(self.send("g.wav", data, cookie=False)[0], 403)
+        self.assertEqual(self.send("g.wav", data, headers={"X-Cairn": "0"})[0], 403)
+        self.assertEqual(self.send("g.wav", data, headers={"Content-Type": "text/plain"})[0], 403)
+        self.assertEqual(self.send("g.wav", data, headers={"Host": "evil.example:80"})[0], 403)
+
+    def test_a_cut_upload_leaves_nothing(self):
+        import http.client
+
+        conn = http.client.HTTPConnection("127.0.0.1", self.app.port, timeout=5)
+        conn.putrequest("POST", "/api/import/file")
+        for k, v in {"Host": "127.0.0.1:%d" % self.app.port, "X-Cairn": "1", "Content-Type": "application/octet-stream", "X-Filename": "cut.wav",
+                     "Content-Length": "100000", "Cookie": "cairn_session=" + self.app.token}.items():
+            conn.putheader(k, v)
+        conn.endheaders()
+        conn.send(self.wav(1)[:5000])
+        conn.sock.shutdown(1)
+        resp = conn.getresponse()
+        self.assertEqual(resp.status, 400)
+        conn.close()
+        folder = Path(os.environ["CAIRN_HOME"]) / "Audio" / "Imported"
+        self.assertEqual([p.name for p in folder.glob("*cut*")] + list(folder.glob(".upload-*")), [])
+
+
 if __name__ == "__main__":
     unittest.main()
