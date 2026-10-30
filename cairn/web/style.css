@@ -219,3 +219,4 @@ a.ib{text-decoration:none}
 
 .upl{height:3px;border-radius:2px;background:#E5E5EA;margin:0 0 12px;overflow:hidden}.upl i{display:block;height:100%;background:var(--blue);transition:width .2s}
 body.dropping::after{content:attr(data-drop);position:fixed;inset:14px;z-index:50;display:flex;align-items:center;justify-content:center;border:2px dashed var(--blue);border-radius:22px;background:rgba(245,245,247,.88);color:var(--blue);font-size:20px;font-weight:600;pointer-events:none}
+.setcol{display:flex;flex-direction:column;gap:10px}

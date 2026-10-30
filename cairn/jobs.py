@@ -8,7 +8,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import awake, config, diarize, embed, llm, pocket, privacy, score, speech, system, templates, vault, vocab, voices
+from . import awake, config, diarize, embed, llm, lock, pocket, privacy, score, speech, system, templates, vault, vocab, voices
 from .notes import guess_date, make_id
 
 
@@ -245,6 +245,25 @@ class Jobs:
         if not self.cancelled:
             embed.built[model] = before
 
+    def start_seal(self):
+        """Seal what is already on disk after the lock was switched on (or after an interrupted pass)."""
+        self._start("seal", self._seal)
+
+    def _seal(self):
+        self._set(step="sealing", total=1, done=0)
+        lock.migrate(True, progress=lambda done, total: self._set(done=done, total=total))
+        self._set(step="", done=0, total=0)
+
+    def start_unseal(self):
+        """Open every sealed file again, then remove the lock."""
+        self._start("unseal", self._unseal)
+
+    def _unseal(self):
+        self._set(step="opening", total=1, done=0)
+        lock.migrate(False, progress=lambda done, total: self._set(done=done, total=total))
+        lock.finish_disable()
+        self._set(step="", done=0, total=0)
+
     def start_secure(self):
         """Copy what is new on the Pocket, then encrypt every recording on it."""
         self._start("secure", self._import, False, True)
@@ -300,7 +319,7 @@ class Jobs:
             if not note or not note.get("sha256") or not os.path.exists(note.get("audio", "")):
                 continue
             try:
-                if pocket.sha256(note["audio"]) != note["sha256"]:  # the copy on this computer must still be the recording
+                if lock.audio_sha256(note["audio"]) != note["sha256"]:  # the copy on this computer must still be the recording
                     raise OSError("the copy on this computer no longer matches: it is copied again first")
 
                 fid, info = pocket.seal_entry(source, entry, listing.key, note["sha256"])
@@ -339,6 +358,7 @@ class Jobs:
             duration=note.get("duration") or pocket.estimate_duration(target),
         )
         self.store.save(note)
+        lock.seal_audio(target)  # with the lock on, a recording is sealed as soon as it is here
 
     # Processing
 
@@ -371,7 +391,8 @@ class Jobs:
             else:
                 step("transcribing")
                 began = time.time()
-                result = speech.transcribe(note["audio"], progress=pct, **({"language": spoken} if spoken else {}))
+                with lock.plain(note["audio"]) as audio_file:
+                    result = speech.transcribe(audio_file, progress=pct, **({"language": spoken} if spoken else {}))
                 timings["transcribing"] = round(time.time() - began, 1)
                 quality, doubtful = speech.assess(result["segments"])
                 shares, mixed = speech.language_mix(result["segments"])
@@ -390,10 +411,11 @@ class Jobs:
                     step("diarizing")
                     began = time.time()
                     prints = {}
-                    if settings.get("voices"):
-                        state, turns, prints = diarize.run_with_voices(note["audio"], timeout=diarize.timeout_for(note.get("duration")))
-                    else:
-                        state, turns = diarize.run(note["audio"], timeout=diarize.timeout_for(note.get("duration")))
+                    with lock.plain(note["audio"]) as audio_file:
+                        if settings.get("voices"):
+                            state, turns, prints = diarize.run_with_voices(audio_file, timeout=diarize.timeout_for(note.get("duration")))
+                        else:
+                            state, turns = diarize.run(audio_file, timeout=diarize.timeout_for(note.get("duration")))
                     timings["diarizing"] = round(time.time() - began, 1)
                     if state == "ok":
                         diarize.assign(note["segments"], turns, lang)
@@ -615,10 +637,11 @@ class Jobs:
         lang = self._lang(note, settings)
         try:
             prints = {}
-            if settings.get("voices"):
-                state, turns, prints = diarize.run_with_voices(note["audio"])
-            else:
-                state, turns = diarize.run(note["audio"])
+            with lock.plain(note["audio"]) as audio_file:
+                if settings.get("voices"):
+                    state, turns, prints = diarize.run_with_voices(audio_file)
+                else:
+                    state, turns = diarize.run(audio_file)
             if state == "missing":
                 raise RuntimeError("Diarization model missing. Install it again from Settings > Models.")
             if state != "ok":

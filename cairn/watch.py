@@ -6,7 +6,7 @@ import time
 import traceback
 from datetime import datetime
 
-from . import battery, config, embed, jobs, privacy
+from . import battery, config, embed, jobs, lock, privacy
 
 DAY = 24 * 3600
 
@@ -34,6 +34,11 @@ class Watcher:
         """One pass. Does nothing while a job is running, so it never competes with the user's work."""
         now = time.time() if now is None else now
         app = self.app
+        if lock.locked():
+            return  # nothing can be read while Cairn is locked: the upkeep waits
+        if lock.due() and not app.jobs.snapshot()["running"]:
+            lock.lock_now()
+            return
         settings = config.load_settings()
         gauge = getattr(app, "gauge", None)
         if gauge is not None and battery.available():
@@ -42,6 +47,13 @@ class Watcher:
         if status is not None and battery.available() and settings.get("pocket_key"):
             status.poll(settings["pocket_key"], now)
         if app.jobs.snapshot()["running"]:
+            return
+        info = lock.info()
+        if info.get("enabled") and not info.get("sealed") and not info.get("locked") and not info.get("migrating"):
+            try:
+                app.jobs.start_seal()  # an interrupted pass is taken up again
+            except Exception:  # noqa: BLE001
+                pass
             return
         try:
             app.purge_pocket()

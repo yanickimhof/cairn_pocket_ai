@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from . import config, pocket
+from . import config, lock, pocket
 from .notes import guess_date, make_id
 
 MAX_BYTES = 4 << 30  # four hours of lossless audio fit well below this
@@ -101,4 +101,5 @@ def receive(store, rfile, length, filename, modified_ms, audio_dir):
         "date": guess_date(target, seconds), "duration": pocket.estimate_duration(target),
     }
     store.save(note)
+    lock.seal_audio(target)
     return note, False

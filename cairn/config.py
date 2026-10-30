@@ -27,22 +27,50 @@ def home():
     return Path(os.environ.get("CAIRN_HOME") or Path.home() / "Cairn").expanduser()
 
 
+class Locked(Exception):
+    """Cairn is locked: what is kept sealed cannot be read or written until it is opened."""
+
+
+_codec = None  # set by lock.py while Cairn is unlocked: it seals and opens what read_json and write_json handle
+NEVER_SEALED = ("config.json", "lock.json", "privacy-check.json", "vault-index.json")
+
+
+def set_codec(codec):
+    global _codec
+    _codec = codec
+
+
+def _sealing():
+    return (home() / "lock.json").is_file()
+
+
 def read_json(path, default=None):
     try:
-        with open(path, encoding="utf-8") as handle:
-            return json.load(handle)
+        with open(path, "rb") as handle:
+            raw = handle.read()
+        if raw[:7] == b"CAIRNB1":
+            if _codec is None:
+                if Path(path).name == "settings.json":
+                    return {} if default is None else default  # the start-up code reads the settings before anyone has unlocked
+                raise Locked("Cairn is locked")
+            raw = _codec.open(raw, path)
+        return json.loads(raw.decode("utf-8"))
     except (OSError, ValueError):
         return {} if default is None else default
 
 
 def write_json(path, data):
-    """Atomic write, readable by the owner only."""
+    """Atomic write, readable by the owner only. Sealed when the lock is on, and refused while Cairn is locked."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
+    seal_it = path.name not in NEVER_SEALED and _sealing()
+    if seal_it and _codec is None:
+        raise Locked("Cairn is locked")
     fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=path.name + ".", suffix=".tmp")
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            json.dump(data, handle, ensure_ascii=False, indent=2)
+        with os.fdopen(fd, "wb") as handle:
+            raw = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
+            handle.write(_codec.seal(raw, path) if seal_it else raw)
         os.replace(tmp, path)
     except BaseException:
         try:

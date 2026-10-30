@@ -20,7 +20,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-from . import ask, battery, catalog, config, diarize, embed, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, setup, speech, tags, templates, upload, vault, vocab, vocabcheck, voices
+from . import ask, battery, catalog, config, diarize, embed, jobs, llm, lock, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, setup, speech, tags, templates, upload, vault, vocab, vocabcheck, voices
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -206,6 +206,7 @@ class App:
             "battery": self.gauge.snapshot(),
             "pocket_status": self.status.snapshot(),
             "update": self.update_info,
+            "lock": lock.info(),
             "privacy": _privacy_summary(),
             "diar_installed": models.diar_installed(),
             "search": self.search_state(),
@@ -701,6 +702,13 @@ def make_handler(app):
                     return self._static(url)
                 if not self._authorized():
                     raise ApiError(403, "forbidden")
+                if url.path == "/api/lock" or url.path.startswith("/api/lock/"):
+                    body = self._body() if method == "POST" else {}
+                    return self._lock_api(method, url.path, body)
+                if lock.locked():
+                    raise ApiError(423, "locked")  # sealed data: nothing but the way to open it is answered
+                if method == "POST":
+                    lock.touch()  # a change comes from the person: the idle time starts again (a poll of the list does not count)
                 if method == "POST" and url.path == "/api/import/file":
                     return self._upload()
                 if method == "POST":
@@ -713,6 +721,8 @@ def make_handler(app):
                 self._json(error.status, {"error": error.message})
             except (BrokenPipeError, ConnectionResetError):
                 pass
+            except config.Locked:
+                self._json(423, {"error": "locked"})
             except Exception:  # never leak a traceback or a path to the page
                 self._json(500, {"error": "server_error"})
 
@@ -736,6 +746,57 @@ def make_handler(app):
                 except jobs.Busy:
                     pass  # the running job picks the new recording up when it reads the queue again
             return self._json(200, {"ok": True, "id": note["id"], "duplicate": duplicate})
+
+        LOCK_STATUS = {"wrong_password": 401, "wrong_phrase": 401, "biometric_refused": 401, "no_biometric": 400, "password_short": 400,
+                       "not_enabled": 400, "already_enabled": 409, "bad_value": 400}
+
+        def _lock_api(self, method, path, body):
+            """Opening and closing. The only part of the API that answers while Cairn is locked."""
+            if method == "GET" and path == "/api/lock":
+                return self._json(200, lock.info())
+            if method != "POST":
+                raise ApiError(404, "not_found")
+            action = path[len("/api/lock/"):]
+            try:
+                if action == "unlock":
+                    lock.unlock(body.get("password"))
+                elif action == "biometric":
+                    lock.unlock_biometric()
+                elif action == "recover":
+                    lock.recover(body.get("phrase"), body.get("password"))
+                elif action == "ping":
+                    if not lock.locked():
+                        lock.touch()
+                    return self._json(200, {"ok": True})
+                else:
+                    if lock.locked():
+                        raise ApiError(423, "locked")
+                    lock.touch()
+                    if action == "now":
+                        if app.jobs.snapshot().get("running"):
+                            app.jobs.cancel()
+                        lock.lock_now()
+                    elif action == "enable":
+                        phrase = lock.enable(body.get("password"), bool(body.get("biometric")), body.get("auto_min", lock.DEFAULT_AUTO))
+                        try:
+                            app.jobs.start_seal()
+                        except jobs.Busy:
+                            pass  # the upkeep takes it up when the running job ends
+                        return self._json(200, {"ok": True, "recovery": phrase})
+                    elif action == "disable":
+                        lock.disable(body.get("password"))
+                        app.jobs.start_unseal()
+                    elif action == "password":
+                        lock.change_password(body.get("old"), body.get("new"))
+                    elif action == "settings":
+                        lock.settings(body.get("auto_min"), body.get("biometric"))
+                    else:
+                        raise ApiError(404, "not_found")
+            except lock.LockError as error:
+                raise ApiError(self.LOCK_STATUS.get(error.code, 400), error.code)
+            except jobs.Busy:
+                raise ApiError(409, "busy")
+            return self._json(200, {"ok": True, **lock.info()})
 
         def _ask(self, body):
             question = " ".join(str(body.get("q") or "").split())[: ask.MAX_QUESTION]
@@ -930,7 +991,7 @@ def make_handler(app):
             ctype = self.AUDIO_TYPES.get(path.suffix.lower())
             if not ctype or not path.is_file():
                 raise ApiError(404, "no_audio")
-            size = path.stat().st_size
+            size = lock.audio_size(path)
             start, end, status = 0, size - 1, 200
             found = re.fullmatch(r"bytes=(\d*)-(\d*)", (self.headers.get("Range") or "").strip())
             if found and (found.group(1) or found.group(2)):
@@ -943,9 +1004,7 @@ def make_handler(app):
                     return self._send(416, b"", "text/plain", {"Content-Range": "bytes */%d" % size})
                 end = min(end, size - 1, start + self.AUDIO_CHUNK - 1)
                 status = 206
-            with open(path, "rb") as handle:
-                handle.seek(start)
-                data = handle.read(end - start + 1)
+            data = lock.audio_read(path, start, end)
             extra = {"Accept-Ranges": "bytes"}
             if status == 206:
                 extra["Content-Range"] = "bytes %d-%d/%d" % (start, end, size)

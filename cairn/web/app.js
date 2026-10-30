@@ -72,6 +72,12 @@
       hSpeech: "Le modèle de transcription n’est pas installé.", hOllama: "Le serveur de modèles (Ollama) ne répond pas : relancez Cairn ou réinstallez-le.", hLlm: "Le modèle de notes n’est pas installé.", hFfmpeg: "ffmpeg est introuvable : réinstallez Cairn.",
       hMemory: "{n} Go de mémoire : Cairn fonctionne, mais les modèles légers sont conseillés.", hDisk: "Il reste {n} Go : libérez de la place avant de télécharger des modèles.",
       pOk: "Pocket connectée", pAbsent: "Pas de Pocket ? Ajoutez des fichiers audio. Sinon : câble USB-C de données, USB Mode (Web Sync) activé, et synchronisation automatique de l’application désactivée.", pNoRecord: "La Pocket est vue, mais sans enregistrements : activez USB Mode (Web Sync) puis rebranchez-la.", cOk: "Prêt",
+      lockTitle: "Cairn est verrouillé", lockPw: "Mot de passe", lockGo: "Déverrouiller", lockBio: "Déverrouiller avec Touch ID", lockWrong: "Mot de passe incorrect", lockNow: "Verrouiller", lockBusy: "Chiffrement en cours",
+      lockSection: "Verrou et chiffrement", lockHint: "Chiffre vos notes, réglages et enregistrements sur ce Mac. Le mot de passe est demandé à l’ouverture et après un temps d’inactivité.",
+      lockOn: "Activer", lockPw1: "Mot de passe (10 caractères minimum)", lockPw2: "Confirmez le mot de passe", lockShort: "10 caractères minimum", lockMismatch: "Les deux mots de passe diffèrent", lockOpen: "Verrou activé",
+      lockPhraseTitle: "Phrase de récupération", lockPhraseText: "Notez-la hors de cet ordinateur. Elle seule permet de retrouver vos notes si vous perdez le mot de passe. Elle ne sera plus affichée.", lockPhraseDone: "J’ai noté la phrase",
+      lockAuto: "Verrouiller après inactivité", lockNever: "Jamais", lockMin: "{n} min", lockBioSetting: "Touch ID", lockChange: "Changer le mot de passe", lockOld: "Mot de passe actuel", lockNew: "Nouveau mot de passe",
+      lockOff: "Désactiver le verrou", lockOffText: "Les données seront déchiffrées. Mot de passe :", lockForgot: "Mot de passe oublié ?", lockPhraseIn: "Phrase de récupération", lockRecover: "Récupérer", lockBadPhrase: "Phrase incorrecte", lockSaved: "Enregistré", lockCancel: "Annuler",
       addFiles: "Ajouter des fichiers audio", dropHere: "Déposez vos fichiers audio", uploading: "Envoi de {name}", filesAdded: "{n} fichier(s) ajouté(s)", filesDup: "{n} déjà présent(s)", fileBad: "Fichier refusé : ce n’est pas un enregistrement audio pris en charge",
       importLabel: "Importer et transcrire", importHint: "Importer et traiter les enregistrements", count: "Enregistrements sur le Pocket",
       batTip: "Batterie du Pocket : {n} %", batCharging: " · en charge (branché)",
@@ -85,7 +91,7 @@
       ready: "Prêt", waiting: "En attente", failed: "Échec : relancer le résumé", done: "Terminé", modelDown: "Moteur local arrêté : relancez Cairn",
       privAuto: "Contrôle automatique", privOk: "aucune connexion vers l’extérieur", privBad: "connexions détectées, voir docs/PRIVACY.md", privNone: "en attente", autoCheck: "Vérifier les mises à jour", autoHint: "Une requête à GitHub par jour", autoProcess: "Traiter automatiquement", autoProcessHint: "Transcrit et résume les enregistrements en attente sans attendre votre clic. Stop met en pause.", autoImport: "Importer au branchement", autoImportHint: "Copie les nouveaux enregistrements dès que le Pocket est branché, sans les traiter", queueTip: "{n} en attente de traitement",
       processNow: "Traiter maintenant", skipIt: "Ignorer", skipped: "Ignoré", putBack: "Remettre dans la file", stopJob: "Arrêter",
-      steps: { copying: "Copie depuis le Pocket", securing: "Chiffrement du Pocket", indexing: "Indexation pour la recherche", transcribing: "Transcription", diarizing: "Identification des interlocuteurs", summarizing: "Rédaction de la note", privacy: "Vérification de la confidentialité" },
+      steps: { copying: "Copie depuis le Pocket", securing: "Chiffrement du Pocket", indexing: "Indexation pour la recherche", transcribing: "Transcription", diarizing: "Identification des interlocuteurs", summarizing: "Rédaction de la note", sealing: "Chiffrement des données", opening: "Déchiffrement des données", privacy: "Vérification de la confidentialité" },
       none: "Aucun enregistrement.", tldr: "En bref", actions: "Actions", points: "Points clés", noSpeech: "Aucune parole détectée.",
       months: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."], error: "Erreur : "
     },
@@ -159,6 +165,12 @@
       hSpeech: "The transcription model is not installed.", hOllama: "The model server (Ollama) does not answer: restart Cairn or reinstall it.", hLlm: "The notes model is not installed.", hFfmpeg: "ffmpeg is missing: reinstall Cairn.",
       hMemory: "{n} GB of memory: Cairn works, but the light models are advised.", hDisk: "{n} GB left: free some space before downloading models.",
       pOk: "Pocket connected", pAbsent: "No Pocket? Add audio files. Otherwise: USB-C data cable, USB Mode (Web Sync) on, and the app's automatic sync off.", pNoRecord: "The Pocket is seen but shows no recordings: turn USB Mode (Web Sync) on, then plug it in again.", cOk: "Ready",
+      lockTitle: "Cairn is locked", lockPw: "Password", lockGo: "Unlock", lockBio: "Unlock with Touch ID", lockWrong: "Wrong password", lockNow: "Lock", lockBusy: "Encrypting",
+      lockSection: "Lock and encryption", lockHint: "Encrypts your notes, settings and recordings on this Mac. The password is asked when Cairn opens and after a time of inactivity.",
+      lockOn: "Turn on", lockPw1: "Password (10 characters minimum)", lockPw2: "Confirm the password", lockShort: "10 characters minimum", lockMismatch: "The two passwords differ", lockOpen: "Lock is on",
+      lockPhraseTitle: "Recovery phrase", lockPhraseText: "Write it down away from this computer. It is the only way back to your notes if you lose the password. It will not be shown again.", lockPhraseDone: "I wrote the phrase down",
+      lockAuto: "Lock after inactivity", lockNever: "Never", lockMin: "{n} min", lockBioSetting: "Touch ID", lockChange: "Change the password", lockOld: "Current password", lockNew: "New password",
+      lockOff: "Turn the lock off", lockOffText: "The data will be decrypted. Password:", lockForgot: "Forgot the password?", lockPhraseIn: "Recovery phrase", lockRecover: "Recover", lockBadPhrase: "Wrong phrase", lockSaved: "Saved", lockCancel: "Cancel",
       addFiles: "Add audio files", dropHere: "Drop your audio files", uploading: "Sending {name}", filesAdded: "{n} file(s) added", filesDup: "{n} already here", fileBad: "File refused: it is not a supported audio recording",
       importLabel: "Import and transcribe", importHint: "Import and process the recordings", count: "Recordings on the Pocket",
       batTip: "Pocket battery: {n}%", batCharging: " · charging (plugged in)",
@@ -172,13 +184,14 @@
       ready: "Ready", waiting: "Waiting", failed: "Failed: rerun the summary", done: "Done", modelDown: "Local engine stopped: restart Cairn",
       privAuto: "Automatic check", privOk: "no connection to the outside", privBad: "connections detected, see docs/PRIVACY.md", privNone: "pending", autoCheck: "Check for updates", autoHint: "One request to GitHub per day", autoProcess: "Process automatically", autoProcessHint: "Transcribes and summarizes waiting recordings without waiting for your click. Stop pauses it.", autoImport: "Import on connect", autoImportHint: "Copies new recordings as soon as the Pocket is connected, without processing them", queueTip: "{n} waiting to be processed",
       processNow: "Process now", skipIt: "Skip", skipped: "Skipped", putBack: "Put back in the queue", stopJob: "Stop",
-      steps: { copying: "Copying from the Pocket", securing: "Encrypting the Pocket", indexing: "Indexing for search", transcribing: "Transcribing", diarizing: "Identifying speakers", summarizing: "Writing the note", privacy: "Checking privacy" },
+      steps: { copying: "Copying from the Pocket", securing: "Encrypting the Pocket", indexing: "Indexing for search", transcribing: "Transcribing", diarizing: "Identifying speakers", summarizing: "Writing the note", sealing: "Encrypting the data", opening: "Decrypting the data", privacy: "Checking privacy" },
       none: "No recordings.", tldr: "TL;DR", actions: "Actions", points: "Key points", noSpeech: "No speech detected.",
       months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], error: "Error: "
     }
   };
 
   var I = {
+    lock: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.5" y="10.5" width="13" height="9" rx="2.5"></rect><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"></path></svg>',
     addFile: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3.5H8A2.5 2.5 0 0 0 5.5 6v12A2.5 2.5 0 0 0 8 20.5h8a2.5 2.5 0 0 0 2.5-2.5V8z"></path><path d="M14 3.5V8h4.5"></path><path d="M12 11.5v5"></path><path d="M9.5 14h5"></path></svg>',
     search: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>',
     ask: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V15h-.5A1.5 1.5 0 0 1 5 13.5z"></path></svg>',
@@ -462,6 +475,7 @@
         return '<button type="button" data-a="autocheck" data-v="' + o[0] + '" aria-pressed="' + (st.settings.autocheck !== false === o[2]) + '" class="' + bg(st.settings.autocheck !== false === o[2]).trim() + '">' + esc(o[1]) + "</button>";
       }).join("") + "</div></div>";
     h += rows.replace('<div class="hr"></div>', '');
+    h += viewLockSettings(t, st);
     var terms = st.settings.vocabulary || [];
     h += '<div class="hr"></div><div class="setrow"' + tip(t.vocabHint) + '><span class="text" style="font-size:14px">' + esc(t.vocab) + (terms.length ? " · " + terms.length : "") +
       '</span><div class="row" style="gap:2px"><button type="button" class="ib vcbtn' + bg(S.vcOpen) + '" data-a="vcToggle"' + tip(t.vcOpen) + ">" + I.listcheck +
@@ -683,6 +697,69 @@
     h += '<div class="row gap8"><button type="button" class="mbtn" data-a="setup">' + esc(t.setupCheck) + "</button></div>";
     h += '<div class="hr"></div><div class="legal">' + esc(t.aboutLegal.replace("{v}", (S.server && S.server.version) || "")) + "</div></div>";
     return h;
+  }
+
+  function viewLocked(t) {
+    var li = S.lockInfo || {}, h = '<main class="wrap"><div class="card about" style="max-width:380px;margin:12vh auto 0;align-items:center;text-align:center">';
+    h += I.shield("#3368A0", 44) + '<div class="t" style="margin-top:6px">' + esc(t.lockTitle) + "</div>";
+    if (S.recovering) {
+      h += '<input id="lockPhrase" type="text" class="dinput" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="' + esc(t.lockPhraseIn) + '" aria-label="' + esc(t.lockPhraseIn) + '" style="width:100%">';
+      h += '<input id="lockPw" type="password" class="dinput" autocomplete="new-password" placeholder="' + esc(t.lockNew) + '" aria-label="' + esc(t.lockNew) + '" style="width:100%">';
+      h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockRecoverGo">' + esc(t.lockRecover) + '</button><button type="button" class="mbtn" data-a="lockRecoverToggle">' + esc(t.lockCancel) + "</button></div>";
+    } else {
+      h += '<input id="lockPw" type="password" class="dinput" autocomplete="current-password" placeholder="' + esc(t.lockPw) + '" aria-label="' + esc(t.lockPw) + '" style="width:100%">';
+      h += '<div class="row gap8"><button type="button" class="ib blue" data-a="lockUnlock"' + tip(t.lockGo) + ">" + I.checkW + "</button>";
+      if (li.biometric && li.biometric.enabled && li.biometric.available) { h += '<button type="button" class="mbtn" data-a="lockBio">' + esc(t.lockBio) + "</button>"; }
+      h += "</div>";
+      h += '<button type="button" class="mbtn" data-a="lockRecoverToggle" style="background:none;border:0;color:var(--mute)">' + esc(t.lockForgot) + "</button>";
+    }
+    if (S.lockErr) { h += '<div class="err" role="alert">' + esc(S.lockErr) + "</div>"; }
+    return h + "</div></main>";
+  }
+  function lockCall(path, body, done) {
+    return api("POST", "/api/lock/" + path, body || {}).then(function (r) { S.lockErr = ""; if (done) { done(r); } }).catch(function (e) {
+      var t = T();
+      S.lockErr = e.message === "wrong_password" ? t.lockWrong : e.message === "wrong_phrase" ? t.lockBadPhrase : e.message === "password_short" ? t.lockShort : t.error + e.message;
+      render();
+    });
+  }
+  function afterUnlock() { S.locked = false; S.recovering = false; refresh(); }
+  function viewLockSettings(t, st) {
+    var li = st.lock || {}, h = '<div class="hr"></div><div class="setcol"><div class="text" style="font-size:14px;font-weight:600">' + esc(t.lockSection) + "</div>";
+    if (S.lockPhrase) {
+      h += '<div class="confirm"><div><b>' + esc(t.lockPhraseTitle) + '</b><div class="text" style="font-family:ui-monospace,Menlo,monospace;font-size:16px;margin:8px 0;user-select:all">' + esc(S.lockPhrase) + "</div>" + esc(t.lockPhraseText) + '</div><div class="row gap8"><button type="button" class="mbtn" data-a="lockPhraseDone">' + esc(t.lockPhraseDone) + "</button></div></div>";
+      return h + "</div>";
+    }
+    if (!li.enabled) {
+      h += '<div class="small">' + esc(t.lockHint) + "</div>";
+      if (S.lockForm === "on") {
+        h += '<input id="lockPw" type="password" class="dinput" autocomplete="new-password" placeholder="' + esc(t.lockPw1) + '" aria-label="' + esc(t.lockPw1) + '">';
+        h += '<input id="lockPw2" type="password" class="dinput" autocomplete="new-password" placeholder="' + esc(t.lockPw2) + '" aria-label="' + esc(t.lockPw2) + '">';
+        if (li.biometric && li.biometric.available) { h += '<label class="small"><input id="lockBioBox" type="checkbox" checked> ' + esc(t.lockBioSetting) + "</label>"; }
+        h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockEnable">' + esc(t.lockOn) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="">' + esc(t.lockCancel) + "</button></div>";
+      } else {
+        h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockForm" data-v="on">' + esc(t.lockOn) + "</button></div>";
+      }
+    } else {
+      h += '<div class="setrow"><span class="text" style="font-size:14px">' + esc(t.lockAuto) + '</span><div class="seg s38">' + [0, 5, 15, 60].map(function (m) {
+        return '<button type="button" data-a="lockAuto" data-v="' + m + '" aria-pressed="' + (li.auto_min === m) + '" class="' + bg(li.auto_min === m).trim() + '">' + esc(m ? t.lockMin.replace("{n}", m) : t.lockNever) + "</button>";
+      }).join("") + "</div></div>";
+      if (li.biometric && li.biometric.available) {
+        h += '<div class="setrow"><span class="text" style="font-size:14px">' + esc(t.lockBioSetting) + "</span>" + onOff("lockBioToggle", li.biometric.enabled, t) + "</div>";
+      }
+      if (S.lockForm === "change") {
+        h += '<input id="lockOld" type="password" class="dinput" autocomplete="current-password" placeholder="' + esc(t.lockOld) + '" aria-label="' + esc(t.lockOld) + '">';
+        h += '<input id="lockPw" type="password" class="dinput" autocomplete="new-password" placeholder="' + esc(t.lockNew) + '" aria-label="' + esc(t.lockNew) + '">';
+        h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockChangeGo">' + esc(t.lockChange) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="">' + esc(t.lockCancel) + "</button></div>";
+      } else if (S.lockForm === "off") {
+        h += '<div class="small">' + esc(t.lockOffText) + '</div><input id="lockPw" type="password" class="dinput" autocomplete="current-password" placeholder="' + esc(t.lockPw) + '" aria-label="' + esc(t.lockPw) + '">';
+        h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockOffGo">' + esc(t.lockOff) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="">' + esc(t.lockCancel) + "</button></div>";
+      } else {
+        h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockForm" data-v="change">' + esc(t.lockChange) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="off">' + esc(t.lockOff) + "</button></div>";
+      }
+    }
+    if (S.lockErr) { h += '<div class="err" role="alert">' + esc(S.lockErr) + "</div>"; }
+    return h + "</div>";
   }
 
   function viewSetup(t) {
@@ -1141,6 +1218,7 @@
 
   function view() {
     var st = S.server;
+    if (S.locked) { return viewLocked(T()); }
     if (!st) { return ""; }
     var t = T(), job = st.job, ring = 0;
     if (job.running && job.total) {
@@ -1167,6 +1245,7 @@
     h += "</div>";
     var other = ui() === "fr" ? "en" : "fr";
     h += '<div class="row" style="gap:2px">';
+    if (st.lock && st.lock.enabled) { h += '<button type="button" class="ib plain" data-a="lockNow"' + tip(t.lockNow) + ">" + I.lock + "</button>"; }
     h += '<button type="button" class="ib plain" data-a="addFiles"' + tip(t.addFiles) + ">" + I.addFile + "</button>";
     h += '<button type="button" class="ib plain' + bg(S.findOpen) + '" data-a="find"' + tip(t.find) + ">" + I.search + "</button>";
     h += '<button type="button" class="ib plain langbtn" data-a="ui" data-v="' + other + '" data-tip="' + esc(t.uiLang + colon() + ui().toUpperCase() + " → " + other.toUpperCase()) + '" aria-label="' + esc(ui().toUpperCase() + ", " + t.uiLang) + '">' + esc(ui().toUpperCase()) + "</button>";
@@ -1427,7 +1506,12 @@
       if (S.vcOpen && st.totals && st.totals.vocab_check !== S.vcCount && S.vc) { S.vcCount = st.totals.vocab_check; loadVc(); }
       if (S.modelsOpen && (!S.models || (st.download && st.download.state === "running") || (S.models.job && S.models.job.state === "running"))) { loadModels(); }
       render();
-    }).catch(function () { /* the server is gone or busy: keep what is shown */ });
+    }).catch(function (e) {
+      if (e && e.status === 423) {
+        S.locked = true; S.server = null;
+        api("GET", "/api/lock").then(function (info) { S.lockInfo = info; render(); });
+      }  /* otherwise the server is gone or busy: keep what is shown */
+    });
   }
 
   function loadFull(id) {
@@ -1793,6 +1877,35 @@
       S.modelsOpen = !S.modelsOpen; S.mAsk = null;
       if (S.modelsOpen) { loadModels(); }
     },
+    lockUnlock: function () {
+      var el = document.getElementById("lockPw");
+      lockCall("unlock", { password: el ? el.value : "" }, afterUnlock);
+    },
+    lockBio: function () { lockCall("biometric", {}, afterUnlock); },
+    lockNow: function () { lockCall("now", {}, function () { S.locked = true; S.server = null; S.full = {}; api("GET", "/api/lock").then(function (i) { S.lockInfo = i; render(); }); }); },
+    lockRecoverToggle: function () { S.recovering = !S.recovering; S.lockErr = ""; },
+    lockRecoverGo: function () {
+      var a = document.getElementById("lockPhrase"), b = document.getElementById("lockPw");
+      lockCall("recover", { phrase: a ? a.value : "", password: b ? b.value : "" }, afterUnlock);
+    },
+    lockForm: function (v) { S.lockForm = v || ""; S.lockErr = ""; },
+    lockEnable: function () {
+      var a = document.getElementById("lockPw"), b = document.getElementById("lockPw2"), box = document.getElementById("lockBioBox");
+      if (!a || a.value.length < 10) { S.lockErr = T().lockShort; return; }
+      if (b && a.value !== b.value) { S.lockErr = T().lockMismatch; return; }
+      lockCall("enable", { password: a.value, biometric: !!(box && box.checked) }, function (r) { S.lockPhrase = r.recovery; S.lockForm = ""; refresh(); });
+    },
+    lockPhraseDone: function () { S.lockPhrase = null; },
+    lockAuto: function (v) { lockCall("settings", { auto_min: parseInt(v, 10) }, refresh); },
+    lockBioToggle: function (v) { lockCall("settings", { biometric: v === "1" }, refresh); },
+    lockChangeGo: function () {
+      var o = document.getElementById("lockOld"), n = document.getElementById("lockPw");
+      lockCall("password", { old: o ? o.value : "", new: n ? n.value : "" }, function () { S.lockForm = ""; flash(T().lockSaved); refresh(); });
+    },
+    lockOffGo: function () {
+      var el = document.getElementById("lockPw");
+      lockCall("disable", { password: el ? el.value : "" }, function () { S.lockForm = ""; refresh(); });
+    },
     setup: function () { S.setupOpen = !S.setupOpen; S.setupSeen = true; if (S.setupOpen) { S.aboutOpen = false; loadSetup(); } },
     setupDone: function () { S.setupOpen = false; api("POST", "/api/settings", { setup_done: true }).then(refresh); },
     fixModel: function () { S.setupOpen = false; S.aboutOpen = false; S.settingsOpen = true; S.modelsOpen = true; loadModels(); },
@@ -1818,6 +1931,15 @@
     }
   };
 
+  var pingAt = 0;
+  ["click", "keydown", "mousemove", "touchstart"].forEach(function (type) {  // the idle time that locks Cairn counts from the last thing the person did
+    document.addEventListener(type, function () {
+      var now = Date.now();
+      if (S.locked || !S.server || !S.server.lock || !S.server.lock.enabled || now - pingAt < 30000) { return; }
+      pingAt = now;
+      api("POST", "/api/lock/ping").catch(function () {});
+    }, { passive: true });
+  });
   var dragDepth = 0;
   function hasFiles(ev) { return ev.dataTransfer && Array.prototype.indexOf.call(ev.dataTransfer.types || [], "Files") >= 0; }
   document.addEventListener("dragenter", function (ev) { if (hasFiles(ev)) { dragDepth += 1; document.body.classList.add("dropping"); document.body.setAttribute("data-drop", T().dropHere); } });
@@ -1862,6 +1984,7 @@
     if (ev.target.id === "spkInput") { S.spkDraft = ev.target.value; }
   });
   document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Enter" && S.locked && ev.target && (ev.target.id === "lockPw" || ev.target.id === "lockPhrase")) { ev.preventDefault(); A[S.recovering ? "lockRecoverGo" : "lockUnlock"](); return; }
     if (ev.key === "Escape") {
       var dialog = document.getElementById("txtview");
       if (dialog && (S.segEdit || S.spkEdit)) { var openId = (S.segEdit || S.spkEdit).id; S.segEdit = null; S.spkEdit = null; showText(openId); return; }
