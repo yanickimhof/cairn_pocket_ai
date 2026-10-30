@@ -2,29 +2,11 @@
 
 **Your Pocket. Your computer. Your data.**
 
-**Sovereign Pocket AI.** Cairn turns your Pocket recordings into sharp, structured notes. Transcribed, analysed and kept on your computer, and nowhere else. Then ask them anything.
+**Sovereign Pocket AI.** Cairn turns your Pocket recordings into sharp, structured notes. Transcribed, analysed and kept on your computer, and nowhere else.
 
 **No cloud. No account. No telemetry. Nothing leaves your machine.**
 
-![Talk to your recordings: ask Cairn in plain words and get the answer, and the minute it was said](docs/brand/hero.png)
-
-## Ask Cairn
-
-**Talk to everything you have recorded.**
-
-Ask in plain words. Cairn answers from what was said, and shows the minute it was said.
-
-- **Plain words in, answer out.** "Why did the launch slip?" "What did we promise the client?"
-- **Every statement sourced.** Tap a number, read the passage, hear the recording.
-- **A real conversation.** Follow up, narrow to a week or a tag.
-- **What is still open?** Your actions and decisions, listed at once.
-- **Private by design.** It runs on your Mac with a model you chose. No cloud, no account, nothing you ask is kept.
-
-![Asking Cairn: an answer with the passage behind it, then a follow-up](docs/screenshots/ask-hero.png)
-
-Optional, installed from Settings > Models. How it works: [docs/GUIDE.md](docs/GUIDE.md#finding-listening-following-up).
-
-![Cairn: import, secure Pocket, transcribe, people, notes, templates, search, ask Cairn, listen and fix, tags, actions, follow-up, vocabulary, export](docs/brand/features.png)
+![Cairn: import, secure Pocket, transcribe, people, notes, templates, search, ask your notes, listen and fix, tags, actions, follow-up, vocabulary, export](docs/brand/features.png)
 
 ## What Cairn does
 
@@ -32,7 +14,7 @@ Optional, installed from Settings > Models. How it works: [docs/GUIDE.md](docs/G
 
 **Understand.** Whisper writes every word on your machine, for one minute or four hours. Voices are named once and recognised in every note. Each note comes with a title, a summary, decisions, actions and key points, in the template you defined once, with a fidelity score that keeps the AI honest.
 
-**Find and fix.** Any word in every note in a second, or ask Cairn a question and get the answer with its source. Tap a time stamp, hear the passage, fix the word. Teach Cairn your names once and they are right in every note. Tags replace folders.
+**Find and fix.** Any word in every note in a second, or ask your notes a question and get an answer with its source. Tap a time stamp, hear the passage, fix the word. Teach Cairn your names once and they are right in every note. Tags replace folders.
 
 **Act.** Every action from every note, by person, in one list. The follow-up email is already written. Export to Markdown, HTML, text or email.
 
@@ -51,9 +33,9 @@ What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
 |---|---|---|
 | ![Securing the Pocket with a password](docs/screenshots/vault.png) | ![A protected Pocket](docs/screenshots/vault-secured.png) | ![People of all the notes](docs/screenshots/people.png) |
 
-| Find anything | Ask Cairn | Hear what was said |
+| Find anything | Ask your notes | Hear what was said |
 |---|---|---|
-| ![Search](docs/screenshots/find.png) | ![Ask Cairn, with the passage behind every answer](docs/screenshots/ask.png) | ![Transcript with the recording](docs/screenshots/listen.png) |
+| ![Search](docs/screenshots/find.png) | ![Ask your notes, with the passage behind every answer](docs/screenshots/ask.png) | ![Transcript with the recording](docs/screenshots/listen.png) |
 
 | Fix it in place | Words to check | Your vocabulary |
 |---|---|---|
@@ -117,7 +99,7 @@ You need neither the Pocket desktop app nor a Pocket account on the computer.
 
 > **Names and places (optional):** in Settings, add the names of people and places and the rare terms you use to Vocabulary, one per line. Cairn writes close variants as listed in the transcript, tells the summary the spelling, and shows every correction on the note. `Brant, Brand => Brandt` always replaces each spelling, and `Open Day => BRANDT Day | awards, ceremony` only near those words. One tap then updates the notes that need it.
 
-> **Ask Cairn (optional):** in Settings > Models, install a search model (Qwen3 Embedding 0.6B, 0.6 GB, or BGE-M3, 1.2 GB, many languages). Your notes are indexed in the background, then a question typed in the magnifier and sent with Enter is answered by your summary model from the passages it finds, each with its number, note and minute. Follow-ups, "what is still open?", and a period or a tag to narrow the question are all there; the model has no tool, nothing is stored and nothing leaves your computer. Details: [docs/GUIDE.md](docs/GUIDE.md#finding-listening-following-up).
+> **Ask your notes (optional):** in Settings > Models, install a search model (Qwen3 Embedding 0.6B or BGE-M3). Then type a question in the magnifier and press Enter: your summary model answers from the passages it finds, each with its note and minute. Follow up, ask what is still open, or narrow it to a period or a tag. Nothing is stored and nothing leaves your computer. Details: [docs/GUIDE.md](docs/GUIDE.md#finding-listening-following-up).
 
 > **Choose your models (optional):** the default install uses Whisper large-v3-turbo and Qwen3 4B. In Settings > Models you can switch the speech model to Whisper large-v3 (3.1 GB, slower, 16 GB of memory advised) and the summary model to Qwen3 8B or 14B. Nothing downloads until you confirm, and a model already in your Ollama is reused. Sizes shown for installed models are the real ones on your computer.
 

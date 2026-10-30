@@ -2,17 +2,14 @@
 
 ## 0.6
 
-**Ask Cairn: talk to everything you have recorded.**
-Ask in plain words and get the answer, with the exact minute it was said behind every statement. Follow up like in a chat. It runs on your Mac, with no cloud and no account, and nothing you ask is kept.
+**Ask your notes.**
+Ask in your own words and get the answer, with the note and the minute behind every statement. Follow up, or narrow it to a period or a tag. It runs on your Mac and nothing is kept.
 
-**What is still open? Answered before you blink.**
-Ask for your open actions or your decisions, this week, this month or ever. The list is there at once, straight from your notes, every line sourced.
+**Open actions and decisions, at once.**
+Ask what is still open and the list is there instantly, straight from your notes.
 
-**It finds the name, not just the idea.**
-Names, figures and acronyms are caught even when the wording differs, and the lines around each passage come with it, so the answer is whole.
-
-**Ask only where you want.**
-Narrow a question to the last 7, 30 or 90 days, or to one tag.
+**Names and numbers, found.**
+A name, a figure or an acronym is found even when the wording differs.
 
 ## 0.5
 
