@@ -20,6 +20,9 @@ A small icon shows what Cairn is doing, what waits and when notes are ready. Off
 **A lighter, verified install.**
 About 700 MB less on Apple silicon, and every download is checked against a fixed checksum.
 
+**Independently reviewed.**
+The session key never travels in a cookie, libraries are kept from sending any telemetry, and turning the lock off cannot lose a note.
+
 ## 0.6
 
 **Ask your notes.**
