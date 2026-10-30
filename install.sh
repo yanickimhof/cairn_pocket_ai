@@ -101,11 +101,11 @@ say "Creating the isolated Python environment"
 UV_VENV_CLEAR=1 "$UV" venv --python 3.11 "$CAIRN_HOME/.venv"
 PY="$CAIRN_HOME/.venv/bin/python"
 say "Installing the speech engine (versions and hashes pinned)"
-"$UV" pip install --python "$PY" --require-hashes -r "$HERE/requirements/$REQ"
+"$UV" pip install --python "$PY" --require-hashes --no-deps -r "$HERE/requirements/$REQ"
 if [ "$HAD_DIAR" = 1 ]; then
   if [ "$ARCH" = "arm64" ] && [ -f "$HERE/requirements/diar-macos-arm64.txt" ]; then
     say "Putting back speaker identification (pyannote.audio, versions and hashes pinned)"
-    "$UV" pip install --python "$PY" --quiet --require-hashes -r "$HERE/requirements/diar-macos-arm64.txt" || printf 'Speaker identification could not be put back: install it again from Settings, Models.\n'
+    "$UV" pip install --python "$PY" --quiet --require-hashes --no-deps -r "$HERE/requirements/diar-macos-arm64.txt" || printf 'Speaker identification could not be put back: install it again from Settings, Models.\n'
   else
     printf 'Speaker identification is not available on this Mac (it needs Apple silicon).\n'
   fi

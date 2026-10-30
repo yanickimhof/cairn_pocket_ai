@@ -1878,7 +1878,7 @@ class UpdateKeepsSpeakerIdentificationTest(unittest.TestCase):
         root = Path(__file__).resolve().parent.parent
         sh = (root / "install.sh").read_text(encoding="utf-8")
         self.assertLess(sh.index("HAD_DIAR=1"), sh.index("UV_VENV_CLEAR=1"))  # looked at before the environment is cleared
-        self.assertLess(sh.index("--require-hashes -r \"$HERE/requirements/$REQ\""), sh.index("diar-macos-arm64.txt\" ]"))  # the package comes back from its hashed list
+        self.assertLess(sh.index("--require-hashes --no-deps -r \"$HERE/requirements/$REQ\""), sh.index("diar-macos-arm64.txt\" ]"))  # the package comes back from its hashed list
         ps = (root / "install.ps1").read_text(encoding="utf-8")
         self.assertLess(ps.index("$HadDiar ="), ps.index("& $Uv venv"))
         self.assertLess(ps.index("--require-hashes"), ps.index("diar-windows.txt"))

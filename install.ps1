@@ -80,10 +80,10 @@ $HadDiar = Test-Path (Join-Path $CairnHome 'models\diar\.cairn-complete')   # sp
 if ($LASTEXITCODE -ne 0) { Fail 'Python environment creation failed.' }
 $Py = Join-Path $CairnHome '.venv\Scripts\python.exe'
 Say 'Installing the speech engine (versions and hashes pinned)'
-& $Uv pip install --python $Py --require-hashes -r $Req
+& $Uv pip install --python $Py --require-hashes --no-deps -r $Req
 if ($HadDiar) {
   Say 'Putting back speaker identification (pyannote.audio)'
-  & $Uv pip install --python $Py --quiet --require-hashes -r (Join-Path $Here 'requirements\diar-windows.txt')
+  & $Uv pip install --python $Py --quiet --require-hashes --no-deps -r (Join-Path $Here 'requirements\diar-windows.txt')
   if ($LASTEXITCODE -ne 0) { Write-Host 'Speaker identification could not be put back: install it again from Settings, Models.' }
 }
 if ($LASTEXITCODE -ne 0) { Fail 'Speech engine installation failed.' }

@@ -1,0 +1,3 @@
+# mlx-whisper lists torch as a requirement, but only its conversion helper (torch_whisper.py, never imported by the package) uses it.
+# Dropping it keeps about 700 MB out of the first install. Speaker identification brings torch back, from its own hashed list.
+torch; sys_platform == "never"

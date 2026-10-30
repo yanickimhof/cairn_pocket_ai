@@ -39,6 +39,22 @@ class ReleaseTest(unittest.TestCase):
         self.assertIn("-ne 'acfde570451cfdb8689fa159a138ee805ba4e241c466432750302c86254b0984'", ps)
         self.assertNotRegex(sh + ps, r"pip install[^\n]*--quiet pyannote")  # speaker identification is installed from a hashed list
 
+    def test_the_first_install_leaves_out_what_the_speech_engine_never_uses(self):
+        import re
+
+        base = (ROOT / "requirements" / "mlx-macos-arm64.txt").read_text(encoding="utf-8")
+        names = set(re.findall(r"(?m)^([A-Za-z0-9_.-]+)==", base))
+        self.assertIn("mlx-whisper", names)
+        for heavy in ("torch", "sympy", "networkx"):
+            self.assertNotIn(heavy, names)  # about 700 MB that only speaker identification needs, installed with it
+        diar = set(re.findall(r"(?m)^([A-Za-z0-9_.-]+)==", (ROOT / "requirements" / "diar-macos-arm64.txt").read_text(encoding="utf-8")))
+        self.assertIn("torch", diar)
+        for path in ("install.sh", "install.ps1"):
+            self.assertIn("--require-hashes --no-deps", (ROOT / path).read_text(encoding="utf-8"))  # nothing outside the hashed list is pulled in
+        from cairn import models
+
+        self.assertIn("--no-deps", models.Downloader._install_locked.__code__.co_consts)
+
     def test_speaker_identification_lists_are_hashed(self):
         for name in ("diar-macos-arm64.txt", "diar-windows.txt"):
             text = (ROOT / "requirements" / name).read_text(encoding="utf-8")

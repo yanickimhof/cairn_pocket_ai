@@ -190,10 +190,10 @@ class Downloader:
         """Install a pinned, hashed list of packages inside Cairn's own environment (uv when there is one, else pip)."""
         uv = shutil.which("uv") or str(config.home() / "bin" / "uv")
         if Path(uv).exists() or shutil.which(uv):
-            command = [uv, "pip", "install", "--python", sys.executable, "--quiet", "--require-hashes", "-r", str(lock)]
+            command = [uv, "pip", "install", "--python", sys.executable, "--quiet", "--require-hashes", "--no-deps", "-r", str(lock)]
         else:
             subprocess.run([sys.executable, "-m", "ensurepip", "--upgrade"], capture_output=True, text=True, timeout=120, check=False)  # nosec B603
-            command = [sys.executable, "-m", "pip", "install", "--quiet", "--require-hashes", "-r", str(lock)]
+            command = [sys.executable, "-m", "pip", "install", "--quiet", "--require-hashes", "--no-deps", "-r", str(lock)]
         done = subprocess.run(command, capture_output=True, text=True, timeout=1800, check=False)  # nosec B603
         if done.returncode != 0:
             tail = (done.stderr or "").strip().splitlines()[-1:]
@@ -261,7 +261,7 @@ class Downloader:
                 uv = shutil.which("uv") or str(config.home() / "bin" / "uv")
                 if Path(uv).exists() or shutil.which(uv):
                     pip = subprocess.run(  # nosec B603
-                        [uv, "pip", "install", "--python", sys.executable, "--quiet", "--require-hashes", "-r", str(lock)],
+                        [uv, "pip", "install", "--python", sys.executable, "--quiet", "--require-hashes", "--no-deps", "-r", str(lock)],
                         capture_output=True, text=True, timeout=1800, check=False,
                     )
                 else:
@@ -271,7 +271,7 @@ class Downloader:
                         capture_output=True, text=True, timeout=120, check=False,
                     )
                     pip = subprocess.run(  # nosec B603
-                        [sys.executable, "-m", "pip", "install", "--quiet", "--require-hashes", "-r", str(lock)],
+                        [sys.executable, "-m", "pip", "install", "--quiet", "--require-hashes", "--no-deps", "-r", str(lock)],
                         capture_output=True, text=True, timeout=1800, check=False,
                     )
                 if pip.returncode != 0:
