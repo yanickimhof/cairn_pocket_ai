@@ -54,11 +54,19 @@ class Jobs:
         with self.lock:
             self._state["errors"].append(message)
 
+    # A job that gives way to what the person asks for: reading the notes for the search and the privacy check always do; a sealing pass gives way
+    # to opening everything again (the lock is being turned off).
+    YIELDS = {"index": None, "privacy": None, "seal": ("unseal",)}
+
+    def _yields(self, running, asked):
+        only = self.YIELDS.get(running, False)
+        return only is None and asked != running or (isinstance(only, tuple) and asked in only)
+
     def _start(self, kind, target, *args):
         for attempt in range(2):
             with self.lock:
-                if self._state["running"] and self._state["kind"] == "index" and kind != "index" and attempt == 0:
-                    self.cancelled = True  # reading the notes for the search gives way to what the person asks for
+                if self._state["running"] and self._yields(self._state["kind"], kind) and attempt == 0:
+                    self.cancelled = True  # what runs in the background gives way to what the person asks for
                 elif self._state["running"]:
                     raise Busy("A job is already running.")
                 else:
@@ -67,7 +75,7 @@ class Jobs:
                     if kind == "import":
                         self.paused = False
                     break
-            for _ in range(100):  # up to ten seconds for the index to step aside
+            for _ in range(150):  # up to fifteen seconds for it to step aside
                 time.sleep(0.1)
                 if not self._state["running"]:
                     break
@@ -251,7 +259,7 @@ class Jobs:
 
     def _seal(self):
         self._set(step="sealing", total=1, done=0)
-        lock.migrate(True, progress=lambda done, total: self._set(done=done, total=total))
+        lock.migrate(True, progress=lambda done, total: self._set(done=done, total=total), stop=lambda: self.cancelled)
         self._set(step="", done=0, total=0)
 
     def start_unseal(self):

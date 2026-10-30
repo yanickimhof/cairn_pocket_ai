@@ -130,7 +130,7 @@ def info():
     from . import biometric
 
     return {"enabled": True, "locked": _state["dek"] is None, "auto_min": cfg.get("auto_min", DEFAULT_AUTO),
-            "biometric": {"available": biometric.available(), "enabled": bool(cfg.get("biometric"))}, "migrating": _state["migrating"],
+            "biometric": {"available": biometric.available(), "enabled": bool(cfg.get("biometric")), "reason": biometric.status()}, "migrating": _state["migrating"],
             "sealed": bool(cfg.get("migrated"))}
 
 
@@ -233,6 +233,20 @@ def _rewrap(cfg, dek, password):
     salt = secrets.token_bytes(16)
     cfg = dict(cfg, salt=_b64(salt), wrap=_wrap(_kek(password, salt, cfg["n"], cfg["r"], cfg["p"]), dek))
     _write(cfg)
+
+
+def new_phrase(password):
+    """A new recovery phrase, after the password was given again. The old phrase stops working. Shown once, like the first."""
+    cfg = _read()
+    if cfg is None:
+        raise LockError("not_enabled")
+    dek = _unwrap(_kek(str(password or ""), _unb64(cfg["salt"]), cfg["n"], cfg["r"], cfg["p"]), cfg["wrap"])
+    if dek is None:
+        _state["fails"] += 1
+        raise LockError("wrong_password")
+    rsalt, phrase = secrets.token_bytes(16), phrase_new()
+    _write(dict(cfg, rsalt=_b64(rsalt), rwrap=_wrap(_kek(_normal(phrase), rsalt, cfg["n"], cfg["r"], cfg["p"]), dek)))
+    return phrase
 
 
 def change_password(old, new):
@@ -344,7 +358,7 @@ def _replace_bytes(path, raw):
         raise
 
 
-def migrate(to_sealed=True, progress=None):
+def migrate(to_sealed=True, progress=None, stop=None):
     """Seal (to_sealed) or open every protected file, then every recording. Safe to stop and start again: a file is in one state or the
     other, and both are read. Returns how many files changed."""
     dek, changed = _key(), 0
@@ -354,6 +368,8 @@ def migrate(to_sealed=True, progress=None):
         files, audio = list(_data_files()), list(audio_files())
         total, done = len(files) + len(audio), 0
         for path in files:
+            if stop and stop():
+                return changed  # stopped between two files: every file is whole, the next pass takes up the rest
             raw = path.read_bytes()
             if seal.is_blob(raw) != to_sealed:
                 if to_sealed:
@@ -368,6 +384,8 @@ def migrate(to_sealed=True, progress=None):
             if progress:
                 progress(done, total)
         for path in audio:
+            if stop and stop():
+                return changed
             if seal.is_sealed(path) != to_sealed:
                 new = path.with_name(path.name + ".new")
                 try:

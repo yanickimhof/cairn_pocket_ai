@@ -112,6 +112,28 @@ class KeysTest(Base):
         lock._state["seen"] -= 10 ** 6
         self.assertFalse(lock.due())  # 0 = only when asked
 
+    def test_a_new_recovery_phrase_replaces_the_old_one(self):
+        old = lock.enable(PASSWORD)
+        with self.assertRaises(lock.LockError):
+            lock.new_phrase("not the password")
+        new = lock.new_phrase(PASSWORD)
+        self.assertNotEqual(old, new)
+        lock.lock_now()
+        with self.assertRaises(lock.LockError):
+            lock.recover(old, "brand new password")  # the phrase shown first no longer opens anything
+        lock.recover(new, "brand new password")
+        self.assertFalse(lock.locked())
+
+    def test_touch_id_says_why_it_is_missing(self):
+        from cairn import biometric
+
+        with mock.patch.object(biometric.sys, "platform", "linux"):
+            self.assertEqual(biometric.status(), "no_system")
+        with mock.patch.object(biometric.sys, "platform", "darwin"), mock.patch.dict("sys.modules", {"keyring": object(), "LocalAuthentication": None}):
+            self.assertEqual(biometric.status(), "no_package")  # the component is not installed in this environment
+        lock.enable(PASSWORD)
+        self.assertIn(lock.info()["biometric"]["reason"], ("no_system", "no_package", "no_keyring", "no_sensor", "ok"))
+
     def test_touch_id_is_only_a_confirmation_before_the_key_is_handed_over(self):
         from cairn import biometric
 
@@ -233,6 +255,12 @@ class LockedServerTest(Base):
         self.addCleanup(self.stop)
 
     def stop(self):
+        import time
+
+        for _ in range(100):  # a sealing pass started by the lock must end before the folder goes
+            if not self.app.jobs.snapshot().get("running") and not lock._state["migrating"]:
+                break
+            time.sleep(0.1)
         self.httpd.shutdown()
         self.httpd.server_close()
 
@@ -297,11 +325,86 @@ class LockedServerTest(Base):
         self.assertTrue(seal.is_sealed(note["audio"]))
         self.assertNotIn(data[100:200], Path(note["audio"]).read_bytes())
 
+    def test_the_phrase_reaches_the_person_even_if_sealing_cannot_start(self):
+        with mock.patch.object(self.app.jobs, "start_seal", side_effect=RuntimeError("no job slot")):
+            status, body = self.call("POST", "/api/lock/enable", {"password": PASSWORD})
+        self.assertEqual(status, 200)
+        self.assertRegex(body["recovery"], r"^([A-Z2-7]{5}-){4}[A-Z2-7]{5}-[A-Z2-7]{1,5}$")
+
+    def test_a_new_phrase_asks_for_the_password_again(self):
+        self.call("POST", "/api/lock/enable", {"password": PASSWORD})
+        self.assertEqual(self.call("POST", "/api/lock/phrase", {"password": "wrong password value"})[0], 401)
+        status, body = self.call("POST", "/api/lock/phrase", {"password": PASSWORD})
+        self.assertEqual(status, 200)
+        self.assertIn("recovery", body)
+
     def test_a_note_written_while_sealing_is_sealed(self):
         self.call("POST", "/api/lock/enable", {"password": PASSWORD})
         self.app.store.save({"id": "z", "status": "waiting", "title": "TITRE-SECRET"})
         self.assertNotIn(b"TITRE-SECRET", (self.home / "Texts" / "z.json").read_bytes())
         self.assertEqual(self.app.store.get("z")["title"], "TITRE-SECRET")
+
+
+class JobsTest(Base):
+    def make(self):
+        from cairn import jobs, notes
+
+        return jobs.Jobs(notes.Store(self.home / "Texts"))
+
+    def run_kind(self, job, kind):
+        """Pretend a job of this kind is running, and see who gives way."""
+        job._state.update(running=True, kind=kind)
+        started = []
+
+        def finish():
+            while not job.cancelled:
+                import time
+
+                time.sleep(0.01)
+            job._state["running"] = False
+
+        threading.Thread(target=finish, daemon=True).start()
+        return started
+
+    def test_opening_everything_again_does_not_wait_for_background_work(self):
+        from cairn import jobs
+
+        for kind in ("seal", "index", "privacy"):
+            job = self.make()
+            self.run_kind(job, kind)
+            lock.enable(PASSWORD)
+            with mock.patch.object(lock, "migrate", return_value=0), mock.patch.object(lock, "finish_disable"):
+                job.start_unseal()  # the background pass is asked to stop and gives way
+            self.assertTrue(job.cancelled is False)
+            lock.lock_now()
+            lock._path().unlink()
+
+    def test_real_work_is_never_interrupted_by_it(self):
+        from cairn import jobs
+
+        job = self.make()
+        job._state.update(running=True, kind="import")
+        with self.assertRaises(jobs.Busy):
+            job.start_unseal()
+        job._state.update(kind="unseal")
+        with self.assertRaises(jobs.Busy):
+            job.start_seal()  # and a sealing pass does not push aside the one that opens everything
+
+    def test_a_sealing_pass_stops_between_files(self):
+        self.populate()
+        lock.enable(PASSWORD)
+        seen = {"n": 0}
+
+        def stop():
+            seen["n"] += 1
+            return seen["n"] > 1
+
+        lock.migrate(True, stop=stop)
+        self.assertFalse(lock.info()["sealed"])  # not finished: the upkeep takes it up again
+        sealed = [p for p in (self.home / "Texts").glob("*.json") if seal.is_blob(p.read_bytes())]
+        self.assertEqual(len(sealed), 1)
+        lock.migrate(True)
+        self.assertTrue(lock.info()["sealed"])
 
 
 if __name__ == "__main__":

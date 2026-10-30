@@ -45,6 +45,7 @@ class ReleaseTest(unittest.TestCase):
         base = (ROOT / "requirements" / "mlx-macos-arm64.txt").read_text(encoding="utf-8")
         names = set(re.findall(r"(?m)^([A-Za-z0-9_.-]+)==", base))
         self.assertIn("mlx-whisper", names)
+        self.assertIn("pyobjc-framework-localauthentication", names)  # Touch ID needs this macOS component in the environment
         for heavy in ("torch", "sympy", "networkx"):
             self.assertNotIn(heavy, names)  # about 700 MB that only speaker identification needs, installed with it
         diar = set(re.findall(r"(?m)^([A-Za-z0-9_.-]+)==", (ROOT / "requirements" / "diar-macos-arm64.txt").read_text(encoding="utf-8")))

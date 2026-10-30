@@ -13,7 +13,7 @@
       taskWhat: "Action", taskWho: "Qui", taskWhen: "Quand", taskEditHint: "Modifier l’action", taskDelHint: "Supprimer l’action", taskDelAsk: "Supprimer cette action ?",
       tplMine: "Mes modèles de note", tplEditHint: "Créer ou modifier un modèle de note", tplName: "Nom du modèle", tplPrompt: "Ex. : Compte rendu client. Sections : Objectifs, Risques, Décisions, Prochaines étapes. Une ligne chacune.", tplEditRow: "Modifier le modèle", tplHelp: "Citez les sections voulues, dans l’ordre : la note aura un TL;DR, les actions, puis une section par nom. Un ton ou une longueur peuvent s’ajouter.", tplStar: "Utiliser pour toutes les nouvelles notes", tplDelAsk: "Supprimer ce modèle ?", tplNone: "Aucun modèle pour l’instant",
       tagHint: "Tags", tagPlaceholder: "Ajouter un tag", tagDismissHint: "Ignorer les suggestions", tagAcceptHint: "Ajouter ce tag", tagRemoveHint: "Retirer ce tag", tagFilterHint: "Filtrer par tag", tagsSuggest: "Suggérer des tags", tagsSuggestHint: "Après chaque note, Cairn propose jusqu’à 3 de vos tags existants, à valider. Un appel de plus au modèle par note.", tagApplied: "{n} notes taguées", pickTagPlaceholder: "#tag",
-      find: "Rechercher", findPlaceholder: "Un mot, un nom, un chiffre", findNone: "Aucun résultat", tasks: "Toutes mes actions", tasksNone: "Aucune action pour l’instant", tasksCopy: "Copier les actions à faire", tasksUnassigned: "Sans responsable", tasksCopied: "Actions copiées",
+      find: "Rechercher", findPlaceholder: "Demandez n’importe quoi à votre Pocket", findNone: "Aucun résultat", tasks: "Toutes mes actions", tasksNone: "Aucune action pour l’instant", tasksCopy: "Copier les actions à faire", tasksUnassigned: "Sans responsable", tasksCopied: "Actions copiées",
       listenHint: "Écouter à partir d’ici", mailHint: "Écrire le mail de suivi", mailTitle: "Mail de suivi", mailWriting: "Rédaction du mail…", mailCopy: "Copier le mail", mailOpen: "Ouvrir dans l’app Mail", mailRedo: "Réécrire le mail",
       vocab: "Vocabulaire", vocabHint: "Noms de personnes, de lieux et termes rares, un par ligne. Cairn corrige dans la transcription les mots qui leur ressemblent et impose leur orthographe au résumé. « Brant, Brand, Brandh => Brandt » remplace toujours chacun par Brandt (=>, -> et : fonctionnent). « Open Day => BRANDT Day | awards, ceremony » ne remplace qu’à côté de ces mots.",
       vocabTodo: "{n} notes utilisent un ancien vocabulaire", vocabAll: "Mettre à jour les notes", vocabChoose: "Choisir des notes", vocabRange: "Mettre à jour une période", vocabStarted: "{n} notes en cours de mise à jour", vocabNothing: "Aucune note à mettre à jour",
@@ -78,6 +78,8 @@
       lockPhraseTitle: "Phrase de récupération", lockPhraseText: "Notez-la hors de cet ordinateur. Elle seule permet de retrouver vos notes si vous perdez le mot de passe. Elle ne sera plus affichée.", lockPhraseDone: "J’ai noté la phrase",
       lockAuto: "Verrouiller après inactivité", lockNever: "Jamais", lockMin: "{n} min", lockBioSetting: "Touch ID", lockChange: "Changer le mot de passe", lockOld: "Mot de passe actuel", lockNew: "Nouveau mot de passe",
       lockOff: "Désactiver le verrou", lockOffText: "Les données seront déchiffrées. Mot de passe :", lockForgot: "Mot de passe oublié ?", lockPhraseIn: "Phrase de récupération", lockRecover: "Récupérer", lockBadPhrase: "Phrase incorrecte", lockSaved: "Enregistré", lockCancel: "Annuler",
+      lockBusyNow: "Un traitement est en cours : réessayez quand il sera terminé.",
+      lockNewPhrase: "Nouvelle phrase de récupération", lockNewPhraseText: "L’ancienne phrase ne fonctionnera plus. Mot de passe :", lockBioNoPackage: "Touch ID indisponible : le composant macOS manque dans l’environnement de Cairn (mettez Cairn à jour).", lockBioNoSensor: "Touch ID indisponible : aucun capteur ou aucune empreinte enregistrée.",
       addFiles: "Ajouter des fichiers audio", dropHere: "Déposez vos fichiers audio", uploading: "Envoi de {name}", filesAdded: "{n} fichier(s) ajouté(s)", filesDup: "{n} déjà présent(s)", fileBad: "Fichier refusé : ce n’est pas un enregistrement audio pris en charge",
       importLabel: "Importer et transcrire", importHint: "Importer et traiter les enregistrements", count: "Enregistrements sur le Pocket",
       batTip: "Batterie du Pocket : {n} %", batCharging: " · en charge (branché)",
@@ -106,7 +108,7 @@
       taskWhat: "Action", taskWho: "Who", taskWhen: "When", taskEditHint: "Edit the action", taskDelHint: "Delete the action", taskDelAsk: "Delete this action?",
       tplMine: "My note templates", tplEditHint: "Create or edit a note template", tplName: "Template name", tplPrompt: "E.g. Client report. Sections: Goals, Risks, Decisions, Next steps. One line each.", tplEditRow: "Edit the template", tplHelp: "Name the sections you want, in order: the note gets a TL;DR, the actions, then one section per name. A tone or a length can be added.", tplStar: "Use for every new note", tplDelAsk: "Delete this template?", tplNone: "No template yet",
       tagHint: "Tags", tagPlaceholder: "Add a tag", tagDismissHint: "Ignore the suggestions", tagAcceptHint: "Add this tag", tagRemoveHint: "Remove this tag", tagFilterHint: "Filter by tag", tagsSuggest: "Suggest tags", tagsSuggestHint: "After each note, Cairn offers up to 3 of your existing tags, for you to confirm. One more model call per note.", tagApplied: "{n} notes tagged", pickTagPlaceholder: "#tag",
-      find: "Search", findPlaceholder: "A word, a name, a number", findNone: "No result", tasks: "All my actions", tasksNone: "No action yet", tasksCopy: "Copy the open actions", tasksUnassigned: "Nobody yet", tasksCopied: "Actions copied",
+      find: "Search", findPlaceholder: "Ask your Pocket anything", findNone: "No result", tasks: "All my actions", tasksNone: "No action yet", tasksCopy: "Copy the open actions", tasksUnassigned: "Nobody yet", tasksCopied: "Actions copied",
       listenHint: "Listen from here", mailHint: "Write the follow-up email", mailTitle: "Follow-up email", mailWriting: "Writing the email…", mailCopy: "Copy the email", mailOpen: "Open in the Mail app", mailRedo: "Write it again",
       vocab: "Vocabulary", vocabHint: "Names of people and places and rare terms, one per line. Cairn corrects close variants in the transcript and imposes their spelling on the summary. \"Brant, Brand, Brandh => Brandt\" always replaces each of them with Brandt (=>, -> and: all work). \"Open Day => BRANDT Day | awards, ceremony\" replaces only near those words.",
       vocabTodo: "{n} notes use an older vocabulary", vocabAll: "Update the notes", vocabChoose: "Choose notes", vocabRange: "Update a period", vocabStarted: "{n} notes are being updated", vocabNothing: "No note to update",
@@ -171,6 +173,8 @@
       lockPhraseTitle: "Recovery phrase", lockPhraseText: "Write it down away from this computer. It is the only way back to your notes if you lose the password. It will not be shown again.", lockPhraseDone: "I wrote the phrase down",
       lockAuto: "Lock after inactivity", lockNever: "Never", lockMin: "{n} min", lockBioSetting: "Touch ID", lockChange: "Change the password", lockOld: "Current password", lockNew: "New password",
       lockOff: "Turn the lock off", lockOffText: "The data will be decrypted. Password:", lockForgot: "Forgot the password?", lockPhraseIn: "Recovery phrase", lockRecover: "Recover", lockBadPhrase: "Wrong phrase", lockSaved: "Saved", lockCancel: "Cancel",
+      lockBusyNow: "A job is running: try again when it has finished.",
+      lockNewPhrase: "New recovery phrase", lockNewPhraseText: "The old phrase will stop working. Password:", lockBioNoPackage: "Touch ID unavailable: the macOS component is missing from Cairn's environment (update Cairn).", lockBioNoSensor: "Touch ID unavailable: no sensor, or no fingerprint enrolled.",
       addFiles: "Add audio files", dropHere: "Drop your audio files", uploading: "Sending {name}", filesAdded: "{n} file(s) added", filesDup: "{n} already here", fileBad: "File refused: it is not a supported audio recording",
       importLabel: "Import and transcribe", importHint: "Import and process the recordings", count: "Recordings on the Pocket",
       batTip: "Pocket battery: {n}%", batCharging: " · charging (plugged in)",
@@ -719,7 +723,7 @@
   function lockCall(path, body, done) {
     return api("POST", "/api/lock/" + path, body || {}).then(function (r) { S.lockErr = ""; if (done) { done(r); } }).catch(function (e) {
       var t = T();
-      S.lockErr = e.message === "wrong_password" ? t.lockWrong : e.message === "wrong_phrase" ? t.lockBadPhrase : e.message === "password_short" ? t.lockShort : t.error + e.message;
+      S.lockErr = e.message === "wrong_password" ? t.lockWrong : e.message === "wrong_phrase" ? t.lockBadPhrase : e.message === "password_short" ? t.lockShort : e.message === "busy" ? t.lockBusyNow : t.error + e.message;
       render();
     });
   }
@@ -746,16 +750,23 @@
       }).join("") + "</div></div>";
       if (li.biometric && li.biometric.available) {
         h += '<div class="setrow"><span class="text" style="font-size:14px">' + esc(t.lockBioSetting) + "</span>" + onOff("lockBioToggle", li.biometric.enabled, t) + "</div>";
+      } else if (li.biometric && li.biometric.reason === "no_package") {
+        h += '<div class="small">' + esc(t.lockBioNoPackage) + "</div>";
+      } else if (li.biometric && li.biometric.reason === "no_sensor") {
+        h += '<div class="small">' + esc(t.lockBioNoSensor) + "</div>";
       }
       if (S.lockForm === "change") {
         h += '<input id="lockOld" type="password" class="dinput" autocomplete="current-password" placeholder="' + esc(t.lockOld) + '" aria-label="' + esc(t.lockOld) + '">';
         h += '<input id="lockPw" type="password" class="dinput" autocomplete="new-password" placeholder="' + esc(t.lockNew) + '" aria-label="' + esc(t.lockNew) + '">';
         h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockChangeGo">' + esc(t.lockChange) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="">' + esc(t.lockCancel) + "</button></div>";
+      } else if (S.lockForm === "phrase") {
+        h += '<div class="small">' + esc(t.lockNewPhraseText) + '</div><input id="lockPw" type="password" class="dinput" autocomplete="current-password" placeholder="' + esc(t.lockPw) + '" aria-label="' + esc(t.lockPw) + '">';
+        h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockPhraseGo">' + esc(t.lockNewPhrase) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="">' + esc(t.lockCancel) + "</button></div>";
       } else if (S.lockForm === "off") {
         h += '<div class="small">' + esc(t.lockOffText) + '</div><input id="lockPw" type="password" class="dinput" autocomplete="current-password" placeholder="' + esc(t.lockPw) + '" aria-label="' + esc(t.lockPw) + '">';
         h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockOffGo">' + esc(t.lockOff) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="">' + esc(t.lockCancel) + "</button></div>";
       } else {
-        h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockForm" data-v="change">' + esc(t.lockChange) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="off">' + esc(t.lockOff) + "</button></div>";
+        h += '<div class="row gap8" style="flex-wrap:wrap"><button type="button" class="mbtn" data-a="lockForm" data-v="change">' + esc(t.lockChange) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="phrase">' + esc(t.lockNewPhrase) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="off">' + esc(t.lockOff) + "</button></div>";
       }
     }
     if (S.lockErr) { h += '<div class="err" role="alert">' + esc(S.lockErr) + "</div>"; }
@@ -1896,6 +1907,10 @@
       lockCall("enable", { password: a.value, biometric: !!(box && box.checked) }, function (r) { S.lockPhrase = r.recovery; S.lockForm = ""; refresh(); });
     },
     lockPhraseDone: function () { S.lockPhrase = null; },
+    lockPhraseGo: function () {
+      var el = document.getElementById("lockPw");
+      lockCall("phrase", { password: el ? el.value : "" }, function (r) { S.lockPhrase = r.recovery; S.lockForm = ""; refresh(); });
+    },
     lockAuto: function (v) { lockCall("settings", { auto_min: parseInt(v, 10) }, refresh); },
     lockBioToggle: function (v) { lockCall("settings", { biometric: v === "1" }, refresh); },
     lockChangeGo: function () {

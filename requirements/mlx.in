@@ -4,3 +4,4 @@ imageio-ffmpeg
 bleak; sys_platform == 'darwin'
 cryptography
 keyring
+pyobjc-framework-LocalAuthentication; sys_platform == 'darwin'

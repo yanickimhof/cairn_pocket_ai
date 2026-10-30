@@ -749,6 +749,8 @@ pyobjc-core==12.2.2 \
     #   pyobjc-framework-cocoa
     #   pyobjc-framework-corebluetooth
     #   pyobjc-framework-libdispatch
+    #   pyobjc-framework-localauthentication
+    #   pyobjc-framework-security
 pyobjc-framework-cocoa==12.2.2 \
     --hash=sha256:0e8ace0d44a00d281281a723d17fcd05eea7544a38a6a512e1fd018ddb7aece2 \
     --hash=sha256:5a751c8033a3b51f7996f0327e0675eb44dcfdfe7920fae01e3d78b662723fff \
@@ -764,6 +766,8 @@ pyobjc-framework-cocoa==12.2.2 \
     #   -c cons-light.txt
     #   pyobjc-framework-corebluetooth
     #   pyobjc-framework-libdispatch
+    #   pyobjc-framework-localauthentication
+    #   pyobjc-framework-security
 pyobjc-framework-corebluetooth==12.2.2 \
     --hash=sha256:0c483a90fb7ebf269af5f235fed82e437d8ff892c133f064af25623bf43efe16 \
     --hash=sha256:289ea13ba2b7746235ef47e2d7e7606752d08384022197ccc0e6943b91d4c62d \
@@ -792,6 +796,30 @@ pyobjc-framework-libdispatch==12.2.2 \
     # via
     #   -c cons-light.txt
     #   bleak
+pyobjc-framework-localauthentication==12.2.2 \
+    --hash=sha256:43c63c52ac88ad1d2f1db7edd8ca585a5b8e1187701f3469d4305f7b5b0ad95c \
+    --hash=sha256:4f00942739717aaf135ce17610e0d8966afbb67e98cae22a6108bceade4969a4 \
+    --hash=sha256:6bc18b328a42900b054bb355c43048c947cd690bf771cd75c4014e1dfb9b16be \
+    --hash=sha256:957e379bdd1767e0566bb920e73423ed25e2c06f188ae881726aff1a7e031b74 \
+    --hash=sha256:98a35bb66974593c7fb7c20cb2815785792e47d7e0d8eef7ec5f288c72eeaa3b \
+    --hash=sha256:a6d7e664017612cc22e6563ad8ffd92ad788dd788e8deff2933096ef698f3044 \
+    --hash=sha256:a9d64e919a1373ed8985523758169d63d5dfd8244863f02d234ed5d9f13a2dec \
+    --hash=sha256:c7a020a38e6aa279e408f2242e21d7fed0bd66688523e380d9bd0ddd17802c0e \
+    --hash=sha256:cd2d4c6e21161a7164c02ec99e3eb629bf9805ac8f134d5eb097cd13060a57ac \
+    --hash=sha256:fa530583d0d8d18d1d01b442f28cb860db0cca49db6a68aada56ee6092b86602
+    # via -r mlx.in
+pyobjc-framework-security==12.2.2 \
+    --hash=sha256:266f41995f2fc80660c8451bdb199a7e259a6cad02fbc1e0e2f69dd5576e2203 \
+    --hash=sha256:33efab1ff7d18570148f8f3ddd44eca305f733aee00b9115d5263bef81018f65 \
+    --hash=sha256:4cc2e7352f4ca67a43bcf65587a024fdafdea5f5fcae7264b896e39cd68d5718 \
+    --hash=sha256:54b9b7a03f2e4a7e1ac182239d63cb94bc3628293f39637c17d3ececd495a619 \
+    --hash=sha256:67655616bd0b9e05bd6a18fa353c5a7bc1743f79f1774644dbb180a2c62bf65b \
+    --hash=sha256:786da49c319318bb4cf168755d4a9324a6b3720a3dd7503990249c2a27b661ee \
+    --hash=sha256:a78b6945d4681e319e03757c8039ac4014833ede1d883aa793a286f48fa93bb7 \
+    --hash=sha256:c4726b41c96a611fa13880bcfcb38a32ac9256239adb5b48d559dc4d0c9d0b99 \
+    --hash=sha256:ca580d5f56e1222d63f1322a4fbf63be0bad77e77cca084290310df007b3fdde \
+    --hash=sha256:f5afda32efbfdef150e921563b94a799ea104e575f4a95b8c5cd71a2322413a8
+    # via pyobjc-framework-localauthentication
 pyyaml==6.0.3 \
     --hash=sha256:00c4bdeba853cc34e7dd471f16b4114f4162dc03e6b7afcc2128711f0eca823c \
     --hash=sha256:0150219816b6a1fa26fb4699fb7daa9caf09eb1999f3b70fb6e786805e80375a \

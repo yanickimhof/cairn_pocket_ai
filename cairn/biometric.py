@@ -22,12 +22,24 @@ def _context():
     return (context, LAPolicyDeviceOwnerAuthenticationWithBiometrics) if ok else None
 
 
-def available():
+def status():
+    """Why Touch ID can or cannot be offered: ok, no_system (not a Mac), no_package (the macOS component is not installed),
+    no_keyring, or no_sensor (no Touch ID on this computer, or none enrolled)."""
+    if sys.platform != "darwin":
+        return "no_system"
     try:
         import keyring  # noqa: F401
     except ImportError:
-        return False
-    return _context() is not None
+        return "no_keyring"
+    try:
+        import LocalAuthentication  # noqa: F401
+    except ImportError:
+        return "no_package"
+    return "ok" if _context() is not None else "no_sensor"
+
+
+def available():
+    return status() == "ok"
 
 
 def confirm(reason):

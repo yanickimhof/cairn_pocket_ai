@@ -780,9 +780,11 @@ def make_handler(app):
                         phrase = lock.enable(body.get("password"), bool(body.get("biometric")), body.get("auto_min", lock.DEFAULT_AUTO))
                         try:
                             app.jobs.start_seal()
-                        except jobs.Busy:
-                            pass  # the upkeep takes it up when the running job ends
+                        except Exception:  # noqa: BLE001 (the phrase exists now: nothing after this may keep it from the person; the upkeep seals the rest)
+                            pass
                         return self._json(200, {"ok": True, "recovery": phrase})
+                    elif action == "phrase":
+                        return self._json(200, {"ok": True, "recovery": lock.new_phrase(body.get("password"))})
                     elif action == "disable":
                         lock.disable(body.get("password"))
                         app.jobs.start_unseal()
