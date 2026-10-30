@@ -1,6 +1,7 @@
 """Background work: import from the Pocket, transcribe, summarize. One job at a time."""
 
 import math
+import contextlib
 import copy
 import os
 import sys
@@ -87,9 +88,12 @@ class Jobs:
             target(*args)
         except Gone:
             pass  # the person deleted the note meanwhile: nothing to report, nothing to bring back
+        except config.Locked:
+            pass  # the person locked Cairn on purpose: nothing failed, the recording is processed after the next unlock
         except Exception as error:  # a job must never leave the state stuck
             self._fail(str(error))
         finally:
+            lock.touch()  # the idle time that locks Cairn starts when the work ends, not when it began
             awake.release()
             self._set(running=False, step="", id=None, pct=None)
 
@@ -182,6 +186,10 @@ class Jobs:
             self._process(note_id, settings)
         except Gone:
             return not self.cancelled
+        except config.Locked:
+            with contextlib.suppress(Exception):
+                self._reset(note_id)  # put back as waiting; when this fails too, the start-up pass does it
+            return False
         except Exception as error:
             if self.cancelled:
                 self._reset(note_id)

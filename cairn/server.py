@@ -775,6 +775,10 @@ def make_handler(app):
                     if action == "now":
                         if app.jobs.snapshot().get("running"):
                             app.jobs.cancel()
+                            for _ in range(80):  # the job ends cleanly before the key goes
+                                if not app.jobs.snapshot().get("running"):
+                                    break
+                                time.sleep(0.1)
                         lock.lock_now()
                     elif action == "enable":
                         phrase = lock.enable(body.get("password"), bool(body.get("biometric")), body.get("auto_min", lock.DEFAULT_AUTO))

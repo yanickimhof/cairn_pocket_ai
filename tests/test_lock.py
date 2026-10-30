@@ -122,6 +122,18 @@ class KeysTest(Base):
         lock.recover(new, "brand new password")
         self.assertFalse(lock.locked())
 
+    def test_it_never_locks_while_a_job_is_running(self):
+        from cairn import awake
+
+        lock.enable(PASSWORD, auto_min=5)
+        lock._state["seen"] -= 3600
+        awake.hold()  # a job is running
+        try:
+            self.assertFalse(lock.due())
+        finally:
+            awake.release()
+        self.assertTrue(lock.due())  # the work is over and the idle time has passed
+
     def test_touch_id_says_why_it_is_missing(self):
         from cairn import biometric
 
@@ -387,6 +399,28 @@ class JobsTest(Base):
         job._state.update(kind="unseal")
         with self.assertRaises(jobs.Busy):
             job.start_seal()  # and a sealing pass does not push aside the one that opens everything
+
+    def test_locking_on_purpose_during_a_job_is_not_an_error(self):
+        import time
+
+        self.populate()
+        lock.enable(PASSWORD)
+        job = self.make()
+        config.write_json(self.home / "Texts" / "w.json", {"id": "w", "status": "transcribing", "title": "", "audio": str(self.audio)})
+
+        def process(note_id, settings):
+            lock.lock_now()
+            config.read_json(self.home / "Texts" / "w.json")  # the key is gone: this refuses
+
+        with mock.patch.object(job, "_process", process), mock.patch.object(job, "_ready", return_value=True):
+            job._start("process", lambda: job._try("w", {}))
+            for _ in range(100):
+                if not job.snapshot()["running"]:
+                    break
+                time.sleep(0.05)
+        self.assertEqual(job.snapshot()["errors"], [])  # nothing is reported as failed
+        lock.unlock(PASSWORD)
+        self.assertEqual(config.read_json(self.home / "Texts" / "w.json")["status"], "transcribing")  # left as it was: the start-up pass puts it back
 
     def test_a_sealing_pass_stops_between_files(self):
         self.populate()

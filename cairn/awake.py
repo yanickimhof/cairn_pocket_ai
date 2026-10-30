@@ -27,6 +27,12 @@ def hold():
                     pass
 
 
+def held():
+    """Whether a long job is running (the computer is kept awake for it)."""
+    with _LOCK:
+        return _STATE["count"] > 0
+
+
 def release():
     with _LOCK:
         _STATE["count"] = max(0, _STATE["count"] - 1)

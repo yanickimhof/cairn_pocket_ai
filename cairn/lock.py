@@ -506,6 +506,10 @@ def idle_for():
 
 def due():
     """Whether the idle time has passed and Cairn should lock itself."""
+    from . import awake
+
     cfg = _read()
     minutes = (cfg or {}).get("auto_min", DEFAULT_AUTO)
+    if awake.held():
+        return False  # never while a job is running: a transcription is not cut by the lock
     return bool(cfg) and _state["dek"] is not None and minutes > 0 and idle_for() > minutes * 60
