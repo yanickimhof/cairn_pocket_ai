@@ -62,7 +62,7 @@ def install():
     _state["installed"] = True
     original_connect, original_connect_ex = socket.socket.connect, socket.socket.connect_ex
     original_sendto, original_getaddrinfo = socket.socket.sendto, socket.getaddrinfo
-    original_sendmsg = socket.socket.sendmsg
+    original_sendmsg = getattr(socket.socket, "sendmsg", None)  # Windows has no sendmsg
     originals = {name: getattr(socket, name) for name in ("gethostbyname", "gethostbyname_ex", "gethostbyaddr") if hasattr(socket, name)}
 
     def connect(self, address):
@@ -96,7 +96,8 @@ def install():
         return resolve
 
     socket.socket.connect, socket.socket.connect_ex, socket.socket.sendto = connect, connect_ex, sendto
-    socket.socket.sendmsg = sendmsg
+    if original_sendmsg is not None:
+        socket.socket.sendmsg = sendmsg
     socket.getaddrinfo = getaddrinfo
     for name, original in originals.items():  # the older name lookups reach the resolver without going through getaddrinfo
         setattr(socket, name, guarded(original))

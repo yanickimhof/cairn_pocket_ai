@@ -1190,6 +1190,22 @@ class UnitTest(unittest.TestCase):
         out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=30, check=False).stdout.split()
         self.assertEqual(out, ["blocked", "blocked", "allowed", "2"])
 
+    def test_network_guard_installs_where_sendmsg_does_not_exist(self):
+        """Windows sockets have no sendmsg: the guard must still install, and the app must start."""
+        import subprocess
+
+        code = (
+            "import socket, sys; sys.path.insert(0, %r)\n"
+            "class Bare:\n"
+            "    def connect(self, a): pass\n"
+            "    def connect_ex(self, a): pass\n"
+            "    def sendto(self, d, *a): pass\n"
+            "socket.socket = Bare\n"
+            "from cairn import netguard\nnetguard.install()\nprint('ok', hasattr(Bare, 'sendmsg'))\n"
+        ) % str(Path(__file__).resolve().parent.parent)
+        res = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=30, check=False)
+        self.assertEqual(res.stdout.split(), ["ok", "False"], res.stderr)
+
     def test_background_service_files(self):
         import plistlib
         import stat

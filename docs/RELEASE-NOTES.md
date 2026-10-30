@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.7.1
+
+**Starts on Windows again.**
+A start-up error on Windows is fixed, and the automatic tests now catch it before a release.
+
 ## 0.7
 
 **Any recording, with or without a Pocket.**

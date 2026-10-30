@@ -28,7 +28,7 @@ jobs:
           python-version: "3.11"
       - name: Shell and Python checks
         run: |
-          pip install shellcheck-py bandit
+          pip install shellcheck-py bandit cryptography
           shellcheck install.sh
           bandit -q -ll -r cairn scripts
       - name: Unit and application tests (stub speech engine and stub model server)
@@ -44,7 +44,7 @@ jobs:
           if [ -n "$PRIVATE_TERMS" ] && grep -rIlE -i "$PRIVATE_TERMS" . --exclude-dir=.git; then echo "A private name is in the files above"; exit 1; fi
 
   macos:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4

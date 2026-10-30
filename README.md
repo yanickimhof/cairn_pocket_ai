@@ -57,7 +57,7 @@ What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
 |---|
 | ![Email](docs/screenshots/email.png) |
 
-> **Status: v0.7.0, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
+> **Status: v0.7.1, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
 
 ## Install
 
@@ -66,13 +66,13 @@ Paste one command in a terminal. It detects your system and installs everything 
 bash or zsh:
 
 ```
-curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.7.0/install.sh | bash
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.7.1/install.sh | bash
 ```
 
 PowerShell:
 
 ```
-irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.7.0/install.ps1 | iex
+irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.7.1/install.ps1 | iex
 ```
 
 | | Minimum | Recommended |
