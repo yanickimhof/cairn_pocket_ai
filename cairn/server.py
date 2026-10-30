@@ -27,6 +27,7 @@ STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "
           "/manifest.webmanifest": "manifest.webmanifest", "/icon-192.png": "icon-192.png", "/icon-512.png": "icon-512.png"}
 PUBLIC = {"/favicon.svg", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"}  # nothing private: the browser fetches them without the session cookie
 COOKIE = "cairn_session"
+COOKIE_DAYS = 30  # renewed each time Cairn is opened from its launcher
 MAX_BODY = 1 << 20
 EXPORTS = {"md": ("text/markdown", ".md"), "html": ("text/html", ".html"), "text": ("text/plain", ".txt")}
 CSP = (
@@ -710,8 +711,8 @@ def make_handler(app):
                 self._json(error.status, {"error": error.message})
             except (BrokenPipeError, ConnectionResetError):
                 pass
-            except Exception as error:  # never leak a traceback to the page
-                self._json(500, {"error": "server_error", "detail": str(error)[:200]})
+            except Exception:  # never leak a traceback or a path to the page
+                self._json(500, {"error": "server_error"})
 
         def _ask(self, body):
             question = " ".join(str(body.get("q") or "").split())[: ask.MAX_QUESTION]
@@ -742,7 +743,7 @@ def make_handler(app):
                 if host not in ("127.0.0.1:%d" % app.port, "localhost:%d" % app.port):
                     raise ApiError(403, "forbidden")
                 if key and hmac.compare_digest(key, app.token):
-                    cookie = "%s=%s; HttpOnly; SameSite=Strict; Path=/; Max-Age=31536000" % (COOKIE, app.token)
+                    cookie = "%s=%s; HttpOnly; SameSite=Strict; Path=/; Max-Age=%d" % (COOKIE, app.token, COOKIE_DAYS * 86400)
                     return self._send(303, b"", "text/plain", {"Location": "/", "Set-Cookie": cookie})
                 if not self._authorized():
                     return self._send(403, "Open Cairn from its launcher.", "text/plain")
@@ -1005,11 +1006,15 @@ def make_handler(app):
                 ctype, text, ext = app.export(note_id, fmt, query.get("transcript", ["1"])[0] == "1", query.get("fragment", ["0"])[0] == "1")
                 name = re.sub(r"[^A-Za-z0-9._-]+", "_", app.get_note(note_id).get("title") or note_id).strip("_") or "note"
                 disposition = "attachment; filename*=UTF-8''%s" % quote(name + ext)
-                if query.get("save", ["0"])[0] == "1":
-                    folder = config.home() / "Exports"
-                    folder.mkdir(parents=True, exist_ok=True)
-                    (folder / (name + ext)).write_text(text, encoding="utf-8")
                 return self._send(200, text, ctype, {"Content-Disposition": disposition})
+            if method == "POST" and action == "export":  # writing to disk is a POST, never a GET
+                fmt = str(body.get("fmt") or "md")
+                ctype, text, ext = app.export(note_id, fmt, body.get("transcript", True) is not False, bool(body.get("fragment")))
+                name = re.sub(r"[^A-Za-z0-9._-]+", "_", app.get_note(note_id).get("title") or note_id).strip("_") or "note"
+                folder = config.home() / "Exports"
+                folder.mkdir(parents=True, exist_ok=True)
+                (folder / (name + ext)).write_text(text, encoding="utf-8")
+                return self._json(200, {"ok": True, "name": name + ext})
             if method == "POST" and action == "rename":
                 title = str(body.get("title") or "").strip()[:200]
                 if not title:

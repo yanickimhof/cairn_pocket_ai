@@ -62,6 +62,8 @@ def install():
     _state["installed"] = True
     original_connect, original_connect_ex = socket.socket.connect, socket.socket.connect_ex
     original_sendto, original_getaddrinfo = socket.socket.sendto, socket.getaddrinfo
+    original_sendmsg = socket.socket.sendmsg
+    originals = {name: getattr(socket, name) for name in ("gethostbyname", "gethostbyname_ex", "gethostbyaddr") if hasattr(socket, name)}
 
     def connect(self, address):
         _check_address(self, address)
@@ -81,8 +83,23 @@ def install():
             _refuse(host)
         return original_getaddrinfo(host, *args, **kwargs)
 
+    def sendmsg(self, buffers, *args):
+        if len(args) >= 3 and args[2] is not None:  # sendmsg(buffers, ancdata, flags, address)
+            _check_address(self, args[2])
+        return original_sendmsg(self, buffers, *args)
+
+    def guarded(original):
+        def resolve(host, *args, **kwargs):
+            if not _is_local(host):
+                _refuse(host)
+            return original(host, *args, **kwargs)
+        return resolve
+
     socket.socket.connect, socket.socket.connect_ex, socket.socket.sendto = connect, connect_ex, sendto
+    socket.socket.sendmsg = sendmsg
     socket.getaddrinfo = getaddrinfo
+    for name, original in originals.items():  # the older name lookups reach the resolver without going through getaddrinfo
+        setattr(socket, name, guarded(original))
 
 
 def blocked():

@@ -3,13 +3,7 @@
 ## 0.6
 
 **Ask your notes.**
-Ask in your own words and get the answer, with the note and the minute behind every statement. Follow up, or narrow it to a period or a tag. It runs on your Mac and nothing is kept.
-
-**Open actions and decisions, at once.**
-Ask what is still open and the list is there instantly, straight from your notes.
-
-**Names and numbers, found.**
-A name, a figure or an acronym is found even when the wording differs.
+Ask in your own words and get the answer, with the note and the minute behind every statement, even when the wording differs. Ask what is still open and the list is there at once. It runs on your Mac and nothing is kept.
 
 ## 0.5
 

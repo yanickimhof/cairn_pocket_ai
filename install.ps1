@@ -60,8 +60,15 @@ $env:UV_CACHE_DIR = Join-Path $CairnHome '.cache\uv'
 $uvCmd = Get-Command uv -ErrorAction SilentlyContinue
 if ($uvCmd) { $Uv = $uvCmd.Source } else {
   Say "Installing uv (Python manager) in $CairnHome\bin"
-  $env:UV_UNMANAGED_INSTALL = Join-Path $CairnHome 'bin'
-  Invoke-RestMethod "https://astral.sh/uv/$UvVersion/install.ps1" | Invoke-Expression
+  $UvZip = Join-Path ([IO.Path]::GetTempPath()) 'uv-windows.zip'
+  Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/astral-sh/uv/releases/download/$UvVersion/uv-x86_64-pc-windows-msvc.zip" -OutFile $UvZip
+  if ((Get-FileHash $UvZip -Algorithm SHA256).Hash.ToLower() -ne 'acfde570451cfdb8689fa159a138ee805ba4e241c466432750302c86254b0984') { Remove-Item -Force $UvZip; Fail 'The uv download does not match its expected SHA-256, installation stopped.' }
+  $UvDir = Join-Path ([IO.Path]::GetTempPath()) 'cairn-uv'
+  if (Test-Path $UvDir) { Remove-Item -Recurse -Force $UvDir }
+  Expand-Archive -Path $UvZip -DestinationPath $UvDir -Force
+  New-Item -ItemType Directory -Force -Path (Join-Path $CairnHome 'bin') | Out-Null
+  Copy-Item (Get-ChildItem -Path $UvDir -Recurse -Filter 'uv.exe' | Select-Object -First 1).FullName (Join-Path $CairnHome 'bin\uv.exe') -Force
+  Remove-Item -Recurse -Force $UvDir, $UvZip
   $Uv = Join-Path $CairnHome 'bin\uv.exe'
 }
 if (-not (Test-Path $Uv)) { Fail 'uv could not be installed.' }
@@ -76,7 +83,7 @@ Say 'Installing the speech engine (versions and hashes pinned)'
 & $Uv pip install --python $Py --require-hashes -r $Req
 if ($HadDiar) {
   Say 'Putting back speaker identification (pyannote.audio)'
-  & $Uv pip install --python $Py --quiet pyannote.audio
+  & $Uv pip install --python $Py --quiet --require-hashes -r (Join-Path $Here 'requirements\diar-windows.txt')
   if ($LASTEXITCODE -ne 0) { Write-Host 'Speaker identification could not be put back: install it again from Settings, Models.' }
 }
 if ($LASTEXITCODE -ne 0) { Fail 'Speech engine installation failed.' }
@@ -96,7 +103,8 @@ $Ollama = Find-Ollama
 if (-not $Ollama) {
   Say 'Downloading Ollama (official build, kept in your Cairn folder)'
   $Zip = Join-Path ([IO.Path]::GetTempPath()) 'ollama-windows-amd64.zip'
-  Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/ollama/ollama/releases/latest/download/ollama-windows-amd64.zip' -OutFile $Zip
+  Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/ollama/ollama/releases/download/v0.40.13/ollama-windows-amd64.zip' -OutFile $Zip
+  if ((Get-FileHash $Zip -Algorithm SHA256).Hash.ToLower() -ne '7afa38624fa62ee5d8293422d0ab084c1bb4603134c7f4dafce11a033b57cc19') { Remove-Item -Force $Zip; Fail 'The Ollama download does not match its expected SHA-256, installation stopped.' }
   $OllamaDir = Join-Path $CairnHome 'bin\ollama'
   if (Test-Path $OllamaDir) { Remove-Item -Recurse -Force $OllamaDir }
   Expand-Archive -Path $Zip -DestinationPath $OllamaDir -Force

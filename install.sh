@@ -13,6 +13,9 @@ umask 077
 REPO="yanickimhof/cairn_pocket_ai"
 REF="${CAIRN_REF:-v0.6.0}"   # a fixed release, never a moving branch
 UV_VERSION="0.11.32"
+OLLAMA_VERSION="v0.40.13"                 # Ollama is installed at a fixed release and checked against this SHA-256
+OLLAMA_SHA256="da3189f87034d224beb0708d77b95180bc03872f6e269d59bd888a216055c58a"
+sha256_of() { shasum -a 256 "$1" | awk '{print $1}'; }
 CAIRN_HOME="${CAIRN_HOME:-$HOME/Cairn}"
 LLM="${CAIRN_LLM:-qwen3:4b}"
 OLLAMA_ADDR="127.0.0.1:11434"
@@ -76,8 +79,18 @@ export UV_PYTHON_INSTALL_DIR="$CAIRN_HOME/python"
 export UV_CACHE_DIR="$CAIRN_HOME/.cache/uv"
 UV="$(command -v uv || true)"
 if [ -z "$UV" ]; then
-  say "Installing uv (Python manager) in $CAIRN_HOME/bin"
-  curl --proto '=https' --tlsv1.2 -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | env UV_UNMANAGED_INSTALL="$CAIRN_HOME/bin" sh
+  say "Installing uv $UV_VERSION in $CAIRN_HOME/bin (checksum verified)"
+  if [ "$ARCH" = "arm64" ]; then
+    UV_TARGET="aarch64-apple-darwin"; UV_SHA256="ed336d0ba49db8ef89b2b41fffa372ce63bd032f22a56f001c265891aec32829"
+  else
+    UV_TARGET="x86_64-apple-darwin"; UV_SHA256="77f5ca26c0de20e992a3677a174fe1121ee25c36f9b1434a863f75bf077a05eb"
+  fi
+  TMP="$(mktemp -d)"
+  curl --proto '=https' --tlsv1.2 -fsSL -o "$TMP/uv.tar.gz" "https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-$UV_TARGET.tar.gz"
+  [ "$(sha256_of "$TMP/uv.tar.gz")" = "$UV_SHA256" ] || die "The uv download does not match its expected SHA-256, installation stopped."
+  tar -xzf "$TMP/uv.tar.gz" -C "$TMP"
+  install -m 700 "$TMP/uv-$UV_TARGET/uv" "$CAIRN_HOME/bin/uv"
+  rm -rf "$TMP"
   UV="$CAIRN_HOME/bin/uv"
 fi
 [ -x "$UV" ] || die "uv could not be installed."
@@ -90,8 +103,12 @@ PY="$CAIRN_HOME/.venv/bin/python"
 say "Installing the speech engine (versions and hashes pinned)"
 "$UV" pip install --python "$PY" --require-hashes -r "$HERE/requirements/$REQ"
 if [ "$HAD_DIAR" = 1 ]; then
-  say "Putting back speaker identification (pyannote.audio)"
-  "$UV" pip install --python "$PY" --quiet pyannote.audio || printf 'Speaker identification could not be put back: install it again from Settings, Models.\n'
+  if [ "$ARCH" = "arm64" ] && [ -f "$HERE/requirements/diar-macos-arm64.txt" ]; then
+    say "Putting back speaker identification (pyannote.audio, versions and hashes pinned)"
+    "$UV" pip install --python "$PY" --quiet --require-hashes -r "$HERE/requirements/diar-macos-arm64.txt" || printf 'Speaker identification could not be put back: install it again from Settings, Models.\n'
+  else
+    printf 'Speaker identification is not available on this Mac (it needs Apple silicon).\n'
+  fi
 fi
 rm -rf "$CAIRN_HOME/.cache/uv"   # download cache, not needed once installed (saves about 0.9 GB)
 if [ "$ENGINE" = "mlx" ]; then
@@ -112,7 +129,8 @@ OLLAMA="$(find_ollama || true)"
 if [ -z "$OLLAMA" ]; then
   say "Downloading Ollama (official build)"
   TMP="$(mktemp -d)"
-  curl --proto '=https' --tlsv1.2 -fsSL -o "$TMP/ollama.zip" "https://ollama.com/download/Ollama-darwin.zip"
+  curl --proto '=https' --tlsv1.2 -fsSL -o "$TMP/ollama.zip" "https://github.com/ollama/ollama/releases/download/$OLLAMA_VERSION/Ollama-darwin.zip"
+  [ "$(sha256_of "$TMP/ollama.zip")" = "$OLLAMA_SHA256" ] || die "The Ollama download does not match its expected SHA-256, installation stopped."
   unzip -q "$TMP/ollama.zip" -d "$CAIRN_HOME/bin"
   rm -rf "$TMP"
   codesign --verify --deep --strict "$CAIRN_HOME/bin/Ollama.app" || die "The Ollama signature is invalid, installation stopped."

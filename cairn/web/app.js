@@ -1361,7 +1361,8 @@
   }
 
   function download(id, fmt) {
-    var path = "/api/note/" + encodeURIComponent(id) + "/export?fmt=" + fmt + "&save=1";
+    var path = "/api/note/" + encodeURIComponent(id) + "/export?fmt=" + fmt;
+    api("POST", "/api/note/" + encodeURIComponent(id) + "/export", { fmt: fmt }).catch(function () {});  // the copy kept in Exports is written by a POST
     return fetch(path).then(function (r) { if (!r.ok) { throw new Error("error"); } return r.blob(); }).then(function (blob) {
       var a = document.createElement("a");
       a.href = URL.createObjectURL(blob);

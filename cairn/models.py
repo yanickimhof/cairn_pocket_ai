@@ -3,6 +3,7 @@
 import importlib.util
 import json
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -208,6 +209,14 @@ class Downloader:
             shutil.rmtree(part, ignore_errors=True)
             self._set(state="error", error=str(error)[:400])
 
+    @staticmethod
+    def diar_requirements():
+        """The pinned, hashed list of packages for speaker identification on this system, or None where none exists
+        (Intel Macs: the speech package it needs has no build for them)."""
+        name = {"darwin": "diar-macos-arm64.txt" if platform.machine() == "arm64" else None, "win32": "diar-windows.txt"}.get(sys.platform)
+        path = Path(__file__).resolve().parent.parent / "requirements" / name if name else None
+        return path if path and path.is_file() else None
+
     def _fetch_diar(self, entry):
         """Installs the diarization package (pyannote.audio) if needed, then downloads its gated model
         weights with the person's own Hugging Face token, cached inside Cairn's own folder. The token is
@@ -222,10 +231,13 @@ class Downloader:
             try:
                 import pyannote.audio  # noqa: F401
             except ImportError:
+                lock = self.diar_requirements()
+                if lock is None:
+                    raise RuntimeError("Speaker identification is not available on this computer.")
                 uv = shutil.which("uv") or str(config.home() / "bin" / "uv")
                 if Path(uv).exists() or shutil.which(uv):
                     pip = subprocess.run(  # nosec B603
-                        [uv, "pip", "install", "--python", sys.executable, "--quiet", "pyannote.audio"],
+                        [uv, "pip", "install", "--python", sys.executable, "--quiet", "--require-hashes", "-r", str(lock)],
                         capture_output=True, text=True, timeout=1800, check=False,
                     )
                 else:
@@ -235,7 +247,7 @@ class Downloader:
                         capture_output=True, text=True, timeout=120, check=False,
                     )
                     pip = subprocess.run(  # nosec B603
-                        [sys.executable, "-m", "pip", "install", "--quiet", "pyannote.audio"],
+                        [sys.executable, "-m", "pip", "install", "--quiet", "--require-hashes", "-r", str(lock)],
                         capture_output=True, text=True, timeout=1800, check=False,
                     )
                 if pip.returncode != 0:
