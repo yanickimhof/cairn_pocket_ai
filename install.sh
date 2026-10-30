@@ -2,7 +2,7 @@
 # Cairn installer for bash and zsh.
 # Detects the system, then installs everything in your own folder: no sudo, no system change.
 #
-#   curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.5.0/install.sh | bash
+#   curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.6.0/install.sh | bash
 #
 # Optional variables: CAIRN_HOME (default ~/Cairn), CAIRN_LLM (default qwen3:4b),
 # CAIRN_WHISPER_REPO (speech model), CAIRN_REF (branch or tag to install; the default is the release this script belongs to),
@@ -11,7 +11,7 @@ set -euo pipefail
 umask 077
 
 REPO="yanickimhof/cairn_pocket_ai"
-REF="${CAIRN_REF:-v0.5.0}"   # a fixed release, never a moving branch
+REF="${CAIRN_REF:-v0.6.0}"   # a fixed release, never a moving branch
 UV_VERSION="0.11.32"
 CAIRN_HOME="${CAIRN_HOME:-$HOME/Cairn}"
 LLM="${CAIRN_LLM:-qwen3:4b}"

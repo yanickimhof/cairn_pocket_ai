@@ -8,7 +8,7 @@ Use GitHub's private vulnerability reporting (Security tab, "Report a vulnerabil
 
 | Component | Version | Size | From | Protection |
 |---|---|---|---|---|
-| Cairn files | The release named in the install command (`v0.5.0`), or the tag in `CAIRN_REF` | Under 1 MB | GitHub | HTTPS only (TLS 1.2 or later), fixed release rather than a moving branch |
+| Cairn files | The release named in the install command (`v0.6.0`), or the tag in `CAIRN_REF` | Under 1 MB | GitHub | HTTPS only (TLS 1.2 or later), fixed release rather than a moving branch |
 | Python manager (uv) | 0.11.32 | About 30 MB | astral.sh | Official installer at a fixed version, kept in the Cairn folder, your shell profile is untouched |
 | Python | 3.11 | About 90 MB | uv | Kept in the Cairn folder |
 | Python packages | Pinned in `requirements/` | About 1 GB | PyPI | Versions and SHA-256 hashes pinned, installed with `--require-hashes` |
@@ -25,6 +25,7 @@ About 5.5 GB in total on a clean Mac and 7 GB on Windows (estimates). An existin
 - One folder with owner-only permissions. Delete it to uninstall.
 - The model server listens on `127.0.0.1` only, and the self test refuses any other address.
 - The web interface is served on `127.0.0.1` only, behind a session key (HttpOnly, SameSite strict cookie), a Host check, a custom header on every change and a strict content security policy.
+- Ask your notes: what a recording says is treated as data, never as an order. Passages are fenced in the request and cannot close their own tag, the model has no tool and no network, and its answer is shown as plain text, so a link or an image in it is never loaded. A citation that matches no passage is dropped. The conversation is kept in the page only, and the log keeps neither a question nor any text.
 - A network guard refuses any outside connection in the app and the speech engine, except the daily version check, and a daily privacy check observes Cairn, the speech engine and the model server. Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 - Pocket vault: AES-256-GCM in 1 MiB chunks, one key per file derived with HKDF from a key that scrypt (N=131072, 128 MiB) derives from the password (10 characters at least; the vault header on the Pocket may not ask for more than that cost). Each chunk's position and an end marker are authenticated, so a file that was cut, reordered or extended is refused. The password is never stored; the key is kept only in the system keychain of a computer you trust. A recording on the Pocket is replaced only after the local copy was checked again, the encrypted copy read back and compared, and the recording found unchanged. The readable file is then overwritten with random bytes before it is deleted; on a flash drive this is best effort, because the drive may keep blocks it moved on its own. A vault is never replaced by another: a header that cannot be read blocks a new one.
 - Checks on every change: shell and Python static analysis, secrets scan, and a full install test on macOS and Windows.
@@ -54,7 +55,7 @@ An internal review, not a third-party audit.
 Piping a script into a shell means trusting it. To read it first:
 
 ```
-curl --proto '=https' --tlsv1.2 -fsSLO https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.5.0/install.sh
+curl --proto '=https' --tlsv1.2 -fsSLO https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.6.0/install.sh
 less install.sh
 bash install.sh
 ```

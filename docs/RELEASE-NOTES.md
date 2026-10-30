@@ -1,5 +1,19 @@
 # Release notes
 
+## 0.6
+
+**Ask your notes, get answers.**
+Ask in your own words. Cairn answers from what was said, and every statement points to the passage and the minute behind it. Follow up as in a conversation. It all happens on your Mac, and nothing is kept.
+
+**"What is still open?"**
+Ask for your open actions or your decisions, this week or this month. Cairn reads them straight from your summaries, in seconds.
+
+**Names and numbers, found.**
+A name, a figure or an acronym is found even when meaning alone would miss it, and the lines around a passage come with it, so the answer is whole.
+
+**Only what you want searched.**
+Narrow a question to the last 7, 30 or 90 days, or to one tag.
+
 ## 0.5
 
 **Lose your Pocket, not your privacy.**
@@ -8,8 +22,8 @@ One password and every recording on it is unreadable to anyone else. Turn on aut
 **Hear it, fix it, once.**
 Tap a time stamp to hear the passage, then correct the word in the transcript: every note that has it follows, or only this one, your choice.
 
-**Find anything, even without the words.**
-Search every word of every note, accents ignored. Add the optional search model and ask in your own words: Cairn finds where it was said, even if nobody used those words.
+**Every word, found.**
+Search every word of every note, accents ignored.
 
 **Names spelled right, without the hunt.**
 Teach Cairn your names and places. It also lists the names it saw written several ways and the words it was unsure of: pick the spelling once and all your notes agree.

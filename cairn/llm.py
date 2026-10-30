@@ -158,6 +158,72 @@ def chat(system, user, schema=None, num_ctx=8192, timeout=CHAT_TIMEOUT, num_pred
     return (data.get("message", {}).get("content") or "").strip()
 
 
+STREAM_TIMEOUT = 300  # seconds without a word from the model before a streamed answer is given up
+
+
+def chat_stream(messages, num_ctx=8192, num_predict=None, timeout=STREAM_TIMEOUT):
+    """The answer of the model, piece by piece (a generator of text). Closing the generator closes the connection, which stops the
+    model at once: a question the person has left costs nothing more."""
+    body = {
+        "model": config.install_config()["llm"],
+        "stream": True,
+        "think": False,
+        "options": dict({"temperature": 0.2, "num_ctx": num_ctx}, **({"num_predict": num_predict} if num_predict else {})),
+        "messages": list(messages),
+    }
+    if machine.ram_gb() >= KEEP_ALIVE_MIN_GB:
+        body["keep_alive"] = KEEP_ALIVE
+
+    def open_stream():
+        request = urllib.request.Request(
+            "http://%s/api/chat" % _host(), data=json.dumps(body).encode(), headers={"Content-Type": "application/json"}
+        )
+        # Loopback only, plain http, fixed scheme: the address is validated in _host().
+        return urllib.request.urlopen(request, timeout=timeout)  # nosec B310
+
+    try:
+        try:
+            response = open_stream()
+        except urllib.error.HTTPError as error:
+            if error.code == 400 and body.pop("think", None) is not None:  # model without thinking mode
+                response = open_stream()
+            else:
+                raise
+    except (urllib.error.URLError, OSError) as error:
+        if isinstance(error, TimeoutError) or isinstance(getattr(error, "reason", None), TimeoutError):
+            raise LLMError("The model did not answer. Check Ollama, then try again.") from error
+        raise LLMError("The local model server is not reachable (%s)." % error) from error
+    with response:
+        try:
+            for line in response:
+                if not line.strip():
+                    continue
+                try:
+                    data = json.loads(line)
+                except ValueError:
+                    continue
+                if data.get("error"):
+                    raise LLMError(str(data["error"])[:200])
+                piece = (data.get("message") or {}).get("content") or ""
+                if piece:
+                    yield piece
+                if data.get("done"):
+                    return
+        except (urllib.error.URLError, OSError) as error:
+            raise LLMError("The model stopped answering (%s)." % error) from error
+
+
+def load(model, num_ctx=None, keep_alive="10m"):
+    """Load a model into memory ahead of use (an empty request), so that the first question does not wait for it."""
+    body = {"model": model, "messages": [], "keep_alive": keep_alive}
+    if num_ctx:
+        body["options"] = {"num_ctx": num_ctx}
+    try:
+        _post("/api/chat", body, timeout=120)
+    except (urllib.error.URLError, OSError, ValueError, LLMError):
+        pass
+
+
 PROBE_CTX = 8192
 _READY = {"model": None, "at": 0.0}
 _CAPABLE = {}  # (model, server version) once it has returned structured notes in this run: that does not change, so it is asked once

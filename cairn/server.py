@@ -20,7 +20,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
-from . import battery, catalog, config, diarize, embed, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, speech, tags, templates, vault, vocab, vocabcheck, voices
+from . import ask, battery, catalog, config, diarize, embed, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, speech, tags, templates, vault, vocab, vocabcheck, voices
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -713,6 +713,28 @@ def make_handler(app):
             except Exception as error:  # never leak a traceback to the page
                 self._json(500, {"error": "server_error", "detail": str(error)[:200]})
 
+        def _ask(self, body):
+            question = " ".join(str(body.get("q") or "").split())[: ask.MAX_QUESTION]
+            if not question:
+                raise ApiError(400, "empty")
+            events = ask.stream(app.store, question, note=str(body.get("note") or "")[:80],
+                                since=str(body.get("since") or "")[:10], tag=str(body.get("tag") or "")[:40], history=body.get("history"))
+            self.send_response(200)  # no length: the answer is sent as it is written, and the connection closes at its end
+            for key, value in (("Content-Type", "application/x-ndjson; charset=utf-8"), ("Cache-Control", "no-store"),
+                               ("X-Content-Type-Options", "nosniff"), ("Referrer-Policy", "no-referrer"),
+                               ("Content-Security-Policy", CSP), ("Connection", "close")):
+                self.send_header(key, value)
+            self.end_headers()
+            self.close_connection = True
+            try:
+                for event in events:
+                    self.wfile.write((json.dumps(event, ensure_ascii=False) + "\n").encode("utf-8"))
+                    self.wfile.flush()
+            except OSError:  # the page was closed or the question left: the model is stopped
+                pass
+            finally:
+                events.close()
+
         def _static(self, url):
             if url.path in ("/", "/index.html"):
                 key = parse_qs(url.query).get("k", [""])[0]
@@ -856,6 +878,10 @@ def make_handler(app):
                     return self._json(200, {"results": embed.search(app.store, (query.get("q") or [""])[0][:300])})
                 except (llm.LLMError, OSError, ValueError) as error:
                     raise ApiError(503, str(error)[:200])
+            if method == "POST" and path == "/api/ask":
+                return self._ask(body)
+            if method == "POST" and path == "/api/ask/warm":
+                return self._json(200, {"ok": True, "started": ask.warm()})
             if method == "GET" and path == "/api/actions":
                 return self._json(200, {"actions": app.actions()})
             if method == "POST" and path == "/api/pick-folder":

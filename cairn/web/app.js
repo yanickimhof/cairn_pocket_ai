@@ -46,7 +46,7 @@
       pplForget: "Effacer l’empreinte vocale de cette personne", pplForgetAll: "Effacer toutes les empreintes vocales", pplForgotten: "Empreintes vocales effacées", pplVoice: "Voix mémorisée",
       voices: "Mémoriser les voix", voicesHint: "Optionnel. Cairn garde une empreinte de la voix de chaque personne que vous nommez, pour nommer seul les prochains enregistrements. Elle reste sur cet ordinateur et s’efface à tout moment. Il faut ensuite relancer l’identification des interlocuteurs sur les notes déjà faites.",
       spkAuto: "Reconnu par sa voix : corrigez-le si besoin",
-      modelsEmbed: "Recherche par sens", findRelated: "Passages proches", findIndexing: "Indexation des notes : {x} sur {y}",
+      modelsEmbed: "Recherche par sens", findRelated: "Passages proches", askGo: "Demander à mes notes", askHint: "Entrée pour poser la question", askWait: "Je cherche dans vos notes…", askStop: "Arrêter", askNone: "Je ne trouve rien à ce sujet dans vos notes.", askNoModel: "Installez un modèle de recherche (Réglages, Modèles) pour interroger vos notes.", askFailed: "La réponse a échoué. Vérifiez qu’Ollama est lancé, puis réessayez.", askSources: "Sources", askClear: "Nouvelle conversation", askFollow: "Une question de suite, ou un mot à chercher", askAllDates: "Toutes les dates", askDays: "{x} derniers jours", askAllTags: "Tous les tags", findIndexing: "Indexation des notes : {x} sur {y}",
       segEdit: "Corriger ce passage", segHere: "Ici seulement", segAlways: "Toujours : apprend la correction et l’applique à toutes les notes", segEdited: "Corrigé à la main",
       segHelp: "Corrigez le texte. « Ici seulement » ne change que cette ligne. « Toujours » ajoute une règle au vocabulaire pour toutes les notes.",
       segSaved: "Passage corrigé", segRule: "Règle ajoutée : {r}", segNoRule: "Pour apprendre une correction, modifiez un mot existant",
@@ -127,7 +127,7 @@
       pplForget: "Erase this person's voiceprint", pplForgetAll: "Erase all voiceprints", pplForgotten: "Voiceprints erased", pplVoice: "Voice remembered",
       voices: "Remember voices", voicesHint: "Optional. Cairn keeps a voiceprint of each person you name, to name the next recordings by itself. It stays on this computer and can be erased at any time. Run speaker identification again on notes already made.",
       spkAuto: "Recognised by voice: correct it if needed",
-      modelsEmbed: "Search by meaning", findRelated: "Related passages", findIndexing: "Reading the notes: {x} of {y}",
+      modelsEmbed: "Search by meaning", findRelated: "Related passages", askGo: "Ask my notes", askHint: "Press Enter to ask", askWait: "Looking through your notes…", askStop: "Stop", askNone: "I find nothing about this in your notes.", askNoModel: "Install a search model (Settings, Models) to ask your notes.", askFailed: "The answer failed. Check that Ollama is running, then try again.", askSources: "Sources", askClear: "New conversation", askFollow: "A follow-up question, or a word to find", askAllDates: "All dates", askDays: "Last {x} days", askAllTags: "All tags", findIndexing: "Reading the notes: {x} of {y}",
       segEdit: "Correct this passage", segHere: "Only here", segAlways: "Always: learns the correction and applies it to every note", segEdited: "Corrected by hand",
       segHelp: "Fix the text. “Only here” changes this line only. “Always” adds a rule to the vocabulary for every note.",
       segSaved: "Passage corrected", segRule: "Rule added: {r}", segNoRule: "To teach a correction, change an existing word",
@@ -168,6 +168,7 @@
 
   var I = {
     search: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>',
+    ask: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V15h-.5A1.5 1.5 0 0 1 5 13.5z"></path></svg>',
     tasks: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6h10"></path><path d="M10 12h10"></path><path d="M10 18h10"></path><path d="m3.5 6 1.5 1.5L7.5 5"></path><path d="m3.5 12 1.5 1.5 2.5-2.5"></path><path d="m3.5 18 1.5 1.5 2.5-2.5"></path></svg>',
     mail: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"></rect><path d="m4.5 8 7.5 5.5L19.5 8"></path></svg>',
     calendar: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="3"></rect><path d="M4 10h16"></path><path d="M8.5 3.5v4"></path><path d="M15.5 3.5v4"></path></svg>',
@@ -809,9 +810,117 @@
   function loadTasks() {
     return api("GET", "/api/actions").then(function (r) { S.tasks = r.actions || []; render(); }).catch(function () { /* keep what is shown */ });
   }
+  // Ask: questions put to the notes. The answer arrives word by word and every number points to the passage it comes from.
+  // The conversation lives on this page only (nothing is stored); it is cleared with one click or by closing Cairn.
+  function askReady() { return !!(S.server && S.server.search && S.server.search.model && S.server.search.indexed); }
+  function askWarm() {  // the models are loaded while the question is being typed
+    if (askReady() && Date.now() - (S.askWarmAt || 0) > 60000) { S.askWarmAt = Date.now(); api("POST", "/api/ask/warm").catch(function () { /* nothing to warm */ }); }
+  }
+  function askCurrent() { return S.asks && S.asks.length ? S.asks[S.asks.length - 1] : null; }
+  function askScope(t) {
+    var h = '<select id="askPeriod" class="asel" aria-label="' + esc(t.askAllDates) + '"><option value=""' + (S.askPeriod ? "" : " selected") + ">" + esc(t.askAllDates) + "</option>";
+    [7, 30, 90].forEach(function (d) { h += '<option value="' + d + '"' + (String(S.askPeriod) === String(d) ? " selected" : "") + ">" + esc(t.askDays.replace("{x}", d)) + "</option>"; });
+    h += "</select>";
+    var tags = allTags();
+    if (tags.length) {
+      h += '<select id="askTag" class="asel" aria-label="' + esc(t.askAllTags) + '"><option value=""' + (S.askTag ? "" : " selected") + ">" + esc(t.askAllTags) + "</option>";
+      tags.forEach(function (x) { h += '<option value="' + esc(x.tag) + '"' + (S.askTag === x.tag ? " selected" : "") + ">#" + esc(x.tag) + "</option>"; });
+      h += "</select>";
+    }
+    return h;
+  }
+  function askBar(t) {
+    var typing = S.findQ.trim().length >= 3;
+    if (!askReady() || (!typing && !askCurrent())) { return ""; }
+    return '<div class="row gap8 askbar">' + (typing ? '<button type="button" class="ib sm" data-a="askGo"' + tip(t.askGo) + ">" + I.ask + '</button><span class="small" style="margin-right:auto">' + esc(t.askHint) + "</span>" : '<span style="margin-right:auto"></span>') + askScope(t) + "</div>";
+  }
+  function askHtml(a) {
+    var ok = {};
+    a.sources.forEach(function (s) { ok[s.n] = true; });
+    return esc(a.text).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(\s?)\[(\d{1,2})\]/g, function (m, space, n) {
+      return ok[n] ? space + '<button type="button" class="cite" data-a="askCite" data-v="' + a.i + "." + n + '" aria-label="' + n + '">' + n + "</button>" : "";  // a number that is not a passage is dropped
+    }).replace(/\n/g, "<br>");
+  }
+  function askTurn(t, a, last) {
+    var h = '<div class="askt"><div class="row gap8" style="align-items:flex-start"><div class="asq" style="margin-right:auto">' + esc(a.q) + "</div>";
+    if (last && (a.status === "wait" || a.status === "stream")) { h += '<button type="button" class="ib sm plain" data-a="askStop"' + tip(t.askStop) + ">" + I.x + "</button>"; }
+    h += "</div>";
+    if (a.status === "error") { h += '<div class="text">' + esc(a.err === "no_search_model" ? t.askNoModel : t.askFailed) + "</div>"; }
+    else if (a.status === "empty") { h += '<div class="text">' + esc(t.askNone) + "</div>"; }
+    else if (!a.text) { h += '<div class="small">' + esc(t.askWait) + "</div>"; }
+    else { h += '<div class="asa"' + (last ? ' id="askAnswer"' : "") + ">" + askHtml(a) + "</div>"; }
+    var shown = a.sources.filter(function (s) { return a.status !== "done" || !a.cited.length || a.cited.indexOf(s.n) >= 0; });
+    if (shown.length && a.text) {
+      h += '<div class="asrc"><div class="small" style="padding:10px 0 2px;font-weight:600">' + esc(t.askSources) + "</div>";
+      shown.forEach(function (s) {
+        var at = s.where === "transcript" && s.start != null;
+        h += '<button type="button" class="fhit" data-a="askCite" data-v="' + a.i + "." + s.n + '"><span class="cn">' + s.n + "</span>" + esc(s.title) + " · " + esc(fmtDate(s.date)) + (at ? ' · <span class="ts">' + fmtStamp(s.start) + "</span>" : "") + "</button>";
+      });
+      h += "</div>";
+    }
+    return h + "</div>";
+  }
+  function askView(t) {
+    if (!S.asks || !S.asks.length) { return ""; }
+    var h = '<div class="ask"><div class="askclear"><button type="button" class="ib sm plain" data-a="askClear"' + tip(t.askClear) + ">" + I.trash + "</button></div>";
+    S.asks.forEach(function (a, i) { h += askTurn(t, a, i === S.asks.length - 1); });
+    return h + "</div>";
+  }
+  function askEvent(a, e) {
+    if (e.type === "sources") { a.sources = e.sources || []; }
+    else if (e.type === "delta") { a.text += e.text || ""; a.status = "stream"; }
+    else if (e.type === "done") { a.cited = e.cited || []; a.status = e.empty ? "empty" : "done"; }
+    else if (e.type === "error") { a.status = "error"; a.err = e.error; }
+  }
+  function askPaint(a, final) {
+    if (final) { render(); return; }
+    if (S.askRaf) { return; }
+    S.askRaf = requestAnimationFrame(function () {  // at most one drawing per frame, and only the answer is touched
+      S.askRaf = 0;
+      var el = document.getElementById("askAnswer");
+      if (askCurrent() !== a) { return; }
+      if (el && a.status === "stream") { el.innerHTML = askHtml(a); } else { render(); }
+    });
+  }
+  function askRun(q) {
+    if (S.askAbort) { try { S.askAbort.abort(); } catch (e) { /* already over */ } }
+    var ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    S.askAbort = ctl;
+    S.asks = S.asks || [];
+    var history = S.asks.filter(function (x) { return x.status === "done" && x.text; }).slice(-3).map(function (x) { return { q: x.q, a: x.text }; });
+    var a = { i: S.asks.length, q: q, text: "", sources: [], cited: [], status: "wait", err: "" };
+    S.asks.push(a);
+    var body = { q: q, history: history, tag: S.askTag || "" };
+    if (S.askPeriod) { body.since = new Date(Date.now() - parseInt(S.askPeriod, 10) * 86400000).toISOString().slice(0, 10); }
+    var box = document.getElementById("findInput");
+    if (box) { box.value = ""; }  // the box is ready for the next question
+    S.findQ = ""; S.findRes = null; S.findSem = null;
+    render();
+    fetch("/api/ask", { method: "POST", headers: { "Content-Type": "application/json", "X-Cairn": "1" }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined }).then(function (r) {
+      if (!r.ok || !r.body || !r.body.getReader) { throw new Error("ask"); }
+      var reader = r.body.getReader(), dec = new TextDecoder(), buf = "";
+      function pump() {
+        return reader.read().then(function (x) {
+          if (S.asks.indexOf(a) < 0) { try { reader.cancel(); } catch (e) { /* closed */ } return; }
+          if (x.done) { if (a.status === "wait" || a.status === "stream") { a.status = a.text ? "done" : "error"; } askPaint(a, true); return; }
+          buf += dec.decode(x.value, { stream: true });
+          var lines = buf.split("\n");
+          buf = lines.pop();
+          lines.forEach(function (l) { if (l.trim()) { try { askEvent(a, JSON.parse(l)); } catch (e) { /* a broken line is skipped */ } } });
+          askPaint(a, a.status !== "stream" && a.status !== "wait");
+          return pump();
+        });
+      }
+      return pump();
+    }).catch(function (err) {
+      if ((err && err.name === "AbortError") || S.asks.indexOf(a) < 0) { return; }
+      a.status = "error"; a.err = "failed"; render();
+    });
+  }
   function viewFind(t) {
     if (S.hidden) { return veil(t); }
-    var h = '<div class="card panel"><div class="name" style="margin:14px 0 8px"><input id="findInput" type="search" autocomplete="off" placeholder="' + esc(t.findPlaceholder) + '" aria-label="' + esc(t.find) + '" value="' + esc(S.findQ) + '"></div>';
+    var h = '<div class="card panel"><div class="name" style="margin:14px 0 8px"><input id="findInput" type="search" autocomplete="off" placeholder="' + esc(askCurrent() ? t.askFollow : t.findPlaceholder) + '" aria-label="' + esc(t.find) + '" value="' + esc(S.findQ) + '"></div>';
+    h += askBar(t) + askView(t);
     var res = S.findRes, seen = {};
     (res || []).forEach(function (r) { seen[r.id] = true; });
     var related = (S.findSemQ === S.findQ.trim() ? S.findSem || [] : []).filter(function (r) { return !seen[r.id]; });
@@ -1347,6 +1456,25 @@
       S.findOpen = !S.findOpen;
       if (S.findOpen) { S.settingsOpen = false; S.aboutOpen = false; S.tasksOpen = false; S.vaultOpen = false; setTimeout(function () { var el = document.getElementById("findInput"); if (el) { el.focus(); } }, 50); }
     },
+    askGo: function () {
+      var q = S.findQ.trim();
+      if (q.length < 3) { return; }
+      if (!askReady()) { S.asks = (S.asks || []).concat([{ i: (S.asks || []).length, q: q, text: "", sources: [], cited: [], status: "error", err: "no_search_model" }]); return; }
+      askRun(q);
+    },
+    askStop: function () {
+      if (S.askAbort) { try { S.askAbort.abort(); } catch (e) { /* already over */ } }
+      var a = askCurrent();
+      if (a) { a.status = a.text ? "done" : "empty"; a.cited = []; }
+    },
+    askClear: function () {
+      if (S.askAbort) { try { S.askAbort.abort(); } catch (e) { /* already over */ } }
+      S.asks = [];
+    },
+    askCite: function (v) {
+      var p = String(v).split("."), a = S.asks && S.asks[parseInt(p[0], 10)], n = parseInt(p[1], 10), src = a && a.sources.filter(function (x) { return x.n === n; })[0];
+      if (src) { A.findGo(src.where === "transcript" && src.start != null ? String(src.start) : "", src.id); }
+    },
     findGo: function (v, id) {
       if (v !== "" && v != null) { showText(id, parseFloat(v)); return; }
       S.findOpen = false; S.open = id; S.hidden = false; S.edit = null; S.exp = null; S.delConfirm = false;
@@ -1632,7 +1760,9 @@
     if (S.taskEdit && ev.target.id === "tkWhen") { S.taskEdit.when = ev.target.value; }
     if (ev.target.id === "vFrom") { S.vFrom = ev.target.value; }
     if (ev.target.id === "vTo") { S.vTo = ev.target.value; }
-    if (ev.target.id === "findInput") { S.findQ = ev.target.value; clearTimeout(S.findTimer); S.findTimer = setTimeout(runFind, 250); render(); }
+    if (ev.target.id === "askPeriod") { S.askPeriod = ev.target.value; }
+    if (ev.target.id === "askTag") { S.askTag = ev.target.value; }
+    if (ev.target.id === "findInput") { askWarm(); S.findQ = ev.target.value; clearTimeout(S.findTimer); S.findTimer = setTimeout(runFind, 250); render(); }
     if (ev.target.id === "spkInput") { S.spkDraft = ev.target.value; }
   });
   document.addEventListener("keydown", function (ev) {
@@ -1646,6 +1776,7 @@
       if (S.confirmKey) { S.confirmKey = null; render(); return; }
       if (S.vaultOpen || S.settingsOpen || S.findOpen || S.tasksOpen || S.aboutOpen) { S.vaultOpen = S.settingsOpen = S.findOpen = S.tasksOpen = S.aboutOpen = false; render(); }
     }
+    if (ev.key === "Enter" && ev.target.id === "findInput") { A.askGo(); render(); }
     if (ev.key === "Enter" && ev.target.id === "tkWhat") { A.taskSave(); render(); }
     if (ev.key === "Enter" && ev.target.id === "tagInput") { A.tagAdd(); render(); }
     if (ev.key === "Enter" && ev.target.id === "nameInput") { A.saveName(); }

@@ -14,7 +14,7 @@
 
 **Understand.** Whisper writes every word on your machine, for one minute or four hours. Voices are named once and recognised in every note. Each note comes with a title, a summary, decisions, actions and key points, in the template you defined once, with a fidelity score that keeps the AI honest.
 
-**Find and fix.** Any word in every note in a second, or ask by meaning. Tap a time stamp, hear the passage, fix the word. Teach Cairn your names once and they are right in every note. Tags replace folders.
+**Find and fix.** Any word in every note in a second, or ask your notes a question and get an answer with its source. Tap a time stamp, hear the passage, fix the word. Teach Cairn your names once and they are right in every note. Tags replace folders.
 
 **Act.** Every action from every note, by person, in one list. The follow-up email is already written. Export to Markdown, HTML, text or email.
 
@@ -33,9 +33,9 @@ What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
 |---|---|---|
 | ![Securing the Pocket with a password](docs/screenshots/vault.png) | ![A protected Pocket](docs/screenshots/vault-secured.png) | ![People of all the notes](docs/screenshots/people.png) |
 
-| Find anything | Ask by meaning | Hear what was said |
+| Find anything | Ask your notes | Hear what was said |
 |---|---|---|
-| ![Search](docs/screenshots/find.png) | ![Related passages](docs/screenshots/meaning.png) | ![Transcript with the recording](docs/screenshots/listen.png) |
+| ![Search](docs/screenshots/find.png) | ![Ask your notes, with the passage behind every answer](docs/screenshots/ask.png) | ![Transcript with the recording](docs/screenshots/listen.png) |
 
 | Fix it in place | Words to check | Your vocabulary |
 |---|---|---|
@@ -53,7 +53,7 @@ What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
 |---|---|---|
 | ![About](docs/screenshots/about.png) | ![HTML export](docs/screenshots/html-export.png) | ![Email](docs/screenshots/email.png) |
 
-> **Status: v0.5.0, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
+> **Status: v0.6.0, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
 
 ## Install
 
@@ -62,13 +62,13 @@ Paste one command in a terminal. It detects your system and installs everything 
 bash or zsh:
 
 ```
-curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.5.0/install.sh | bash
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.6.0/install.sh | bash
 ```
 
 PowerShell:
 
 ```
-irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.5.0/install.ps1 | iex
+irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.6.0/install.ps1 | iex
 ```
 
 | | Minimum | Recommended |
@@ -99,6 +99,8 @@ You need neither the Pocket desktop app nor a Pocket account on the computer.
 
 > **Names and places (optional):** in Settings, add the names of people and places and the rare terms you use to Vocabulary, one per line. Cairn writes close variants as listed in the transcript, tells the summary the spelling, and shows every correction on the note. `Brant, Brand => Brandt` always replaces each spelling, and `Open Day => BRANDT Day | awards, ceremony` only near those words. One tap then updates the notes that need it.
 
+> **Ask your notes (optional):** in Settings > Models, install a search model (Qwen3 Embedding 0.6B, 0.6 GB, or BGE-M3, 1.2 GB, many languages). Your notes are indexed in the background, then a question typed in the magnifier and sent with Enter is answered by your summary model from the passages it finds, each with its number, note and minute. Follow-ups, "what is still open?", and a period or a tag to narrow the question are all there; the model has no tool, nothing is stored and nothing leaves your computer. Details: [docs/GUIDE.md](docs/GUIDE.md#finding-listening-following-up).
+
 > **Choose your models (optional):** the default install uses Whisper large-v3-turbo and Qwen3 4B. In Settings > Models you can switch the speech model to Whisper large-v3 (3.1 GB, slower, 16 GB of memory advised) and the summary model to Qwen3 8B or 14B. Nothing downloads until you confirm, and a model already in your Ollama is reused. Sizes shown for installed models are the real ones on your computer.
 
 ## Use it
@@ -107,7 +109,7 @@ You need neither the Pocket desktop app nor a Pocket account on the computer.
 2. Connect your Pocket. Cairn copies and verifies the new recordings and lists them as waiting, so you see everything and decide what to process.
 3. Press the central button (its badge counts what is waiting) to process the queue, or tap one recording. Cairn transcribes with Whisper, then titles and summarizes with a local model (a Qwen model through Ollama), at the level of detail, in the language and with the type you choose for each recording. Settings can import and process by themselves.
 4. Each note shows two indicators, the fidelity of the note to its transcript and the speech engine's confidence in the raw transcript, and highlights the passages worth checking. Rename, tag, copy or export it (Markdown, HTML, to `~/Cairn/Exports`), tap a time stamp to hear the recording from that line, or write the follow-up email.
-5. The magnifier searches every note (`#tag` filters), and the checklist icon gathers all your actions in one list.
+5. The magnifier searches every note (`#tag` filters). Press Enter to ask a question instead: the answer comes with the passages it is drawn from. The checklist icon gathers all your actions in one list.
 6. Delete a recording when you no longer want it: it goes from the Pocket and from your computer in one step, for good, because the Pocket has no protection of its own.
 
 Models, speed, background mode, web app and other details: [docs/GUIDE.md](docs/GUIDE.md). Install options, update and troubleshooting: [docs/INSTALL.md](docs/INSTALL.md).

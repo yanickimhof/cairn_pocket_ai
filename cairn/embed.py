@@ -11,6 +11,7 @@ import json
 import math
 import re
 import threading
+import unicodedata
 
 from . import catalog, config, llm
 
@@ -26,6 +27,7 @@ MIN_SCORE = 0.30
 RELATIVE = 0.80  # a note is related when it scores at least this share of the best one
 MAX_NOTES = 12
 SNIPPET = 220
+KEEP_ALIVE = "10m"  # the small model stays loaded between two questions: a question costs milliseconds, not a load
 _lock = threading.Lock()
 _cache = {}  # file -> (signature, chunks, vectors); at most CACHE_NOTES of them, the least recently used go first
 CACHE_NOTES = 64
@@ -93,7 +95,7 @@ def _signature(items):
 
 def embed(model, texts):
     """Unit vectors for these texts, from the local model server."""
-    answer = llm._post("/api/embed", {"model": model, "input": list(texts), "truncate": True}, timeout=600)
+    answer = llm._post("/api/embed", {"model": model, "input": list(texts), "truncate": True, "keep_alive": KEEP_ALIVE}, timeout=600)
     vectors = answer.get("embeddings")
     if not isinstance(vectors, list) or len(vectors) != len(texts):
         raise llm.LLMError("The embedding model returned an unexpected answer.")
@@ -243,3 +245,131 @@ def forget(model):
     built.pop(model, None)
     with _lock:
         _cache.clear()
+
+
+PASSAGE_CHARS = 1500  # what one passage may hold once its neighbours are added
+POOL = 40             # candidates kept from each of the two searches
+STOP = frozenset((
+    "le la les un une des du de d l et ou en au aux ce ces cet que qui quoi quel quelle quels quelles est sont etait ete pour par sur dans "
+    "avec sans mes mon ma ton ta son sa nos notre plus pas ne se il elle ils elles on nous vous je tu me te dit dis parle ont "
+    "what which who whom whose the an of to in for and or is are was were be been do did does with about from by at as it this that "
+    "these those my our you we they he she how when where why tell said say talk").split())
+_WORD = re.compile(r"[a-z0-9]{2,}")
+_tokens = {}  # note file -> (items it was read from, one set of words per passage)
+
+
+def fold(text):
+    """Lower case without accents: 'Sécurité' and 'securite' are the same word."""
+    return unicodedata.normalize("NFKD", str(text).casefold()).encode("ascii", "ignore").decode()
+
+
+def terms(query):
+    """The words of a question that say something: no filler, no repetition."""
+    return [w for w in dict.fromkeys(_WORD.findall(fold(query))) if w not in STOP and (len(w) >= 3 or w.isdigit())]
+
+
+def _word_sets(path, items):
+    with _lock:
+        cached = _tokens.get(str(path))
+        if cached and cached[0] is items:
+            return cached[1]
+    sets = [frozenset(_WORD.findall(fold(item["t"]))) for item in items]
+    with _lock:
+        _tokens[str(path)] = (items, sets)
+        while len(_tokens) > CACHE_NOTES * 4:
+            _tokens.pop(next(iter(_tokens)))
+    return sets
+
+
+def passages(store, query, model=None, limit=6, per_note=3, note=None, since="", tag=""):
+    """The passages that best answer a question, whole and in order of relevance, for the chat to read:
+    [{"id", "title", "date", "where", "start", "text", "score"}].
+
+    Two searches are made and merged: by meaning (the embedding model) and by words (names, numbers and acronyms that a
+    meaning search can miss). A passage found by both comes first. The lines around a spoken passage are added, because the
+    sentence that answers is often the one before or after. At most per_note passages come from one note, so that a long
+    recording does not crowd out the others. note, since (a date) and tag narrow the notes that are read."""
+    model = model or chosen()
+    query = " ".join(str(query or "").split())[:500]
+    if not model or not query:
+        return []
+    vector = embed(model, [query])[0]
+    folder = _folder(model)
+    wanted = str(tag or "").strip().casefold()
+    rows = {}
+    for n in store.slim():
+        if n.get("status") != "done" or (note and n["id"] != note) or (since and (n.get("date") or "") < since):
+            continue
+        if wanted and wanted not in [str(t).casefold() for t in n.get("tags") or []]:
+            continue
+        rows[n["id"]] = n
+    pool, meaning, words, total = {}, [], [], 0
+    for note_id in rows:
+        path = folder / (note_id + ".json")
+        loaded = _load(path)
+        if not loaded:
+            continue
+        items, (vectors, dim) = loaded
+        if dim != len(vector):
+            continue
+        pool[note_id] = (items, _word_sets(path, items))
+        total += len(items)
+        for i, score in enumerate(_scores(vectors, dim, vector)):
+            if score >= MIN_SCORE:
+                meaning.append((score, note_id, i))
+    if not pool:
+        return []
+    meaning.sort(reverse=True)
+    if meaning:
+        floor = max(MIN_SCORE, meaning[0][0] * 0.6)
+        meaning = [m for m in meaning if m[0] >= floor][:POOL]
+    wanted_terms = terms(query)
+    if wanted_terms:
+        frequency = {w: sum(1 for _, sets in pool.values() for s in sets if w in s) for w in wanted_terms}
+        weight = {w: math.log(1 + total / (1 + frequency[w])) for w in wanted_terms}
+        everything = sum(weight.values())
+        for note_id, (items, sets) in pool.items():
+            for i, present in enumerate(sets):
+                got = sum(weight[w] for w in wanted_terms if w in present)
+                if got and got >= 0.5 * everything:  # most of what the question is about is in the passage
+                    words.append((got, note_id, i))
+        words.sort(reverse=True)
+        words = words[:POOL]
+    fused, scores = {}, {}
+    for ranking in (meaning, words):
+        for rank, (score, note_id, i) in enumerate(ranking):
+            fused[(note_id, i)] = fused.get((note_id, i), 0.0) + 1.0 / (60 + rank)
+    for score, note_id, i in meaning:
+        scores[(note_id, i)] = score
+    chosen_ones, count = {}, {}
+    for key in sorted(fused, key=lambda k: -fused[k]):
+        if len(chosen_ones) >= limit:
+            break
+        if count.get(key[0], 0) >= per_note:
+            continue
+        count[key[0]] = count.get(key[0], 0) + 1
+        chosen_ones[key] = fused[key]
+    out = []
+    for note_id in {k[0] for k in chosen_ones}:
+        items = pool[note_id][0]
+        picked = {i for (n, i) in chosen_ones if n == note_id}
+        spoken = lambda j: 0 <= j < len(items) and items[j]["w"] == "transcript"
+        reach = set(picked)
+        for i in picked:
+            if spoken(i):
+                reach.update(j for j in (i - 1, i + 1) if spoken(j))
+        run = []
+        for i in sorted(reach) + [None]:
+            if run and (i is None or i != run[-1] + 1 or not (spoken(i) and spoken(run[-1]))):
+                members = [items[j] for j in run]
+                text = " ".join(str(m["t"]) for m in members)
+                best = max(chosen_ones.get((note_id, j), 0.0) for j in run)
+                row = rows[note_id]
+                out.append((best, {"id": note_id, "title": row.get("title") or "", "date": row.get("date") or "", "where": members[0]["w"],
+                                   "start": members[0]["s"], "text": text[:PASSAGE_CHARS],
+                                   "score": round(max([scores.get((note_id, j), 0.0) for j in run]), 3)}))
+                run = []
+            if i is not None:
+                run.append(i)
+    out.sort(key=lambda x: -x[0])
+    return [p for _, p in out]
