@@ -11,8 +11,8 @@ Correct a word in the transcript and every note that has it follows, or only thi
 **Cairn spots the doubtful words.**
 It lists the names it saw written several ways and the words it was unsure of, so you stop hunting. Pick the spelling once and all your notes agree.
 
-**Ask a question, get the passage.**
-With the optional search model, describe what you are looking for in your own words and Cairn finds where it was said, even if nobody used those words.
+**Search now understands you.**
+Add the optional search model and describe what you are looking for in your own words: Cairn finds where it was said, even if nobody used those words.
 
 **Everyone you talk to, remembered.**
 Name a voice once and, if you want, Cairn recognises it in your next notes. Rename or merge people in one place.
