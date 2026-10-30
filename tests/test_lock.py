@@ -217,7 +217,7 @@ class SealedFilesTest(Base):
             return real(path, raw)
 
         with mock.patch.object(lock, "_replace_bytes", flaky):
-            with self.assertRaises(OSError):
+            with self.assertRaises(lock.MigrationFailed):  # the file that failed is named, every other one was handled
                 lock.migrate(True)
         self.assertEqual(lock.info()["sealed"], False)
         self.assertEqual(lock._state["migrating"], False)

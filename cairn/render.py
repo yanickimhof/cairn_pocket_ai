@@ -101,8 +101,11 @@ def to_markdown(note, transcript=True):
         out += ["## " + lab["transcript"], "", note["clean"], ""]
     info = _footer_info(note, lab)
     out += ["---", "", lab["footer"] + ((" " + info + ".") if info else ""), ""]
-    # what the model wrote (or the audio said) must not become markup in a viewer that renders HTML inside markdown
-    return re.sub(r"<(?=[A-Za-z/!?])", "&lt;", "\n".join(out))
+    # what the model wrote (or the audio said) must not become markup in a viewer that renders HTML inside markdown, nor a link or an image
+    # that the viewer would fetch or follow when the file is opened: Cairn writes no link of its own, so none is kept
+    text = re.sub(r"<(?=[A-Za-z/!?])", "&lt;", "\n".join(out))
+    text = text.replace("![", "!\\[").replace("](", "]\\(")
+    return re.sub(r"(?m)^(\s*\[[^\]\n]+\]):", r"\1\\:", text)
 
 
 def to_text(note):

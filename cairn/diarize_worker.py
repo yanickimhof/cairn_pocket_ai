@@ -82,6 +82,10 @@ def main():
     cache = home / "models" / "diar" / "hf_cache"
     if not cache.exists():
         return 3
+    from . import config, netguard
+
+    os.environ.update(config.NO_TELEMETRY)
+    netguard.install()  # speaker identification never needs the network: the guard refuses anything that is not this computer
     os.environ["HF_HUB_OFFLINE"] = "1"
     os.environ["HF_HOME"] = str(cache)
     os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")  # an operation the graphics chip lacks runs on the processor

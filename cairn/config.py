@@ -21,6 +21,10 @@ DEFAULT_SETTINGS = {"ui": None, "audio_dir": None, "llm": None, "speech": None, 
 
 _lock = threading.RLock()
 
+# Libraries that report their use unless told not to: pyannote.audio sends a session id, the length of each recording and the number of
+# speakers to otel.pyannote.ai by default. Every program Cairn starts, and Cairn itself, runs with all of them off.
+NO_TELEMETRY = {"PYANNOTE_METRICS_ENABLED": "0", "OTEL_SDK_DISABLED": "true", "HF_HUB_DISABLE_TELEMETRY": "1", "DO_NOT_TRACK": "1", "ANONYMIZED_TELEMETRY": "False"}
+
 
 def home():
     """The Cairn folder (default ~/Cairn)."""
@@ -35,9 +39,38 @@ _codec = None  # set by lock.py while Cairn is unlocked: it seals and opens what
 NEVER_SEALED = ("config.json", "lock.json", "privacy-check.json", "vault-index.json")
 
 
+_plain_writes = False  # while the lock is being turned off: what is written from now on stays plain, so nothing is sealed behind the pass
+_strict = False        # once everything is sealed: a plain file where a sealed one belongs is not accepted (it could have been planted)
+
+
 def set_codec(codec):
     global _codec
     _codec = codec
+
+
+def set_plain_writes(on):
+    global _plain_writes
+    _plain_writes = bool(on)
+
+
+def set_strict(on):
+    global _strict
+    _strict = bool(on)
+
+
+def is_open():
+    """Whether the key is available: a file that cannot be read now is damaged or foreign, not merely locked."""
+    return _codec is not None
+
+
+def read_json_safe(path, default=None):
+    """read_json for a listing: one file that cannot be opened is left out instead of taking the whole list down. Still refuses while locked."""
+    try:
+        return read_json(path, default)
+    except Locked:
+        if _codec is None:
+            raise
+        return {} if default is None else default
 
 
 def _sealing():
@@ -54,6 +87,8 @@ def read_json(path, default=None):
                     return {} if default is None else default  # the start-up code reads the settings before anyone has unlocked
                 raise Locked("Cairn is locked")
             raw = _codec.open(raw, path)
+        elif _strict and Path(path).name not in NEVER_SEALED and _sealing():
+            return {} if default is None else default  # sealed data holds no plain file: this one was not written by Cairn
         return json.loads(raw.decode("utf-8"))
     except (OSError, ValueError):
         return {} if default is None else default
@@ -63,7 +98,7 @@ def write_json(path, data):
     """Atomic write, readable by the owner only. Sealed when the lock is on, and refused while Cairn is locked."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    seal_it = path.name not in NEVER_SEALED and _sealing()
+    seal_it = path.name not in NEVER_SEALED and _sealing() and not _plain_writes
     if seal_it and _codec is None:
         raise Locked("Cairn is locked")
     fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=path.name + ".", suffix=".tmp")
@@ -150,7 +185,7 @@ def save_settings(patch):
                 folder = Path(value.strip()).expanduser()
                 if not folder.is_absolute():
                     raise ValueError("The audio folder must be an absolute path.")
-                folder.mkdir(parents=True, exist_ok=True)
+                folder.mkdir(parents=True, exist_ok=True, mode=0o700)
                 current["audio_dir"] = str(folder)
             elif key == "diarize" and isinstance(value, bool):
                 current["diarize"] = value

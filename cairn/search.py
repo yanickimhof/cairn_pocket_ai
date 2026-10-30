@@ -3,12 +3,13 @@
 import re
 import unicodedata
 
-from . import config
+from . import config, lock
 
 MAX_NOTES = 30
 MAX_SNIPPETS = 3
 CONTEXT = 70  # characters kept on each side of a match
 _CACHE = {}  # file -> (signature, text index)
+lock.on_lock(_CACHE.clear)
 
 
 def fold(text):
@@ -78,7 +79,7 @@ def _load(folder):
         sig = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
         cached = _CACHE.get(path)
         if not cached or cached[0] != sig:
-            note = config.read_json(path, default=None)
+            note = config.read_json_safe(path, default=None)
             ok = note and note.get("id") and note.get("status") == "done"
             cached = _CACHE[path] = (sig, (note["id"], note.get("title") or "", note.get("date") or "", _index(path, note),
                                            {fold(t)[0] for t in note.get("tags") or []}) if ok else None)

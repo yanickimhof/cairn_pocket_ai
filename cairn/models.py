@@ -211,7 +211,7 @@ class Downloader:
                     raise RuntimeError("Parakeet needs a Mac with Apple silicon.")
                 self._set(pct=1)
                 self._install_locked(lock)
-            env = dict(os.environ, HF_HUB_OFFLINE="0", HF_HUB_DISABLE_TELEMETRY="1", DO_NOT_TRACK="1")
+            env = dict(os.environ, **config.NO_TELEMETRY, HF_HUB_OFFLINE="0")
             code = "import sys; from huggingface_hub import snapshot_download as d; d(sys.argv[1], revision=sys.argv[3] or None, local_dir=sys.argv[2])"
             flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
             proc = subprocess.Popen(  # nosec B603
@@ -278,7 +278,7 @@ class Downloader:
                     tail = (pip.stderr or "").strip().splitlines()[-1:]
                     raise RuntimeError("Could not install pyannote.audio. " + " ".join(tail))
             self._set(pct=40)
-            env = dict(os.environ, HF_HUB_OFFLINE="0", HF_HUB_DISABLE_TELEMETRY="1", DO_NOT_TRACK="1", HF_HOME=str(part / "hf_cache"), HF_TOKEN=token)
+            env = dict(os.environ, **config.NO_TELEMETRY, HF_HUB_OFFLINE="0", HF_HOME=str(part / "hf_cache"), HF_TOKEN=token)
             code = (
                 "import os, sys\n"
                 "from pyannote.audio import Pipeline\n"

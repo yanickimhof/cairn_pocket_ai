@@ -66,7 +66,7 @@ def receive(store, rfile, length, filename, modified_ms, audio_dir):
     if length > MAX_BYTES:
         raise Rejected(413, "too_large")
     folder = Path(audio_dir) / FOLDER
-    folder.mkdir(parents=True, exist_ok=True)
+    folder.mkdir(parents=True, exist_ok=True, mode=0o700)
     part = folder / (".upload-%s.part" % secrets.token_hex(6))
     digest, left, head = hashlib.sha256(), length, b""
     try:

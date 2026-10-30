@@ -104,6 +104,11 @@ class App:
         self.check_wait = 20.0  # seconds between two looks at the names, however often the notes change
         self._check_notes = {}  # note id -> (file signature, what the note says about names)
         self._check_lock = threading.Lock()
+        lock.on_lock(self._check_notes.clear)
+        try:
+            lock.leftovers()  # what a crash left behind: decrypted copies, half-written files
+        except Exception:  # noqa: BLE001
+            pass
 
     # Pocket
 
@@ -277,7 +282,7 @@ class App:
         return {"version": config.VERSION, "components": comps, "referral": config.REFERRAL_URL}
 
     def check_update(self):
-        """The only outgoing request Cairn can make, and only when the user asks for it."""
+        """The only outgoing request Cairn can make: once a day (Settings, Check for updates), or when you ask."""
         # /releases/latest ignores pre-releases (404), so list releases and take the newest published one.
         url = "https://api.github.com/repos/%s/releases?per_page=5" % config.REPO
         request = urllib.request.Request(url, headers={"User-Agent": "Cairn", "Accept": "application/vnd.github+json"})
@@ -792,7 +797,11 @@ def make_handler(app):
                         return self._json(200, {"ok": True, "recovery": lock.new_phrase(body.get("password"))})
                     elif action == "disable":
                         lock.disable(body.get("password"))
-                        app.jobs.start_unseal()
+                        try:
+                            app.jobs.start_unseal()
+                        except Exception:
+                            lock.abort_disable()  # nothing was started: leave the lock as it was
+                            raise
                     elif action == "password":
                         lock.change_password(body.get("old"), body.get("new"))
                     elif action == "settings":
@@ -1001,6 +1010,8 @@ def make_handler(app):
             size = lock.audio_size(path)
             start, end, status = 0, size - 1, 200
             found = re.fullmatch(r"bytes=(\d*)-(\d*)", (self.headers.get("Range") or "").strip())
+            if not found and size > self.AUDIO_CHUNK:
+                found = re.fullmatch(r"bytes=(\d*)-(\d*)", "bytes=0-")  # no Range on a long file: the first part, as a partial answer, never all of it
             if found and (found.group(1) or found.group(2)):
                 if found.group(1):
                     start = int(found.group(1))
@@ -1102,10 +1113,19 @@ def make_handler(app):
                 fmt = str(body.get("fmt") or "md")
                 ctype, text, ext = app.export(note_id, fmt, body.get("transcript", True) is not False, bool(body.get("fragment")))
                 name = re.sub(r"[^A-Za-z0-9._-]+", "_", app.get_note(note_id).get("title") or note_id).strip("_") or "note"
+                if lock.enabled():  # a copy kept in Exports would be plain: with the lock on, the page downloads it and Cairn keeps nothing
+                    return self._json(200, {"ok": True, "saved": False})
                 folder = config.home() / "Exports"
-                folder.mkdir(parents=True, exist_ok=True)
-                (folder / (name + ext)).write_text(text, encoding="utf-8")
-                return self._json(200, {"ok": True, "name": name + ext})
+                folder.mkdir(parents=True, exist_ok=True, mode=0o700)
+                target = folder / (name + ext)
+                for n in range(2, 1000):  # a second note with the same title does not overwrite the first
+                    if not target.exists():
+                        break
+                    target = folder / ("%s-%d%s" % (name, n, ext))
+                fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                    handle.write(text)
+                return self._json(200, {"ok": True, "name": target.name, "saved": True})
             if method == "POST" and action == "rename":
                 title = str(body.get("title") or "").strip()[:200]
                 if not title:

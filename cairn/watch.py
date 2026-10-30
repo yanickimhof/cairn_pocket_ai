@@ -50,12 +50,16 @@ class Watcher:
         if app.jobs.snapshot()["running"]:
             return
         info = lock.info()
-        if info.get("enabled") and not info.get("sealed") and not info.get("locked") and not info.get("migrating"):
+        if info.get("enabled") and not info.get("locked") and not info.get("migrating"):
             try:
-                app.jobs.start_seal()  # an interrupted pass is taken up again
+                if info.get("opening"):
+                    app.jobs.start_unseal()  # turning the lock off was interrupted: finish it
+                    return
+                if not info.get("sealed") or lock.recheck_due():
+                    app.jobs.start_seal()  # an interrupted pass is taken up again, and a seal that failed once is tried again
+                    return
             except Exception:  # noqa: BLE001
                 pass
-            return
         try:
             app.purge_pocket()
         except OSError:

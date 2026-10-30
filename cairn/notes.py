@@ -8,7 +8,7 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
-from . import config, score, tags
+from . import config, lock, score, tags
 
 ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,150}")
 HEAVY = ("segments", "clean", "doubtful", "summary")  # what makes a note large: left out of the listing copy
@@ -38,6 +38,7 @@ class Store:
         self.folder.mkdir(parents=True, exist_ok=True)
         self.lock = threading.RLock()
         self._cache = {}  # file -> (signature, listing copy): only a note that changed is read again
+        lock.on_lock(self._cache.clear)  # locked, it forgets what it read
 
     def _path(self, note_id):
         if not ID_RE.fullmatch(note_id or ""):
@@ -75,7 +76,7 @@ class Store:
                 stat = path.stat()
             except OSError:
                 continue
-            note = config.read_json(path, default=None)
+            note = config.read_json_safe(path, default=None)
             if note and note.get("id"):
                 yield (stat.st_mtime_ns, stat.st_size, stat.st_ino), note
 
@@ -83,7 +84,7 @@ class Store:
         """Every note, complete. Reads each file: for the listing and the queue, use slim()."""
         with self.lock:
             files = sorted(self.folder.glob("*.json"))
-            notes = [config.read_json(f, default=None) for f in files]
+            notes = [config.read_json_safe(f, default=None) for f in files]
         return [n for n in notes if n and n.get("id")]
 
     def slim(self):
@@ -101,7 +102,7 @@ class Store:
                 seen.add(path)
                 cached = self._cache.get(path)
                 if not cached or cached[0] != sig:
-                    note = config.read_json(path, default=None)
+                    note = config.read_json_safe(path, default=None)
                     row = {k: v for k, v in note.items() if k not in HEAVY} if note and note.get("id") else None
                     cached = self._cache[path] = (sig, row)
                 if cached[1]:

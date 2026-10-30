@@ -287,8 +287,12 @@ class Jobs:
 
     def _unseal(self):
         self._set(step="opening", total=1, done=0)
-        lock.migrate(False, progress=lambda done, total: self._set(done=done, total=total))
-        lock.finish_disable()
+        try:
+            lock.migrate(False, progress=lambda done, total: self._set(done=done, total=total))
+            lock.finish_disable()
+        except Exception:
+            lock.abort_disable()  # not everything could be opened: back to locked, the upkeep seals what was opened
+            raise
         self._set(step="", done=0, total=0)
 
     def start_secure(self):

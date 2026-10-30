@@ -13,7 +13,7 @@ import re
 import threading
 import unicodedata
 
-from . import catalog, config, llm
+from . import catalog, config, llm, lock
 
 try:  # numpy is there with the speech engines; the search works without it, only slower
     import numpy as np
@@ -30,6 +30,7 @@ SNIPPET = 220
 KEEP_ALIVE = "10m"  # the small model stays loaded between two questions: a question costs milliseconds, not a load
 _lock = threading.Lock()
 _cache = {}  # file -> (signature, chunks, vectors); at most CACHE_NOTES of them, the least recently used go first
+lock.on_lock(_cache.clear)
 CACHE_NOTES = 64
 built = {}  # model -> the notes signature it was last indexed at
 

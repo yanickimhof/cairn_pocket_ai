@@ -10,7 +10,7 @@ import tempfile
 import threading
 import time
 
-from . import config
+from . import config, lock
 
 DOUBTFUL_LOGPROB = -0.8
 DOUBTFUL_COMPRESSION = 2.4
@@ -52,7 +52,7 @@ def _worker(engine, model_dir):
     if proc and proc.poll() is None and _WORKER["key"] == key:
         return proc
     _stop_worker()
-    env = dict(os.environ, HF_HUB_OFFLINE="1", DO_NOT_TRACK="1", PYTHONIOENCODING="utf-8")
+    env = dict(os.environ, **config.NO_TELEMETRY, HF_HUB_OFFLINE="1", PYTHONIOENCODING="utf-8")
     env["PATH"] = str(config.home() / "bin") + os.pathsep + env.get("PATH", "")
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     proc = subprocess.Popen(  # nosec B603
@@ -142,7 +142,7 @@ def transcribe(audio_path, progress=None, language=None, engine=None, model_dir=
         raise RuntimeError("No speech engine configured. Run the installer again.")
     if not model_dir or not os.path.isdir(model_dir):
         raise RuntimeError("Speech model not found. Run the installer again.")
-    with tempfile.TemporaryDirectory() as tmp:
+    with tempfile.TemporaryDirectory(dir=str(lock.tmpdir()) if lock.enabled() else None) as tmp:  # with the lock on, the text stays in the private folder
         output = os.path.join(tmp, "out.json")
         mark = os.path.join(tmp, "progress")
         with _LOCK:

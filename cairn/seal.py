@@ -84,10 +84,16 @@ def _blocks(size):
 
 
 def is_sealed(path):
+    """Whether the file is a sealed recording: it starts with the mark AND is exactly as long as its header says. A file that only begins like
+    one (a recording from a drive, or a planted one) is treated as plain audio."""
     try:
         with open(path, "rb") as handle:
-            return handle.read(len(FILE_MAGIC)) == FILE_MAGIC
-    except OSError:
+            head = handle.read(HEADER)
+        if len(head) != HEADER or head[: len(FILE_MAGIC)] != FILE_MAGIC:
+            return False
+        (size,) = struct.unpack(">Q", head[len(FILE_MAGIC) + 16:])
+        return os.path.getsize(path) == HEADER + size + _blocks(size) * TAG
+    except (OSError, OverflowError):
         return False
 
 

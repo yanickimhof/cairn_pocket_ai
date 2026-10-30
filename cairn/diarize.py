@@ -54,7 +54,7 @@ def _exec(audio_path, timeout, voices):
     if not available():
         return "missing", None
     device = config.load_settings().get("diarize_device", "auto")
-    env = dict(os.environ, CAIRN_DIARIZE_DEVICE=device if device in ("auto", "cpu") else "auto", CAIRN_VOICES="1" if voices else "0")
+    env = dict(os.environ, **config.NO_TELEMETRY, CAIRN_DIARIZE_DEVICE=device if device in ("auto", "cpu") else "auto", CAIRN_VOICES="1" if voices else "0")
     try:
         proc = subprocess.Popen(  # nosec B603
             [sys.executable, "-m", "cairn.diarize_worker", str(audio_path)], stdout=subprocess.PIPE, stderr=subprocess.PIPE,

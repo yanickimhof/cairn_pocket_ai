@@ -29,7 +29,7 @@ def start_model_server():
         print("The local model server (Ollama) was not found. Run the installer again.")
         return None
     log = open(config.home() / "ollama.log", "ab")
-    env = dict(os.environ, OLLAMA_HOST=cfg["ollama_host"], DO_NOT_TRACK="1")
+    env = dict(os.environ, **config.NO_TELEMETRY, OLLAMA_HOST=cfg["ollama_host"])
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     process = subprocess.Popen([binary, "serve"], stdout=log, stderr=subprocess.STDOUT, env=env, creationflags=flags)
     for _ in range(60):
@@ -72,7 +72,7 @@ def main(argv=None):
     args = parser.parse_args(args_in)
     netguard.install()  # from here on, only connections to this computer are possible
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
-    os.environ.setdefault("DO_NOT_TRACK", "1")
+    os.environ.update(config.NO_TELEMETRY)
     config.home().mkdir(parents=True, exist_ok=True)
     started = start_model_server() if not os.environ.get("CAIRN_NO_MODEL_SERVER") else None
     app, httpd = server.make_server(args.port)
