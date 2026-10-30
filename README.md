@@ -6,7 +6,7 @@
 
 **No cloud. No account. No telemetry. Nothing leaves your machine.**
 
-![Cairn: import, secure Pocket, transcribe, people, notes, templates, search, ask your notes, listen and fix, tags, actions, follow-up, vocabulary, export](docs/brand/features.png)
+![Cairn: import, audio files, secure Pocket, lock, transcribe, people, notes, templates, search, ask your notes, listen and fix, tags, actions, follow-up, vocabulary, export](docs/brand/features.png)
 
 ## What Cairn does
 
@@ -49,9 +49,13 @@ What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
 |---|---|---|
 | ![Settings](docs/screenshots/settings.png) | ![Note templates](docs/screenshots/templates.png) | ![Models](docs/screenshots/models.png) |
 
-| About | Export to HTML (transcript folded) | Copy for an email |
+| About | Locked, with a password or Touch ID | Export to HTML (transcript folded) |
 |---|---|---|
-| ![About](docs/screenshots/about.png) | ![HTML export](docs/screenshots/html-export.png) | ![Email](docs/screenshots/email.png) |
+| ![About](docs/screenshots/about.png) | ![Cairn is locked](docs/screenshots/locked.png) | ![HTML export](docs/screenshots/html-export.png) |
+
+| Copy for an email |
+|---|
+| ![Email](docs/screenshots/email.png) |
 
 > **Status: v0.7.0, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
 
