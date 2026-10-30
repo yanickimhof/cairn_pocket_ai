@@ -6,7 +6,7 @@ import time
 import traceback
 from datetime import datetime
 
-from . import battery, config, embed, jobs, lock, privacy
+from . import battery, config, embed, jobs, lock, menubar, privacy
 
 DAY = 24 * 3600
 
@@ -34,6 +34,7 @@ class Watcher:
         """One pass. Does nothing while a job is running, so it never competes with the user's work."""
         now = time.time() if now is None else now
         app = self.app
+        menubar.ensure(bool(config.load_settings().get("menubar", True)))  # the menu bar item follows the setting, also while locked
         if lock.locked():
             return  # nothing can be read while Cairn is locked: the upkeep waits
         if lock.due() and not app.jobs.snapshot()["running"]:

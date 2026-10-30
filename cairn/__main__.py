@@ -13,7 +13,7 @@ import threading
 import time
 import webbrowser
 
-from . import config, llm, netguard, server, service, speech, watch
+from . import config, llm, menubar, netguard, server, service, speech, watch
 
 
 find_ollama = llm.find_ollama
@@ -90,6 +90,7 @@ def main(argv=None):
         pass
     finally:
         httpd.server_close()
+        menubar.stop()
         speech.shutdown()
         if started:
             started.terminate()

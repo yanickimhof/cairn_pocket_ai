@@ -80,6 +80,7 @@
       lockOff: "Désactiver le verrou", lockOffText: "Les données seront déchiffrées. Mot de passe :", lockForgot: "Mot de passe oublié ?", lockPhraseIn: "Phrase de récupération", lockRecover: "Récupérer", lockBadPhrase: "Phrase incorrecte", lockSaved: "Enregistré", lockCancel: "Annuler",
       lockBusyNow: "Un traitement est en cours : réessayez quand il sera terminé.",
       lockNewPhrase: "Nouvelle phrase de récupération", lockNewPhraseText: "L’ancienne phrase ne fonctionnera plus. Mot de passe :", lockBioNoPackage: "Touch ID indisponible : le composant macOS manque dans l’environnement de Cairn (mettez Cairn à jour).", lockBioNoSensor: "Touch ID indisponible : aucun capteur ou aucune empreinte enregistrée.",
+      menubarLabel: "Barre de menus",
       addFiles: "Ajouter des fichiers audio", dropHere: "Déposez vos fichiers audio", uploading: "Envoi de {name}", filesAdded: "{n} fichier(s) ajouté(s)", filesDup: "{n} déjà présent(s)", fileBad: "Fichier refusé : ce n’est pas un enregistrement audio pris en charge",
       importLabel: "Importer et transcrire", importHint: "Importer et traiter les enregistrements", count: "Enregistrements sur le Pocket",
       batTip: "Batterie du Pocket : {n} %", batCharging: " · en charge (branché)",
@@ -175,6 +176,7 @@
       lockOff: "Turn the lock off", lockOffText: "The data will be decrypted. Password:", lockForgot: "Forgot the password?", lockPhraseIn: "Recovery phrase", lockRecover: "Recover", lockBadPhrase: "Wrong phrase", lockSaved: "Saved", lockCancel: "Cancel",
       lockBusyNow: "A job is running: try again when it has finished.",
       lockNewPhrase: "New recovery phrase", lockNewPhraseText: "The old phrase will stop working. Password:", lockBioNoPackage: "Touch ID unavailable: the macOS component is missing from Cairn's environment (update Cairn).", lockBioNoSensor: "Touch ID unavailable: no sensor, or no fingerprint enrolled.",
+      menubarLabel: "Menu bar",
       addFiles: "Add audio files", dropHere: "Drop your audio files", uploading: "Sending {name}", filesAdded: "{n} file(s) added", filesDup: "{n} already here", fileBad: "File refused: it is not a supported audio recording",
       importLabel: "Import and transcribe", importHint: "Import and process the recordings", count: "Recordings on the Pocket",
       batTip: "Pocket battery: {n}%", batCharging: " · charging (plugged in)",
@@ -479,6 +481,7 @@
         return '<button type="button" data-a="autocheck" data-v="' + o[0] + '" aria-pressed="' + (st.settings.autocheck !== false === o[2]) + '" class="' + bg(st.settings.autocheck !== false === o[2]).trim() + '">' + esc(o[1]) + "</button>";
       }).join("") + "</div></div>";
     h += rows.replace('<div class="hr"></div>', '');
+    if (st.menubar && st.menubar.available) { h += '<div class="hr"></div><div class="setrow"><span class="text" style="font-size:14px">' + esc(t.menubarLabel) + "</span>" + onOff("menubarToggle", st.settings.menubar !== false, t) + "</div>"; }
     h += viewLockSettings(t, st);
     var terms = st.settings.vocabulary || [];
     h += '<div class="hr"></div><div class="setrow"' + tip(t.vocabHint) + '><span class="text" style="font-size:14px">' + esc(t.vocab) + (terms.length ? " · " + terms.length : "") +
@@ -1890,6 +1893,7 @@
       var a = document.getElementById("lockPhrase"), b = document.getElementById("lockPw");
       lockCall("recover", { phrase: a ? a.value : "", password: b ? b.value : "" }, afterUnlock);
     },
+    menubarToggle: function (v) { api("POST", "/api/settings", { menubar: v === "1" }).then(refresh); },
     lockForm: function (v) { S.lockForm = v || ""; S.lockErr = ""; },
     lockToggle: function (v) { S.lockForm = v === "1" ? "on" : "off"; S.lockErr = ""; },
     lockEnable: function () {

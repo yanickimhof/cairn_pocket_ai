@@ -17,7 +17,7 @@ LOOPBACK = re.compile(r"127\.0\.0\.1:\d{2,5}")
 DEFAULT_LLM = "qwen3:4b"
 LEVELS = ("short", "mid", "full")
 LANGS = ("fr", "en")
-DEFAULT_SETTINGS = {"ui": None, "audio_dir": None, "llm": None, "speech": None, "autocheck": True, "autoimport": True, "autoprocess": False, "pocket_key": None, "diarize": False, "diarize_device": "auto", "vocabulary": [], "templates": [], "template_default": "", "tags_suggest": False, "pocket_secure_auto": False, "vocab_ignored": [], "embed": None, "voices": False, "hf_token": None, "setup_done": False}
+DEFAULT_SETTINGS = {"ui": None, "audio_dir": None, "llm": None, "speech": None, "autocheck": True, "autoimport": True, "autoprocess": False, "pocket_key": None, "diarize": False, "diarize_device": "auto", "vocabulary": [], "templates": [], "template_default": "", "tags_suggest": False, "pocket_secure_auto": False, "vocab_ignored": [], "embed": None, "voices": False, "hf_token": None, "setup_done": False, "menubar": True}
 
 _lock = threading.RLock()
 
@@ -138,7 +138,7 @@ def save_settings(patch):
         for key, value in patch.items():
             if key == "ui" and value in LANGS:
                 current["ui"] = value
-            elif key in ("autocheck", "autoimport", "autoprocess", "tags_suggest", "pocket_secure_auto", "voices", "setup_done") and isinstance(value, bool):
+            elif key in ("autocheck", "autoimport", "autoprocess", "tags_suggest", "pocket_secure_auto", "voices", "setup_done", "menubar") and isinstance(value, bool):
                 current[key] = value
             elif key == "llm" and value in catalog.LLM_IDS:
                 current["llm"] = value

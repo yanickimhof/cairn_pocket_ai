@@ -20,7 +20,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-from . import ask, battery, catalog, config, diarize, embed, jobs, llm, lock, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, setup, speech, tags, templates, upload, vault, vocab, vocabcheck, voices
+from . import ask, battery, catalog, config, diarize, embed, jobs, llm, lock, menubar, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, setup, speech, tags, templates, upload, vault, vocab, vocabcheck, voices
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -207,6 +207,7 @@ class App:
             "pocket_status": self.status.snapshot(),
             "update": self.update_info,
             "lock": lock.info(),
+            "menubar": {"available": menubar.available()},
             "privacy": _privacy_summary(),
             "diar_installed": models.diar_installed(),
             "search": self.search_state(),
