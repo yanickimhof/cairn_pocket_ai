@@ -31,9 +31,6 @@ Every action from every note, by person, newest first. Tick them, correct them, 
 **The follow-up email, written.**
 One tap drafts a short email from the note, in its language, ready for your mail app. Cairn sends nothing.
 
-**Right spelling, only where it belongs.**
-A rule can apply only near the right words, so a real word is left alone. One tap updates the notes that need it: all of them, a choice, or a period.
-
 **Notes in your own format.**
 Write a template once, a name and an instruction, and every note follows it, sections included. A star makes it the default.
 
@@ -51,9 +48,6 @@ Teach Cairn the names and places it gets wrong. Every transcript and summary the
 **Speakers, 4.5 times faster.**
 Cairn now uses your Mac's graphics chip to tell who is speaking. Same result, a fraction of the time.
 
-**Fix who said what.**
-A voice got the wrong label? Redo the speakers of any note and give each one a name.
-
 **It keeps going without you.**
 With automatic processing on, Cairn starts as soon as your recordings are copied, keeps your Mac awake, and tries again if something fails. Your notes are ready when you are.
 
@@ -70,9 +64,6 @@ Cairn tells speakers apart, entirely on your Mac.
 
 **Your Pocket at a glance.**
 Add your own session key to see its firmware, state and storage, read only.
-
-**Install gets you the latest.**
-The install command now installs the newest release.
 
 ## 0.1
 
