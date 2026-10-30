@@ -30,6 +30,7 @@ class Base(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.home = Path(self.tmp.name) / "Cairn"
         self.home.mkdir()
+        self.addCleanup(self.tmp.cleanup)  # registered first, so it runs last: after the server and its jobs were stopped
         patcher = mock.patch.dict(os.environ, {"CAIRN_HOME": str(self.home), "CAIRN_ENGINE": "mlx"})
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -39,9 +40,6 @@ class Base(unittest.TestCase):
     def reset(self):
         lock._state.update(dek=None, fails=0, migrating=False, seen=0)
         config.set_codec(None)
-
-    def tearDown(self):
-        self.tmp.cleanup()
 
     def populate(self):
         texts = self.home / "Texts"
