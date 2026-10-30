@@ -73,10 +73,10 @@
       hMemory: "{n} Go de mémoire : Cairn fonctionne, mais les modèles légers sont conseillés.", hDisk: "Il reste {n} Go : libérez de la place avant de télécharger des modèles.",
       pOk: "Pocket connectée", pAbsent: "Pas de Pocket ? Ajoutez des fichiers audio. Sinon : câble USB-C de données, USB Mode (Web Sync) activé, et synchronisation automatique de l’application désactivée.", pNoRecord: "La Pocket est vue, mais sans enregistrements : activez USB Mode (Web Sync) puis rebranchez-la.", cOk: "Prêt",
       lockTitle: "Cairn est verrouillé", lockPw: "Mot de passe", lockGo: "Déverrouiller", lockBio: "Déverrouiller avec Touch ID", lockWrong: "Mot de passe incorrect", lockNow: "Verrouiller", lockBusy: "Chiffrement en cours",
-      lockSection: "Verrou et chiffrement", lockHint: "Chiffre vos notes, réglages et enregistrements sur ce Mac. Le mot de passe est demandé à l’ouverture et après un temps d’inactivité.",
+      lockSection: "Verrou", lockHint: "Chiffre vos notes, réglages et enregistrements sur ce Mac. Le mot de passe est demandé à l’ouverture et après un temps d’inactivité.",
       lockOn: "Activer", lockPw1: "Mot de passe (10 caractères minimum)", lockPw2: "Confirmez le mot de passe", lockShort: "10 caractères minimum", lockMismatch: "Les deux mots de passe diffèrent", lockOpen: "Verrou activé",
       lockPhraseTitle: "Phrase de récupération", lockPhraseText: "Notez-la hors de cet ordinateur. Elle seule permet de retrouver vos notes si vous perdez le mot de passe. Elle ne sera plus affichée.", lockPhraseDone: "J’ai noté la phrase",
-      lockAuto: "Verrouiller après inactivité", lockNever: "Jamais", lockMin: "{n} min", lockBioSetting: "Touch ID", lockChange: "Changer le mot de passe", lockOld: "Mot de passe actuel", lockNew: "Nouveau mot de passe",
+      lockAuto: "Inactivité", lockNever: "Jamais", lockMin: "{n} min", lockBioSetting: "Touch ID", lockChange: "Mot de passe", lockOld: "Mot de passe actuel", lockNew: "Nouveau mot de passe",
       lockOff: "Désactiver le verrou", lockOffText: "Les données seront déchiffrées. Mot de passe :", lockForgot: "Mot de passe oublié ?", lockPhraseIn: "Phrase de récupération", lockRecover: "Récupérer", lockBadPhrase: "Phrase incorrecte", lockSaved: "Enregistré", lockCancel: "Annuler",
       lockBusyNow: "Un traitement est en cours : réessayez quand il sera terminé.",
       lockNewPhrase: "Nouvelle phrase de récupération", lockNewPhraseText: "L’ancienne phrase ne fonctionnera plus. Mot de passe :", lockBioNoPackage: "Touch ID indisponible : le composant macOS manque dans l’environnement de Cairn (mettez Cairn à jour).", lockBioNoSensor: "Touch ID indisponible : aucun capteur ou aucune empreinte enregistrée.",
@@ -168,10 +168,10 @@
       hMemory: "{n} GB of memory: Cairn works, but the light models are advised.", hDisk: "{n} GB left: free some space before downloading models.",
       pOk: "Pocket connected", pAbsent: "No Pocket? Add audio files. Otherwise: USB-C data cable, USB Mode (Web Sync) on, and the app's automatic sync off.", pNoRecord: "The Pocket is seen but shows no recordings: turn USB Mode (Web Sync) on, then plug it in again.", cOk: "Ready",
       lockTitle: "Cairn is locked", lockPw: "Password", lockGo: "Unlock", lockBio: "Unlock with Touch ID", lockWrong: "Wrong password", lockNow: "Lock", lockBusy: "Encrypting",
-      lockSection: "Lock and encryption", lockHint: "Encrypts your notes, settings and recordings on this Mac. The password is asked when Cairn opens and after a time of inactivity.",
+      lockSection: "Lock", lockHint: "Encrypts your notes, settings and recordings on this Mac. The password is asked when Cairn opens and after a time of inactivity.",
       lockOn: "Turn on", lockPw1: "Password (10 characters minimum)", lockPw2: "Confirm the password", lockShort: "10 characters minimum", lockMismatch: "The two passwords differ", lockOpen: "Lock is on",
       lockPhraseTitle: "Recovery phrase", lockPhraseText: "Write it down away from this computer. It is the only way back to your notes if you lose the password. It will not be shown again.", lockPhraseDone: "I wrote the phrase down",
-      lockAuto: "Lock after inactivity", lockNever: "Never", lockMin: "{n} min", lockBioSetting: "Touch ID", lockChange: "Change the password", lockOld: "Current password", lockNew: "New password",
+      lockAuto: "Idle", lockNever: "Never", lockMin: "{n} min", lockBioSetting: "Touch ID", lockChange: "Password", lockOld: "Current password", lockNew: "New password",
       lockOff: "Turn the lock off", lockOffText: "The data will be decrypted. Password:", lockForgot: "Forgot the password?", lockPhraseIn: "Recovery phrase", lockRecover: "Recover", lockBadPhrase: "Wrong phrase", lockSaved: "Saved", lockCancel: "Cancel",
       lockBusyNow: "A job is running: try again when it has finished.",
       lockNewPhrase: "New recovery phrase", lockNewPhraseText: "The old phrase will stop working. Password:", lockBioNoPackage: "Touch ID unavailable: the macOS component is missing from Cairn's environment (update Cairn).", lockBioNoSensor: "Touch ID unavailable: no sensor, or no fingerprint enrolled.",
@@ -728,49 +728,40 @@
     });
   }
   function afterUnlock() { S.locked = false; S.recovering = false; refresh(); }
+  function lockInputs(ids, labels) {
+    return ids.map(function (id, i) { return '<input id="' + id + '" type="password" class="dinput" autocomplete="' + (id === "lockOld" ? "current-password" : "new-password") + '" placeholder="' + esc(labels[i]) + '" aria-label="' + esc(labels[i]) + '">'; }).join("");
+  }
+  function lockForm(t, ids, labels, go) {
+    return '<div class="setcol">' + lockInputs(ids, labels) + '<div class="row gap8"><button type="button" class="ib sm blue" data-a="' + go + '"' + tip(t.lockGo) + ">" + I.checkW + '</button><button type="button" class="ib sm" data-a="lockForm" data-v=""' + tip(t.lockCancel) + ">" + I.x + "</button></div></div>";
+  }
   function viewLockSettings(t, st) {
-    var li = st.lock || {}, h = '<div class="hr"></div><div class="setcol"><div class="text" style="font-size:14px;font-weight:600">' + esc(t.lockSection) + "</div>";
+    var li = st.lock || {}, bio = li.biometric || {}, h = "";
     if (S.lockPhrase) {
-      h += '<div class="confirm"><div><b>' + esc(t.lockPhraseTitle) + '</b><div class="text" style="font-family:ui-monospace,Menlo,monospace;font-size:16px;margin:8px 0;user-select:all">' + esc(S.lockPhrase) + "</div>" + esc(t.lockPhraseText) + '</div><div class="row gap8"><button type="button" class="mbtn" data-a="lockPhraseDone">' + esc(t.lockPhraseDone) + "</button></div></div>";
-      return h + "</div>";
+      return '<div class="hr"></div><div class="confirm"><div><div class="text" style="font-family:ui-monospace,Menlo,monospace;font-size:16px;margin:0 0 8px;user-select:all">' + esc(S.lockPhrase) + "</div>" + esc(t.lockPhraseText) + '</div><div class="row gap8"><button type="button" class="ib sm blue" data-a="lockPhraseDone"' + tip(t.lockPhraseDone) + ">" + I.checkW + "</button></div></div>";
     }
+    h += '<div class="hr"></div><div class="setrow"' + tip(t.lockHint) + '><span class="text" style="font-size:14px">' + esc(t.lockSection) + "</span>" + onOff("lockToggle", !!li.enabled, t) + "</div>";
     if (!li.enabled) {
-      h += '<div class="small">' + esc(t.lockHint) + "</div>";
       if (S.lockForm === "on") {
-        h += '<input id="lockPw" type="password" class="dinput" autocomplete="new-password" placeholder="' + esc(t.lockPw1) + '" aria-label="' + esc(t.lockPw1) + '">';
-        h += '<input id="lockPw2" type="password" class="dinput" autocomplete="new-password" placeholder="' + esc(t.lockPw2) + '" aria-label="' + esc(t.lockPw2) + '">';
-        if (li.biometric && li.biometric.available) { h += '<label class="small"><input id="lockBioBox" type="checkbox" checked> ' + esc(t.lockBioSetting) + "</label>"; }
-        h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockEnable">' + esc(t.lockOn) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="">' + esc(t.lockCancel) + "</button></div>";
-      } else {
-        h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockForm" data-v="on">' + esc(t.lockOn) + "</button></div>";
+        h += '<div class="setcol">' + lockInputs(["lockPw", "lockPw2"], [t.lockPw1, t.lockPw2]);
+        if (bio.available) { h += '<label class="small"><input id="lockBioBox" type="checkbox" checked> ' + esc(t.lockBioSetting) + "</label>"; }
+        h += '<div class="row gap8"><button type="button" class="ib sm blue" data-a="lockEnable"' + tip(t.lockOn) + ">" + I.checkW + '</button><button type="button" class="ib sm" data-a="lockForm" data-v=""' + tip(t.lockCancel) + ">" + I.x + "</button></div></div>";
       }
     } else {
-      h += '<div class="setrow"><span class="text" style="font-size:14px">' + esc(t.lockAuto) + '</span><div class="seg s38">' + [0, 5, 15, 60].map(function (m) {
-        return '<button type="button" data-a="lockAuto" data-v="' + m + '" aria-pressed="' + (li.auto_min === m) + '" class="' + bg(li.auto_min === m).trim() + '">' + esc(m ? t.lockMin.replace("{n}", m) : t.lockNever) + "</button>";
+      h += '<div class="setrow"><span class="text" style="font-size:14px">' + esc(t.lockAuto) + '</span><div class="seg s38">' + [5, 15, 60, 0].map(function (m) {
+        return '<button type="button" data-a="lockAuto" data-v="' + m + '" aria-pressed="' + (li.auto_min === m) + '" class="' + bg(li.auto_min === m).trim() + '">' + esc(m ? t.lockMin.replace("{n}", m) : "\u221e") + "</button>";
       }).join("") + "</div></div>";
-      if (li.biometric && li.biometric.available) {
-        h += '<div class="setrow"><span class="text" style="font-size:14px">' + esc(t.lockBioSetting) + "</span>" + onOff("lockBioToggle", li.biometric.enabled, t) + "</div>";
-      } else if (li.biometric && li.biometric.reason === "no_package") {
-        h += '<div class="small">' + esc(t.lockBioNoPackage) + "</div>";
-      } else if (li.biometric && li.biometric.reason === "no_sensor") {
-        h += '<div class="small">' + esc(t.lockBioNoSensor) + "</div>";
-      }
-      if (S.lockForm === "change") {
-        h += '<input id="lockOld" type="password" class="dinput" autocomplete="current-password" placeholder="' + esc(t.lockOld) + '" aria-label="' + esc(t.lockOld) + '">';
-        h += '<input id="lockPw" type="password" class="dinput" autocomplete="new-password" placeholder="' + esc(t.lockNew) + '" aria-label="' + esc(t.lockNew) + '">';
-        h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockChangeGo">' + esc(t.lockChange) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="">' + esc(t.lockCancel) + "</button></div>";
-      } else if (S.lockForm === "phrase") {
-        h += '<div class="small">' + esc(t.lockNewPhraseText) + '</div><input id="lockPw" type="password" class="dinput" autocomplete="current-password" placeholder="' + esc(t.lockPw) + '" aria-label="' + esc(t.lockPw) + '">';
-        h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockPhraseGo">' + esc(t.lockNewPhrase) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="">' + esc(t.lockCancel) + "</button></div>";
-      } else if (S.lockForm === "off") {
-        h += '<div class="small">' + esc(t.lockOffText) + '</div><input id="lockPw" type="password" class="dinput" autocomplete="current-password" placeholder="' + esc(t.lockPw) + '" aria-label="' + esc(t.lockPw) + '">';
-        h += '<div class="row gap8"><button type="button" class="mbtn" data-a="lockOffGo">' + esc(t.lockOff) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="">' + esc(t.lockCancel) + "</button></div>";
-      } else {
-        h += '<div class="row gap8" style="flex-wrap:wrap"><button type="button" class="mbtn" data-a="lockForm" data-v="change">' + esc(t.lockChange) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="phrase">' + esc(t.lockNewPhrase) + '</button><button type="button" class="mbtn" data-a="lockForm" data-v="off">' + esc(t.lockOff) + "</button></div>";
+      if (bio.available) { h += '<div class="setrow"><span class="text" style="font-size:14px">' + esc(t.lockBioSetting) + "</span>" + onOff("lockBioToggle", bio.enabled, t) + "</div>"; }
+      else if (bio.reason === "no_package" || bio.reason === "no_sensor") { h += '<div class="small">' + esc(bio.reason === "no_package" ? t.lockBioNoPackage : t.lockBioNoSensor) + "</div>"; }
+      if (S.lockForm === "change") { h += lockForm(t, ["lockOld", "lockPw"], [t.lockOld, t.lockNew], "lockChangeGo"); }
+      else if (S.lockForm === "phrase") { h += lockForm(t, ["lockPw"], [t.lockPw], "lockPhraseGo"); }
+      else if (S.lockForm === "off") { h += lockForm(t, ["lockPw"], [t.lockPw], "lockOffGo"); }
+      else {
+        h += '<div class="setrow"><span class="text" style="font-size:14px">' + esc(t.lockChange) + '</span><button type="button" class="ib" data-a="lockForm" data-v="change"' + tip(t.lockChange) + ">" + I.pencil + "</button></div>";
+        h += '<div class="setrow"><span class="text" style="font-size:14px">' + esc(t.lockPhraseTitle) + '</span><button type="button" class="ib" data-a="lockForm" data-v="phrase"' + tip(t.lockNewPhrase) + ">" + I.plus + "</button></div>";
       }
     }
     if (S.lockErr) { h += '<div class="err" role="alert">' + esc(S.lockErr) + "</div>"; }
-    return h + "</div>";
+    return h;
   }
 
   function viewSetup(t) {
@@ -1900,6 +1891,7 @@
       lockCall("recover", { phrase: a ? a.value : "", password: b ? b.value : "" }, afterUnlock);
     },
     lockForm: function (v) { S.lockForm = v || ""; S.lockErr = ""; },
+    lockToggle: function (v) { S.lockForm = v === "1" ? "on" : "off"; S.lockErr = ""; },
     lockEnable: function () {
       var a = document.getElementById("lockPw"), b = document.getElementById("lockPw2"), box = document.getElementById("lockBioBox");
       if (!a || a.value.length < 10) { S.lockErr = T().lockShort; return; }

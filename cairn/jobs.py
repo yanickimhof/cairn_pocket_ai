@@ -54,9 +54,9 @@ class Jobs:
         with self.lock:
             self._state["errors"].append(message)
 
-    # A job that gives way to what the person asks for: reading the notes for the search and the privacy check always do; a sealing pass gives way
-    # to opening everything again (the lock is being turned off).
-    YIELDS = {"index": None, "privacy": None, "seal": ("unseal",)}
+    # A job that gives way to what the person asks for: reading the notes for the search always does; the privacy check and a sealing pass
+    # give way only to opening everything again (the lock is being turned off).
+    YIELDS = {"index": None, "privacy": ("unseal",), "seal": ("unseal",)}
 
     def _yields(self, running, asked):
         only = self.YIELDS.get(running, False)
