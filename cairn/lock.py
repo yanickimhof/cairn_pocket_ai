@@ -158,12 +158,25 @@ def context(path):
         return path.name
 
 
+_hooks = []
+
+
+def on_unlock(callback):
+    """Work that had to wait for the key (reading the notes at start-up), run each time Cairn is opened."""
+    _hooks.append(callback)
+
+
 def _install(dek):
     with _guard:
         _state["dek"] = dek
         _state["seen"] = time.time()
         _state["fails"] = 0
         config.set_codec(_Codec(dek))
+    for callback in list(_hooks):
+        try:
+            callback()
+        except Exception:  # noqa: BLE001 (a hook must never keep the person out)
+            pass
 
 
 def lock_now():

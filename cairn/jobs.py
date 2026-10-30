@@ -34,7 +34,18 @@ class Jobs:
         self.paused = False  # set by Stop: automatic processing waits for new recordings or a manual start
         self.secure_wanted = False  # the person asked to secure the Pocket while another job was running
         self.llm_blocked_until = 0.0  # after a failed check of the model server, automatic processing waits a little
-        self.store.reset_interrupted()
+        self.interrupted_pending = False
+        self.after_unlock()
+        lock.on_unlock(self.after_unlock)
+
+    def after_unlock(self):
+        """Put back as waiting what a stop in the middle left half done. At start-up with the lock on, the notes cannot be read yet:
+        this runs again when Cairn is opened."""
+        try:
+            self.store.reset_interrupted()
+            self.interrupted_pending = False
+        except config.Locked:
+            self.interrupted_pending = True
 
     def snapshot(self):
         with self.lock:

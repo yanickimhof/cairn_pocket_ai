@@ -39,6 +39,7 @@ class Base(unittest.TestCase):
 
     def reset(self):
         lock._state.update(dek=None, fails=0, migrating=False, seen=0)
+        lock._hooks.clear()
         config.set_codec(None)
 
     def populate(self):
@@ -355,6 +356,48 @@ class LockedServerTest(Base):
         self.assertEqual(self.app.store.get("z")["title"], "TITRE-SECRET")
 
 
+class RestartTest(Base):
+    """Cairn started again with the lock on: it must start, answer only the way in, and be whole once opened."""
+
+    def test_the_server_starts_locked_and_opens_with_the_password(self):
+        from cairn import notes, server
+
+        store = notes.Store(self.home / "Texts")
+        for i in range(3):
+            store.save({"id": "n%d" % i, "status": "done", "title": "T%d" % i, "date": "2026-10-0%dT10:00:00" % (i + 1), "summary": {"tldr": "x"},
+                        "segments": [], "lang": "en", "languages": {}, "fidelity": None})
+        store.save({"id": "cut", "status": "transcribing", "title": "", "date": "2026-10-09T10:00:00"})
+        lock.enable(PASSWORD)
+        lock.migrate(True)
+        lock.lock_now()  # the program is started again: nothing is open
+        lock._hooks.clear()
+        app, httpd = server.make_server(18861)
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        self.addCleanup(httpd.server_close)
+        self.addCleanup(httpd.shutdown)
+
+        def call(method, path, body=None):
+            conn = http.client.HTTPConnection("127.0.0.1", app.port, timeout=30)
+            hdr = {"Host": "127.0.0.1:%d" % app.port, "Cookie": "cairn_session=" + app.token}
+            if method == "POST":
+                hdr.update({"Content-Type": "application/json", "X-Cairn": "1"})
+            conn.request(method, path, json.dumps(body or {}) if method == "POST" else None, hdr)
+            resp = conn.getresponse()
+            data = json.loads(resp.read() or b"{}")
+            conn.close()
+            return resp.status, data
+
+        self.assertEqual(call("GET", "/api/state")[0], 423)
+        self.assertTrue(app.jobs.interrupted_pending)
+        self.assertEqual(call("POST", "/api/lock/unlock", {"password": PASSWORD})[0], 200)
+        status, state = call("GET", "/api/state")
+        self.assertEqual(status, 200)
+        self.assertEqual(sorted(n["id"] for n in state["notes"]), ["cut", "n0", "n1", "n2"])  # every note is there
+        self.assertEqual(next(n for n in state["notes"] if n["id"] == "cut")["status"], "waiting")  # and the one cut short is put back
+        self.assertFalse(app.jobs.interrupted_pending)
+        lock._hooks.clear()
+
+
 class JobsTest(Base):
     def make(self):
         from cairn import jobs, notes
@@ -420,7 +463,7 @@ class JobsTest(Base):
                 time.sleep(0.05)
         self.assertEqual(job.snapshot()["errors"], [])  # nothing is reported as failed
         lock.unlock(PASSWORD)
-        self.assertEqual(config.read_json(self.home / "Texts" / "w.json")["status"], "transcribing")  # left as it was: the start-up pass puts it back
+        self.assertEqual(config.read_json(self.home / "Texts" / "w.json")["status"], "waiting")  # put back as waiting when Cairn is opened again
 
     def test_a_sealing_pass_stops_between_files(self):
         self.populate()
