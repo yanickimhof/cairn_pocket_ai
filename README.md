@@ -6,7 +6,7 @@
 
 **No cloud. No account. No telemetry. Nothing leaves your machine.**
 
-![Cairn: import, transcribe, speakers, notes, templates, search, listen, tags, actions, follow-up, vocabulary, export](docs/brand/features.png)
+![Cairn: import, secure Pocket, transcribe, people, notes, templates, search, ask your notes, listen and fix, tags, actions, follow-up, vocabulary, export](docs/brand/features.png)
 
 ## What Cairn does
 
@@ -17,6 +17,16 @@
 **Find and fix.** Any word in every note in a second, or ask your notes a question and get an answer with its source. Tap a time stamp, hear the passage, fix the word. Teach Cairn your names once and they are right in every note. Tags replace folders.
 
 **Act.** Every action from every note, by person, in one list. The follow-up email is already written. Export to Markdown, HTML, text or email.
+
+## Ask your notes
+
+**Ask in your own words. Get the answer, and the minute it was said.**
+
+Cairn answers from what was said in your recordings. Every statement points to the passage and the minute behind it. Follow up as in a conversation. Ask what is still open this week, or narrow a question to one tag. The model runs on your Mac, has no tool and no network, and nothing is kept.
+
+![Asking your notes: an answer with the passage behind it, then a follow-up](docs/screenshots/ask-hero.png)
+
+Optional, installed from Settings > Models. How it works: [docs/GUIDE.md](docs/GUIDE.md#finding-listening-following-up).
 
 ## Sovereign by design
 
