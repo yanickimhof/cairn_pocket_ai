@@ -2,20 +2,20 @@
 
 ## 0.5
 
-**A Pocket you can afford to lose.**
-One password encrypts every recording Cairn has copied. Plugged into another computer, the Pocket reveals nothing.
+**Lose your Pocket, not your privacy.**
+One password and every recording on it is unreadable to anyone else. Turn on automatic securing and every new recording is protected the moment you plug it in.
 
-**Fix it where you read it.**
-Correct a passage in the transcript, here only or everywhere, and every note follows.
+**Fix it once, right where you read it.**
+Correct a word in the transcript and every note that has it follows, or only this one, your choice.
 
-**Words worth a second look.**
-Cairn lists the names spelled several ways and the words it doubted. Pick the spelling once, every note follows.
+**Names spelled right, without the hunt.**
+Cairn finds the names written several ways and the words it doubted. You pick the spelling once and all your notes agree.
 
-**Ask in your own words.**
-An optional search model finds the passage that answers your question, even when the words differ.
+**Ask a question, get the passage.**
+With the optional search model, describe what you are looking for in your own words and Cairn finds where it was said, even if nobody used those words.
 
-**One voice, one name, everywhere.**
-Name and merge people once for all your notes, and let Cairn recognise voices if you choose.
+**Know who said what, everywhere.**
+Name a voice once and, if you want, Cairn recognises it in your next notes. Rename or merge people in one place.
 
 ## 0.4
 
