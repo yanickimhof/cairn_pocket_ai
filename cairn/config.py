@@ -100,6 +100,7 @@ def install_config():
     chosen = read_json(home() / "settings.json")
     if chosen.get("llm") and not os.environ.get("CAIRN_LLM"):
         cfg["llm"] = chosen["llm"]
+    cfg["speech_engine"] = cfg.get("engine")  # the engine that runs the speech model: "parakeet" when that model is the chosen one
     if os.environ.get("CAIRN_WHISPER_MODEL"):
         cfg["whisper_dir"] = cfg["whisper_model"] = os.environ["CAIRN_WHISPER_MODEL"]
     else:
@@ -107,6 +108,8 @@ def install_config():
         speech_id = chosen.get("speech")
         marked = home() / "models" / str(speech_id) / ".cairn-complete"
         cfg["whisper_model"] = str(marked.parent) if speech_id and marked.exists() else cfg["whisper_dir"]
+        if speech_id == "parakeet" and marked.exists() and cfg.get("engine") == "mlx":
+            cfg["speech_engine"] = "parakeet"
     return cfg
 
 

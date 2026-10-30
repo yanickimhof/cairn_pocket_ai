@@ -130,15 +130,15 @@ def shutdown():
         _stop_worker()
 
 
-def transcribe(audio_path, progress=None, language=None):
+def transcribe(audio_path, progress=None, language=None, engine=None, model_dir=None):
     """Run the speech engine on one file. Returns {language, segments, duration}.
 
     progress, if given, is called with a number from 0 to 100 while the engine works.
     language ("fr", "en") forces the language of the recording; None lets the engine detect it, once, from the start.
     """
     cfg = config.install_config()
-    engine, model_dir = cfg.get("engine"), cfg.get("whisper_model")
-    if engine not in ("mlx", "faster"):
+    engine, model_dir = engine or cfg.get("speech_engine") or cfg.get("engine"), model_dir or cfg.get("whisper_model")
+    if engine not in ("mlx", "faster", "parakeet"):
         raise RuntimeError("No speech engine configured. Run the installer again.")
     if not model_dir or not os.path.isdir(model_dir):
         raise RuntimeError("Speech model not found. Run the installer again.")
@@ -150,6 +150,9 @@ def transcribe(audio_path, progress=None, language=None):
     segments = [s for s in data.get("segments", []) if s.get("text")]
     data["segments"] = segments
     data["duration"] = max((s["end"] for s in segments), default=0.0)
+    if not data.get("language"):  # an engine that does not say which language it heard: the words say it
+        shares, _ = language_mix(segments)
+        data["language"] = max(shares, key=shares.get) if shares else None
     return data
 
 
@@ -186,7 +189,7 @@ def model_key():
     from . import models
 
     cfg = config.install_config()
-    return "%s:%s" % (cfg.get("engine"), models.selected_speech() or cfg.get("whisper_repo") or "")
+    return "%s:%s" % (cfg.get("speech_engine") or cfg.get("engine"), models.selected_speech() or cfg.get("whisper_repo") or "")
 
 
 def model_name():

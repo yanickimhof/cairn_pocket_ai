@@ -181,12 +181,36 @@ class Downloader:
         except Exception as error:  # reported to the page, never raised
             self._set(state="error", error=str(error)[:400])
 
+    @staticmethod
+    def parakeet_requirements():
+        path = Path(__file__).resolve().parent.parent / "requirements" / "parakeet-macos-arm64.txt"
+        return path if path.is_file() and sys.platform == "darwin" and platform.machine() == "arm64" else None
+
+    def _install_locked(self, lock):
+        """Install a pinned, hashed list of packages inside Cairn's own environment (uv when there is one, else pip)."""
+        uv = shutil.which("uv") or str(config.home() / "bin" / "uv")
+        if Path(uv).exists() or shutil.which(uv):
+            command = [uv, "pip", "install", "--python", sys.executable, "--quiet", "--require-hashes", "-r", str(lock)]
+        else:
+            subprocess.run([sys.executable, "-m", "ensurepip", "--upgrade"], capture_output=True, text=True, timeout=120, check=False)  # nosec B603
+            command = [sys.executable, "-m", "pip", "install", "--quiet", "--require-hashes", "-r", str(lock)]
+        done = subprocess.run(command, capture_output=True, text=True, timeout=1800, check=False)  # nosec B603
+        if done.returncode != 0:
+            tail = (done.stderr or "").strip().splitlines()[-1:]
+            raise RuntimeError("Could not install the package. " + " ".join(tail))
+
     def _fetch_speech(self, entry):
         target = speech_dir(entry["id"])
         part = target.with_name(target.name + ".part")
         try:
             shutil.rmtree(part, ignore_errors=True)
             part.mkdir(parents=True, exist_ok=True)
+            if entry.get("engine") == "parakeet" and importlib.util.find_spec("parakeet_mlx") is None:
+                lock = self.parakeet_requirements()
+                if lock is None:
+                    raise RuntimeError("Parakeet needs a Mac with Apple silicon.")
+                self._set(pct=1)
+                self._install_locked(lock)
             env = dict(os.environ, HF_HUB_OFFLINE="0", HF_HUB_DISABLE_TELEMETRY="1", DO_NOT_TRACK="1")
             code = "import sys; from huggingface_hub import snapshot_download as d; d(sys.argv[1], revision=sys.argv[3] or None, local_dir=sys.argv[2])"
             flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)

@@ -2,6 +2,7 @@
 
     python -m cairn [--port 8731] [--no-browser]
     python -m cairn service install|open|stop|restart|status|uninstall   (background mode, macOS)
+    python -m cairn bench [AUDIO ...] [--max 3]                          (speed, memory and agreement of the installed speech models)
 """
 
 import argparse
@@ -53,6 +54,18 @@ def main(argv=None):
     args_in = sys.argv[1:] if argv is None else argv
     if args_in[:1] == ["service"]:
         return service.main(args_in[1:])
+    if args_in[:1] == ["bench"]:
+        from . import bench
+
+        bench_parser = argparse.ArgumentParser(prog="cairn bench", description="Measure the installed speech models on your own recordings.")
+        bench_parser.add_argument("audio", nargs="*")
+        bench_parser.add_argument("--max", type=int, default=3)
+        bench_parser.add_argument("--out")
+        found = bench_parser.parse_args(args_in[1:])
+        netguard.install()
+        os.environ.setdefault("HF_HUB_OFFLINE", "1")
+        bench.run(found.audio or None, found.max, found.out)
+        return 0
     parser = argparse.ArgumentParser(prog="cairn", description="Cairn: sovereign Pocket AI, on your own computer.")
     parser.add_argument("--port", type=int, default=int(os.environ.get("CAIRN_PORT", str(server.DEFAULT_PORT))))
     parser.add_argument("--no-browser", action="store_true", default=bool(os.environ.get("CAIRN_NO_BROWSER")))

@@ -76,6 +76,8 @@ def run(engine, model_dir, audio, progress_path=None, language=None):
             for s in result.get("segments", [])
         ]
         return {"language": result.get("language"), "segments": segments}
+    if engine == "parakeet":
+        return _parakeet(model_dir, audio, report)
     if engine == "faster":
         from faster_whisper import WhisperModel
 
@@ -99,6 +101,27 @@ def run(engine, model_dir, audio, progress_path=None, language=None):
                 report(s.end / info.duration)
         return {"language": info.language, "segments": segments}
     raise SystemExit("Unknown speech engine: %r" % engine)
+
+
+def _parakeet(model_dir, audio, report):
+    """Parakeet through its MLX port: sentences with a start, an end and a confidence. It has no language setting; a long recording is
+    cut in overlapping parts and joined again by the package itself."""
+    import math
+
+    from parakeet_mlx import DecodingConfig, SentenceConfig, from_pretrained
+
+    model = _MODELS.get(("parakeet", model_dir))
+    if model is None:
+        model = _MODELS[("parakeet", model_dir)] = from_pretrained(model_dir)
+    cut = SentenceConfig(max_duration=30.0, silence_gap=1.2)
+    result = model.transcribe(audio, decoding_config=DecodingConfig(sentence=cut), chunk_duration=120.0, overlap_duration=15.0,
+                              chunk_callback=lambda done, total: report(done / max(total, 1)))
+    report(1.0)
+    segments = [
+        {"start": s.start, "end": s.end, "text": s.text.strip(), "logprob": math.log(max(float(s.confidence), 0.05)), "no_speech": 0.0, "compression": 1.0}
+        for s in result.sentences if s.text.strip()
+    ]
+    return {"language": None, "segments": segments}
 
 
 def serve(engine, model_dir):
