@@ -2,7 +2,7 @@
 # Cairn installer for bash and zsh.
 # Detects the system, then installs everything in your own folder: no sudo, no system change.
 #
-#   curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.6.0/install.sh | bash
+#   curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.7.0/install.sh | bash
 #
 # Optional variables: CAIRN_HOME (default ~/Cairn), CAIRN_LLM (default qwen3:4b),
 # CAIRN_WHISPER_REPO (speech model), CAIRN_REF (branch or tag to install; the default is the release this script belongs to),
@@ -11,7 +11,7 @@ set -euo pipefail
 umask 077
 
 REPO="yanickimhof/cairn_pocket_ai"
-REF="${CAIRN_REF:-v0.6.0}"   # a fixed release, never a moving branch
+REF="${CAIRN_REF:-v0.7.0}"   # a fixed release, never a moving branch
 UV_VERSION="0.11.32"
 OLLAMA_VERSION="v0.40.13"                 # Ollama is installed at a fixed release and checked against this SHA-256
 OLLAMA_SHA256="da3189f87034d224beb0708d77b95180bc03872f6e269d59bd888a216055c58a"

@@ -19,7 +19,7 @@ Nothing is registered, so nothing starts by itself. Cairn listens on port 8731, 
 
 ## Update
 
-Cairn looks for a new version once a day (switch in **Settings, Check for updates**) and puts a dot on the info icon when one exists. To update, run the install command again: it replaces the engine and keeps your notes, settings and models. If speaker identification was installed, it is put back. The version it replaces stays in `~/Cairn/src.previous`, in case you need to go back. If you secured a Pocket, macOS may ask once to let the new copy of Python use the keychain: allow it, or enter the Pocket password again.
+Cairn looks for a new version once a day (switch in **Settings, Check for updates**) and puts a dot on the info icon when one exists. To update, run the install command again: it replaces the engine and keeps your notes, settings and models. If speaker identification was installed, it is put back from its own hashed list. The version it replaces stays in `~/Cairn/src.previous`, in case you need to go back. If you secured a Pocket, macOS may ask once to let the new copy of Python use the keychain: allow it, or enter the Pocket password again.
 
 ## Troubleshooting
 

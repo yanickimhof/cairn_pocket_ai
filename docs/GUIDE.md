@@ -102,6 +102,36 @@ Both scores appear in the exports (Markdown, HTML, copy). Secure mode hides the 
 - **All my actions:** the checklist icon lists the actions of every finished note, grouped by person, newest note first. Tick one when it is done: the tick is kept with its note. Tap the text of an action to correct it (the action, who, when), or use the trash to delete it after a confirmation: the change is made in the note itself, so its summary and its exports show it too. If the note is redone, its summary is written again and your corrections are replaced. The copy button copies the open actions as text. If a note is redone and the wording of an action changes, it shows as open again.
 - **Follow-up email:** the envelope on a note writes a short email from its summary, in the language of the note, with the summary model. The draft is kept with the note: copy it, open it in your mail app, or write it again. Cairn never sends anything.
 
+## Audio files
+
+The icon at the top, or a drop anywhere on the page, adds `.wav`, `.mp3`, `.m4a`, `.opus`, `.ogg` and `.flac` files, with or without a Pocket. A file is checked by its first bytes, not by its name; the same recording added twice is kept once. Files go to `Audio/Imported` and wait like Pocket recordings. Deleting one of these notes never touches a Pocket.
+
+## First steps
+
+On a first launch with no note, and from **About**, a list shows what Cairn needs: the speech model, the model server and notes model, ffmpeg, memory, disk space and the Pocket. Each missing item says what to do. The Pocket is advisory: with no Pocket, add audio files. A drive that looks like a Pocket but shows no recordings usually means USB Mode (Web Sync) is off.
+
+## Lock and encryption
+
+**Settings, Lock.** Choose a password of 10 characters or more. Cairn shows a recovery phrase once: write it down away from this computer. Without the password or the phrase, the data cannot be read: there is no other way in.
+
+- **What is sealed:** notes, settings (including the vocabulary and any token), voiceprints, the search index and every recording, with AES-256-GCM. Recordings are sealed in 1 MiB blocks, so playing from any time stamp opens only the blocks it needs.
+- **When it locks:** at start, when you press the lock icon, and after the idle time you choose (5, 15 or 60 minutes, or never). Idle time counts from what you do, not from the page refreshing itself, and Cairn never locks while a job runs. Locked, the page answers nothing but the password.
+- **Touch ID (Mac):** it confirms you are there before the key is read from the keychain. It does not replace the password: choose one, and use Touch ID for the daily opening. If Settings says the component is missing, update Cairn.
+- **Password and phrase:** both can be changed in Settings; a new phrase replaces the old one and the password is asked again. Turning the lock off decrypts everything again.
+- **Turning it on** seals what is already there, file by file, each only after the sealed copy was read back and matched; it can be stopped and resumes. Recordings that arrive later are sealed on arrival.
+- **Limits:** a file that was in plain form before may remain recoverable from free disk space, so keep full disk encryption on. While a recording is being transcribed, a plain copy exists in a private temporary file that is overwritten and removed afterwards. Exports you save in `Exports` are plain. Malware running as you while Cairn is open can read what you can. Lose the password and the phrase, and the data is gone.
+
+## Test bench
+
+`cairn bench` measures the speech models you have installed on your own recordings: speed, memory, the model's own confidence, the share of French and English, and how much the models disagree. Run it from the Cairn folder:
+
+```
+~/Cairn/bin/cairn bench                      # your three latest recordings
+~/Cairn/bin/cairn bench talk.m4a --max 1      # a file of your choice
+```
+
+Place a text next to a file (`talk.m4a.ref.txt`) and its difference from that text is added. The report is written to `~/Cairn/Exports/bench-DATE.md` and holds numbers only, never a word of a recording. With the lock on, the recordings are sealed: name the files.
+
 ## Deleting
 
 The trash icon on a note deletes it for good, on the Pocket and on this computer: the file on the Pocket, and the audio, transcript and summary here. Cairn never reaches the Pocket cloud account or its apps: a recording kept there is yours to delete there. If the Pocket is not connected, its file is erased the next time it is. Exports already saved in `~/Cairn/Exports` are not touched. The Pocket has no protection of its own, which is why deleting there matters.
@@ -109,6 +139,8 @@ The trash icon on a note deletes it for good, on the Pocket and on this computer
 ## Models
 
 The default install is the smallest that gives good results: Whisper large-v3-turbo (1.6 GB) and Qwen3 4B (2.5 GB). On a French recording, smaller speech models misheard names and produced wrong actions, so Cairn does not offer them.
+
+**Parakeet v3** (2.5 GB, Apple silicon only) is offered as an optional speech model. It is much faster on a recording in one language, but it cannot be told which language to hear and may drift on a recording that mixes two: Whisper stays the default. Installing it adds a small set of pinned packages from a hashed list and changes none of those already installed. Use `cairn bench` to compare on your own recordings.
 
 For sharper notes, open **Settings, Models**, pick a larger model (Qwen3 8B or 14B, Whisper large-v3), confirm the download, then press **Use**. Nothing downloads without your click, and a model can be removed from the same screen to free disk space. If Qwen3 8B is already in your Ollama, Cairn uses it. It never modifies your existing Ollama or models.
 

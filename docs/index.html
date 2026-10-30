@@ -32,7 +32,7 @@ a{color:var(--accent)}
 <div class="card spec"><div class="label">What it installs</div><p class="min" id="min"></p><table id="spec"></table></div><p class="alt" style="margin-top:24px">The command downloads and sets up everything in your own folder, with no administrator rights. <a href="https://github.com/yanickimhof/cairn_pocket_ai/blob/main/SECURITY.md">Read before you run</a> · <a href="https://github.com/yanickimhof/cairn_pocket_ai">Source</a></p>
 </main>
 <script>
-var base = "https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.6.0/";
+var base = "https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.7.0/";
 var cmds = {
   sh: { label: "Terminal (bash or zsh)", text: "curl --proto '=https' --tlsv1.2 -fsSL " + base + "install.sh | bash" },
   ps: { label: "PowerShell", text: "irm " + base + "install.ps1 | iex" }
@@ -40,7 +40,7 @@ var cmds = {
 var ua = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || navigator.userAgent || "";
 var key = /win/i.test(ua) ? "ps" : "sh";
 var specs = {
-  sh: { min: "Minimum: macOS 14 or later, Apple silicon recommended. About 5.5 GB of disk.", rows: [["Whisper large-v3-turbo (speech)", "1.6 GB"], ["Qwen3 4B (language model)", "2.5 GB"], ["Ollama (model server)", "0.2 GB"], ["Python 3.11 and packages", "1 GB"]] },
+  sh: { min: "Minimum: macOS 14 or later, Apple silicon recommended. About 4.8 GB of disk.", rows: [["Whisper large-v3-turbo (speech)", "1.6 GB"], ["Qwen3 4B (language model)", "2.5 GB"], ["Ollama (model server)", "0.2 GB"], ["Python 3.11 and packages", "0.4 GB"]] },
   ps: { min: "Minimum: Windows 10 22H2 or later. About 7 GB of disk (estimate).", rows: [["Whisper large-v3-turbo (speech)", "1.6 GB"], ["Qwen3 4B (language model)", "2.5 GB"], ["Ollama (model server)", "1.7 GB download, about 4 GB installed"], ["Python 3.11 and packages", "About 1 GB"]] }
 };
 function showSpec(k) {

@@ -1,5 +1,25 @@
 # Release notes
 
+## 0.7
+
+**Any recording, with or without a Pocket.**
+Drop audio files on Cairn, or pick them with the icon at the top: they become notes like the rest.
+
+**Locked, and sealed.**
+A password or Touch ID, and your notes, recordings and settings are encrypted on this Mac. Cairn locks itself when you step away.
+
+**Ready to go.**
+A first-steps list says what is ready, what is missing and how to fix it, Pocket included.
+
+**Faster, if you want.**
+Parakeet v3 is an optional speech model on Apple silicon, and `cairn bench` measures your models on your own recordings.
+
+**Quiet in the menu bar.**
+A small icon shows what Cairn is doing, what waits and when notes are ready. Off in one tap.
+
+**A lighter, verified install.**
+About 700 MB less on Apple silicon, and every download is checked against a fixed checksum.
+
 ## 0.6
 
 **Ask your notes.**

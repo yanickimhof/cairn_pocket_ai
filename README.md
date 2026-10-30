@@ -10,7 +10,7 @@
 
 ## What Cairn does
 
-**Capture.** Plug in your Pocket and every recording is copied and verified, without a click. One password locks what stays on the Pocket.
+**Capture.** Plug in your Pocket and every recording is copied and verified, without a click, or drop any audio file on the page. One password locks what stays on the Pocket, and a lock seals your notes and recordings on this computer.
 
 **Understand.** Whisper writes every word on your machine, for one minute or four hours. Voices are named once and recognised in every note. Each note comes with a title, a summary, decisions, actions and key points, in the template you defined once, with a fidelity score that keeps the AI honest.
 
@@ -20,7 +20,7 @@
 
 ## Sovereign by design
 
-Your recordings never leave your computer. No account, no cloud, no telemetry, and everything works offline. A vault encrypts what stays on the Pocket, a secure mode hides the screen, and you choose the models that run. You hold the keys.
+Your recordings never leave your computer. No account, no cloud, no telemetry, and everything works offline. A vault encrypts what stays on the Pocket, an app lock encrypts your notes and recordings, a secure mode hides the screen, and you choose the models that run. You hold the keys.
 
 
 What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
@@ -53,7 +53,7 @@ What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
 |---|---|---|
 | ![About](docs/screenshots/about.png) | ![HTML export](docs/screenshots/html-export.png) | ![Email](docs/screenshots/email.png) |
 
-> **Status: v0.6.0, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
+> **Status: v0.7.0, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
 
 ## Install
 
@@ -62,13 +62,13 @@ Paste one command in a terminal. It detects your system and installs everything 
 bash or zsh:
 
 ```
-curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.6.0/install.sh | bash
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.7.0/install.sh | bash
 ```
 
 PowerShell:
 
 ```
-irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.6.0/install.ps1 | iex
+irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.7.0/install.ps1 | iex
 ```
 
 | | Minimum | Recommended |
@@ -77,7 +77,7 @@ irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.6.0/install
 | Memory | 8 GB | 16 GB or more (larger models) |
 | Disk space | 12 GB free | 20 GB free |
 | System | macOS 14, Windows 10 22H2 | Latest version |
-| Internet | Installation only: about 5.5 GB (Mac) or 7 GB (Windows), about 2.5 GB if Ollama and a Qwen3 model are already installed | |
+| Internet | Installation only: about 4.8 GB (Mac) or 7 GB (Windows), about 2.5 GB if Ollama and a Qwen3 model are already installed (estimates) | |
 
 No graphics card needed. Everything works offline once installed.
 
@@ -101,12 +101,16 @@ You need neither the Pocket desktop app nor a Pocket account on the computer.
 
 > **Ask your notes (optional):** in Settings > Models, install a search model (Qwen3 Embedding 0.6B or BGE-M3). Then type a question in the magnifier and press Enter: your summary model answers from the passages it finds, each with its note and minute. Follow up, ask what is still open, or narrow it to a period or a tag. Nothing is stored and nothing leaves your computer. Details: [docs/GUIDE.md](docs/GUIDE.md#finding-listening-following-up).
 
-> **Choose your models (optional):** the default install uses Whisper large-v3-turbo and Qwen3 4B. In Settings > Models you can switch the speech model to Whisper large-v3 (3.1 GB, slower, 16 GB of memory advised) and the summary model to Qwen3 8B or 14B. Nothing downloads until you confirm, and a model already in your Ollama is reused. Sizes shown for installed models are the real ones on your computer.
+> **Lock and encryption (optional):** in Settings, turn on **Lock**, choose a password (10 characters or more) and write down the recovery phrase, shown once. Notes, settings, the search index and recordings are then encrypted on this computer, Cairn asks for the password when it opens and after the idle time you set, and Touch ID can replace typing it on a Mac that has it. Details and limits: [docs/GUIDE.md](docs/GUIDE.md#lock-and-encryption).
+
+> **Menu bar (macOS):** a small icon shows what Cairn is doing and what waits, and tells you once when notes are ready. Settings, **Menu bar**, turns it off.
+
+> **Choose your models (optional):** the default install uses Whisper large-v3-turbo and Qwen3 4B. In Settings > Models you can switch the speech model to Whisper large-v3 (3.1 GB, slower, 16 GB of memory advised), or on Apple silicon to Parakeet v3, much faster on a recording in a single language (it cannot be told which language to hear, so Whisper stays the default); `cairn bench` measures them on your own recordings ([guide](docs/GUIDE.md#test-bench)). The summary model can be Qwen3 8B or 14B. Nothing downloads until you confirm, and a model already in your Ollama is reused. Sizes shown for installed models are the real ones on your computer.
 
 ## Use it
 
 1. Start Cairn: open `~/Cairn/Cairn.app` (macOS), the Start menu shortcut or `Cairn.cmd` (Windows), or run `~/Cairn/bin/cairn`. A page opens, served only by your computer and protected by a session key.
-2. Connect your Pocket. Cairn copies and verifies the new recordings and lists them as waiting, so you see everything and decide what to process.
+2. Connect your Pocket, or drop audio files on the page. Cairn copies and verifies the new recordings and lists them as waiting, so you see everything and decide what to process.
 3. Press the central button (its badge counts what is waiting) to process the queue, or tap one recording. Cairn transcribes with Whisper, then titles and summarizes with a local model (a Qwen model through Ollama), at the level of detail, in the language and with the type you choose for each recording. Settings can import and process by themselves.
 4. Each note shows two indicators, the fidelity of the note to its transcript and the speech engine's confidence in the raw transcript, and highlights the passages worth checking. Rename, tag, copy or export it (Markdown, HTML, to `~/Cairn/Exports`), tap a time stamp to hear the recording from that line, or write the follow-up email.
 5. The magnifier searches every note (`#tag` filters). Press Enter to ask a question instead: the answer comes with the passages it is drawn from. The checklist icon gathers all your actions in one list.
