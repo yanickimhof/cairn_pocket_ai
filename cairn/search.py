@@ -23,7 +23,7 @@ def fold(text):
 
 
 def split_query(query):
-    """(text of the query, tags asked for): "#orion budget" is the word budget among the notes tagged orion."""
+    """(text of the query, tags asked for): "#apollo budget" is the word budget among the notes tagged apollo."""
     tags = [t for t in re.findall(r"#([^\s#]+)", query or "")][:5]
     return re.sub(r"#[^\s#]+", " ", query or ""), [fold(t)[0] for t in tags]
 

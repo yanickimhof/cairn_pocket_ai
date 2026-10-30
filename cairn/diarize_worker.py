@@ -29,19 +29,49 @@ def choose_device(setting, mps_available):
     return "mps" if setting != "cpu" and mps_available else "cpu"
 
 
-def run_pipeline(path, setting):
+def split_result(result):
+    """(diarization, voiceprints or None) from what a pipeline returns: pyannote 4 holds both in one object, 3.x returns a pair
+    when asked for the embeddings."""
+    if isinstance(result, tuple) and len(result) == 2:
+        return result
+    return result, getattr(result, "speaker_embeddings", None)
+
+
+def voiceprints(diarization, embeddings):
+    """{speaker label: list of floats}, the embeddings being in the order of the labels of the annotation."""
+    if embeddings is None:
+        return {}
+    annotation = getattr(diarization, "speaker_diarization", diarization)
+    labels = list(annotation.labels())
+    out = {}
+    for label, vector in zip(labels, embeddings):
+        values = [float(x) for x in vector]
+        if values and all(x == x and abs(x) != float("inf") for x in values):  # no NaN, no infinity
+            out[label] = [round(x, 5) for x in values]
+    return out
+
+
+def run_pipeline(path, setting, voices=False):
     from pyannote.audio import Pipeline
     import torch
 
     name = "pyannote/speaker-diarization-3.1"
+    extra = {"return_embeddings": True} if voices else {}
+
+    def call(pipeline):
+        try:
+            return split_result(pipeline(path, **extra))
+        except TypeError:  # a version whose pipeline does not take that option still gives the voiceprints in its result
+            return split_result(pipeline(path))
+
     pipeline = Pipeline.from_pretrained(name)
     if choose_device(setting, torch.backends.mps.is_available()) == "mps":
         try:
             pipeline.to(torch.device("mps"))
-            return pipeline(path)
+            return call(pipeline)
         except Exception:  # the graphics chip could not do it: start again on the processor
             pipeline = Pipeline.from_pretrained(name)
-    return pipeline(path)
+    return call(pipeline)
 
 
 def main():
@@ -60,7 +90,8 @@ def main():
     except ImportError:
         return 3
     try:
-        diarization = run_pipeline(sys.argv[1], os.environ.get("CAIRN_DIARIZE_DEVICE", "auto"))
+        voices = os.environ.get("CAIRN_VOICES") == "1"
+        diarization, embeddings = run_pipeline(sys.argv[1], os.environ.get("CAIRN_DIARIZE_DEVICE", "auto"), voices)
     except Exception as error:  # a bad file, a pipeline error, out of memory, and so on
         print("%s: %s" % (type(error).__name__, str(error)[:200]), file=sys.stderr)
         return 1
@@ -69,7 +100,13 @@ def main():
     except AttributeError as error:  # a result shape this version does not know
         print("%s: %s" % (type(error).__name__, str(error)[:200]), file=sys.stderr)
         return 1
-    print(json.dumps(turns))
+    if voices:
+        try:
+            print(json.dumps({"turns": turns, "voices": voiceprints(diarization, embeddings)}))
+        except (AttributeError, TypeError, ValueError):  # no voiceprints in this result: the turns alone are still worth having
+            print(json.dumps({"turns": turns, "voices": {}}))
+    else:
+        print(json.dumps(turns))
     return 0
 
 

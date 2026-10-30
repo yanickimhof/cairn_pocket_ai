@@ -2,32 +2,26 @@
 
 **Your Pocket. Your computer. Your data.**
 
-Sovereign Pocket AI. Turn your Pocket recordings into clean, structured notes, entirely on your computer.
+**Sovereign Pocket AI.** Cairn turns your Pocket recordings into sharp, structured notes. Transcribed, analysed and kept on your computer, and nowhere else.
 
-No cloud, no account, no telemetry. Nothing leaves your machine.
-
-*A cairn is a stack of stones that marks a trail. This one marks the way from your voice to your notes.*
+**No cloud. No account. No telemetry. Nothing leaves your machine.**
 
 ![Cairn: import, transcribe, speakers, notes, templates, search, listen, tags, actions, follow-up, vocabulary, export](docs/brand/features.png)
 
 ## What Cairn does
 
-| | |
-|---|---|
-| **Import** | Connect your Pocket and Cairn copies and verifies every recording by itself. |
-| **Transcribe** | Whisper turns each recording into text on your computer, at any length, with no upload. |
-| **Speakers** | Voices are told apart and named, so a transcript reads as a conversation. |
-| **Notes** | A title, a summary, the actions, the key points and the decisions, at the depth you choose, with a fidelity score you can check. |
-| **Templates** | Define a format once, a client report or a weekly brief, and every note follows it. |
-| **Search** | Find any word across all your notes in a second, narrowed by tag. |
-| **Listen** | Tap a time stamp to hear the passage and settle a doubtful word in seconds. |
-| **Tags** | Organize with free words instead of folders, and let Cairn suggest them from your own. |
-| **Actions** | Every action from every note, by person, in one list you can tick, correct and copy. |
-| **Follow-up** | The follow-up email is drafted from the note, ready for your mail app. |
-| **Vocabulary** | Teach Cairn your names, places and jargon, and a spelling is fixed in every note at once. |
-| **Export** | Markdown, HTML, text or a paste-ready email: your notes leave in the format you choose. |
+**Capture.** Plug in your Pocket and every recording is copied and verified, without a click. One password locks what stays on the Pocket.
 
-**Sovereign by design.** No account, no cloud, no telemetry. Your recordings never leave your computer and everything works offline. A secure mode hides the screen, and you pick the Whisper and Qwen models that run.
+**Understand.** Whisper writes every word on your machine, for one minute or four hours. Voices are named once and recognised in every note. Each note comes with a title, a summary, decisions, actions and key points, in the template you defined once, with a fidelity score that keeps the AI honest.
+
+**Find and fix.** Any word in every note in a second, or ask by meaning. Tap a time stamp, hear the passage, fix the word. Teach Cairn your names once and they are right in every note. Tags replace folders.
+
+**Act.** Every action from every note, by person, in one list. The follow-up email is already written. Export to Markdown, HTML, text or email.
+
+## Sovereign by design
+
+Your recordings never leave your computer. No account, no cloud, no telemetry, and everything works offline. A vault encrypts what stays on the Pocket, a secure mode hides the screen, and you choose the models that run. You hold the keys.
+
 
 What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
 
@@ -35,23 +29,31 @@ What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
 |---|---|---|
 | ![Secure mode](docs/screenshots/secure-mode.png) | ![Recordings, with live progress](docs/screenshots/recordings.png) | ![Note](docs/screenshots/note.png) |
 
-| Find anything | Hear what was said | Tags |
+| Secure my Pocket | A Pocket that is protected | Who said what |
 |---|---|---|
-| ![Search](docs/screenshots/find.png) | ![Transcript with the recording](docs/screenshots/listen.png) | ![Tags](docs/screenshots/tags.png) |
+| ![Securing the Pocket with a password](docs/screenshots/vault.png) | ![A protected Pocket](docs/screenshots/vault-secured.png) | ![People of all the notes](docs/screenshots/people.png) |
 
-| All your actions | The follow-up email | Settings |
+| Find anything | Ask by meaning | Hear what was said |
 |---|---|---|
-| ![All actions](docs/screenshots/actions.png) | ![Follow-up email](docs/screenshots/followup.png) | ![Settings](docs/screenshots/settings.png) |
+| ![Search](docs/screenshots/find.png) | ![Related passages](docs/screenshots/meaning.png) | ![Transcript with the recording](docs/screenshots/listen.png) |
 
-| Your vocabulary | Your note templates | Models on demand |
+| Fix it in place | Words to check | Your vocabulary |
 |---|---|---|
-| ![Vocabulary](docs/screenshots/vocabulary.png) | ![Note templates](docs/screenshots/templates.png) | ![Models](docs/screenshots/models.png) |
+| ![Correcting a passage](docs/screenshots/correct.png) | ![Words to check](docs/screenshots/check.png) | ![Vocabulary](docs/screenshots/vocabulary.png) |
+
+| Tags | All your actions | The follow-up email |
+|---|---|---|
+| ![Tags](docs/screenshots/tags.png) | ![All actions](docs/screenshots/actions.png) | ![Follow-up email](docs/screenshots/followup.png) |
+
+| Settings | Your note templates | Models on demand |
+|---|---|---|
+| ![Settings](docs/screenshots/settings.png) | ![Note templates](docs/screenshots/templates.png) | ![Models](docs/screenshots/models.png) |
 
 | About | Export to HTML (transcript folded) | Copy for an email |
 |---|---|---|
 | ![About](docs/screenshots/about.png) | ![HTML export](docs/screenshots/html-export.png) | ![Email](docs/screenshots/email.png) |
 
-> **Status: v0.4.0, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
+> **Status: v0.5.0, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
 
 ## Install
 
@@ -60,13 +62,13 @@ Paste one command in a terminal. It detects your system and installs everything 
 bash or zsh:
 
 ```
-curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.4.0/install.sh | bash
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.5.0/install.sh | bash
 ```
 
 PowerShell:
 
 ```
-irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.4.0/install.ps1 | iex
+irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.5.0/install.ps1 | iex
 ```
 
 | | Minimum | Recommended |
@@ -95,7 +97,7 @@ You need neither the Pocket desktop app nor a Pocket account on the computer.
 
 > **Speaker identification (optional):** in Settings, add your Hugging Face token, install its model (Settings > Models), then switch it on to see who's speaking in the transcript and the note. Speakers can be given a real name from the transcript view, and an older recording can be rediarized on demand. Off by default, fully local once installed; see [docs/GUIDE.md](docs/GUIDE.md#speaker-identification-diarization-optional) for setup, including the Hugging Face access you need to accept once. On a Mac with Apple silicon it runs on the graphics chip by default, at least four times faster with the same result; Settings can switch it to the processor.
 
-> **Names and places (optional):** in Settings, add the names of people and places and the rare terms you use to Vocabulary, one per line. Cairn writes close variants as listed in the transcript, tells the summary the spelling, and shows every correction on the note. `Sion, Cion => Acme` always replaces each spelling, and `Science Day => ACME Day | awards, ceremony` only near those words. One tap then updates the notes that need it.
+> **Names and places (optional):** in Settings, add the names of people and places and the rare terms you use to Vocabulary, one per line. Cairn writes close variants as listed in the transcript, tells the summary the spelling, and shows every correction on the note. `Brant, Brand => Brandt` always replaces each spelling, and `Open Day => BRANDT Day | awards, ceremony` only near those words. One tap then updates the notes that need it.
 
 > **Choose your models (optional):** the default install uses Whisper large-v3-turbo and Qwen3 4B. In Settings > Models you can switch the speech model to Whisper large-v3 (3.1 GB, slower, 16 GB of memory advised) and the summary model to Qwen3 8B or 14B. Nothing downloads until you confirm, and a model already in your Ollama is reused. Sizes shown for installed models are the real ones on your computer.
 
@@ -112,7 +114,7 @@ Models, speed, background mode, web app and other details: [docs/GUIDE.md](docs/
 
 ## How it is checked
 
-Every change runs through automated checks on GitHub: unit and end-to-end tests, a test that loads and drives the page script, static analysis of the code, a scan for secrets, and a complete installation on macOS and Windows, from a simulated Pocket to an exported note. The install commands point at a fixed release, packages are pinned by hash, speech models by revision, and Dependabot watches the dependencies. The interface is checked against WCAG 2.1 AA with an automated tool. This is an internal review, not a third-party audit. Details and known limits: [SECURITY.md](SECURITY.md).
+Every change runs through automated checks on GitHub: unit and end-to-end tests, a test that loads and drives the page script, static analysis of the code, a scan for secrets, and a complete installation on macOS and Windows, from a simulated Pocket to an exported note. The install commands point at a fixed release, packages are pinned by hash, speech models by revision, and Dependabot watches the dependencies. The interface goes through automated accessibility checks (axe-core) and a keyboard walk; it has not been tested with a screen reader yet. Details and known limits: [SECURITY.md](SECURITY.md).
 
 ## Why sovereign
 

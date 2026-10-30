@@ -154,6 +154,60 @@ def main():
             fail("the audio copy is still on the computer")
         print("OK: export, rename, delete everywhere (simulated Pocket and computer)", flush=True)
 
+        # The Pocket vault: secure the simulated Pocket, check nothing readable is left, lock it, unlock it, delete from it
+        suffix = Path(args.audio).suffix
+        (pocket / "2026-10-09").mkdir(parents=True, exist_ok=True)
+        shutil.copy(args.audio, pocket / "2026-10-09" / ("20261009_090000" + suffix))
+        state = client.call("GET", "/api/state?list=0")[1]
+        if state["pocket"].get("vault", {}).get("available") is not True:
+            fail("the encryption library is not available: %s" % state["pocket"].get("vault"))
+        password = "check-password-for-the-vault"
+        if client.call("POST", "/api/vault/create", {"password": "short"})[0] != 400:
+            fail("a short password must be refused")
+        if client.call("POST", "/api/vault/create", {"password": password, "trust": False})[0] != 202:
+            fail("the vault was not created")
+        for _ in range(120):
+            time.sleep(2)
+            state = client.call("GET", "/api/state?list=0")[1]
+            # another job may hold the engine for a moment: the request is kept and done as soon as it is free
+            if not state["job"]["running"] and (state["pocket"]["vault"]["state"] == "secured" or state["job"]["errors"]):
+                break
+        if state["job"]["errors"]:
+            fail("securing failed: %s" % state["job"]["errors"])
+        vault = state["pocket"]["vault"]
+        if (vault["state"], vault["plain"], vault["sealed"]) != ("secured", 0, 1):
+            listing = sorted(str(x.relative_to(pocket)) for x in pocket.rglob("*"))
+            fail("the Pocket is not secured: %s | job: %s | pocket: %s" % (vault, state["job"], listing))
+        if list(pocket.rglob("*" + suffix)):
+            fail("a readable recording is still on the Pocket")
+        if len(list(pocket.glob("*.cairn"))) != 1 or not (pocket / ".cairn-vault").is_file():
+            fail("the encrypted file or the vault header is missing")
+        if args.audio and Path(args.audio).read_bytes()[:64] in b"".join(p.read_bytes() for p in pocket.glob("*.cairn")):
+            fail("the recording can be read in the encrypted file")
+        if client.call("POST", "/api/vault/forget")[0] != 200:
+            fail("forget")
+        if client.call("GET", "/api/state?list=0")[1]["pocket"]["vault"]["state"] != "locked":
+            fail("the Pocket must be locked once the key is forgotten")
+        if client.call("POST", "/api/vault/unlock", {"password": "the wrong password"})[0] != 403:
+            fail("a wrong password must be refused")
+        if client.call("POST", "/api/vault/unlock", {"password": password, "trust": False})[0] != 202:
+            fail("the right password was refused")
+        for _ in range(120):
+            time.sleep(2)
+            state = client.call("GET", "/api/state?list=0")[1]
+            # another job may hold the engine for a moment: the request is kept and done as soon as it is free
+            if not state["job"]["running"] and (state["pocket"]["vault"]["state"] == "secured" or state["job"]["errors"]):
+                break
+        if state["pocket"]["vault"]["state"] != "secured" or state["job"]["errors"]:
+            fail("unlock: %s %s" % (state["pocket"]["vault"], state["job"]["errors"]))
+        notes = client.call("GET", "/api/state")[1]["notes"]
+        if len(notes) != 1:
+            fail("the recording must have come in from the encrypted Pocket: %s" % notes)
+        out = client.call("POST", "/api/note/%s/delete" % notes[0]["id"])
+        if out[0] != 200 or out[1].get("pocket") is not True or list(pocket.glob("*.cairn")):
+            fail("deleting must erase the encrypted file from the Pocket")
+        print("OK: Pocket vault (secured, locked, unlocked, read, deleted)", flush=True)
+
         if client.call("POST", "/api/privacy/check")[0] != 202:
             fail("the privacy check was not accepted")
         for _ in range(120):

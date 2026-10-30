@@ -1,3 +1,5 @@
 faster-whisper
 huggingface_hub
 bleak; sys_platform == 'darwin'
+cryptography>=46,<49
+keyring

@@ -11,14 +11,18 @@ const source = fs.readFileSync(appPath, "utf8");
 const listeners = {};
 const page = { innerHTML: "" };
 const toast = { className: "", textContent: "" };
-const fakeNode = () => ({
-  style: {}, setAttribute() {}, addEventListener() {}, click() {}, remove() {}, appendChild() {}, parentNode: null,
-});
+const fakeNode = () => {
+  const node = { style: {}, innerHTML: "", handlers: {}, setAttribute() {}, click() {}, remove() {}, appendChild() {}, parentNode: null, querySelector: () => null, focus() {} };
+  node.addEventListener = (type, fn) => { node.handlers[type] = fn; };
+  return node;
+};
+let modal = null;  // the last window the page opened (the transcript)
 const doc = {
   getElementById: (id) => (id === "app" ? page : id === "toast" ? toast : null),
   addEventListener: (type, fn) => { (listeners[type] = listeners[type] || []).push(fn); },
   documentElement: {},
-  body: { appendChild() {}, removeChild() {}, style: {} },
+  body: { appendChild(node) { modal = node; node.parentNode = doc.body; }, removeChild(node) { if (modal === node) { modal = null; } }, style: {} },
+  querySelector: () => null,
   activeElement: null,
   createElement: fakeNode,
 };
@@ -28,8 +32,19 @@ function fetchStub(path, opt) {
   calls.push(((opt && opt.method) || "GET") + " " + path);
   let body = {};
   if (path.split("?")[0] === "/api/state") { body = JSON.parse(JSON.stringify(fx.state)); }  // a copy: the page empties its list in secure mode
-  else if (path.indexOf("/api/search") === 0) {
-    body = { results: [{ id: "n1", title: "Call", date: "2026-10-08T08:06:00", score: 3, hits: [{ where: "transcript", start: 12, parts: [{ t: "see the ", m: false }, { t: "acme", m: true }] }] }] };
+  else if (path.indexOf("/api/search?") === 0) {
+    body = { results: [{ id: "n1", title: "Call", date: "2026-10-08T08:06:00", score: 3, hits: [{ where: "transcript", start: 12, parts: [{ t: "see the ", m: false }, { t: "brandt", m: true }] }] }] };
+  }
+  else if (path.indexOf("/api/search/meaning") === 0) {
+    body = { results: [{ id: "n9", title: "Meaning hit", date: "2026-10-08T08:06:00", score: 0.7, hits: [{ where: "similar", start: null, parts: [{ t: "an answer in other words", m: false }] }] }] };
+  }
+  else if (path === "/api/people") {
+    body = { people: [{ name: "Anna", seconds: 600, voice: 2, notes: [{ id: "n1", title: "Call", date: "2026-10-08T08:06:00" }] }, { name: "Anna B", seconds: 60, voice: 0, notes: [{ id: "n2", title: "Check-in", date: "2026-10-07T08:06:00" }] }],
+             unnamed: [{ id: "n3", title: "Review", date: "2026-10-06T08:06:00", labels: ["Speaker 1"] }], enabled: true, voiceprints: 1, orphans: [] };
+  }
+  else if (path === "/api/vocabulary/check") {
+    body = { items: [{ key: "brandt", forms: [{ text: "Brandt", count: 3 }, { text: "Brant", count: 1 }], suggest: "Brandt", reason: "variants", notes: 2,
+                       examples: [{ note: "n1", title: "Call", start: 3, text: "We saw Brant yesterday", word: "Brant", weak: false }] }] };
   }
   else if (path === "/api/actions") {
     body = { actions: [{ note: "n1", title: "Call", date: "2026-10-08T08:06:00", what: "Send the plan", who: "Sophie", when: "Friday", done: false },
@@ -115,11 +130,11 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   click({ "data-a": "find" });
   await settle();
   check(page.innerHTML.indexOf('id="findInput"') !== -1 && page.innerHTML.indexOf('data-a="autocheck"') === -1, "the search opens and replaces the settings");
-  (listeners.input || []).forEach((fn) => fn({ target: { id: "findInput", value: "acme" } }));
+  (listeners.input || []).forEach((fn) => fn({ target: { id: "findInput", value: "brandt" } }));
   timers.splice(0).forEach((fn) => fn());
   await settle();
-  check(calls.some((c) => c === "GET /api/search?q=acme"), "typing searches");
-  check(page.innerHTML.indexOf("<mark>acme</mark>") !== -1 && page.innerHTML.indexOf('data-a="findGo"') !== -1, "the results mark the searched word");
+  check(calls.some((c) => c === "GET /api/search?q=brandt"), "typing searches");
+  check(page.innerHTML.indexOf("<mark>brandt</mark>") !== -1 && page.innerHTML.indexOf('data-a="findGo"') !== -1, "the results mark the searched word");
   check(page.innerHTML.indexOf('data-v="12"') !== -1, "a transcript result carries its moment");
 
   // all actions, grouped by person, with the ticked ones at the end
@@ -160,7 +175,7 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   check(page.innerHTML.indexOf('data-a="mailOpen"') !== -1, "a finished note offers its follow-up email");
 
   // vocabulary: how many notes are out of date, update them all, or tick some
-  fx.state.settings.vocabulary = ["Sion, Cion => Acme"];
+  fx.state.settings.vocabulary = ["Brant, Brand => Brandt"];
   fx.state.totals.vocab_todo = 2;
   timers.splice(0).forEach((fn) => fn());
   click({ "data-a": "settings" });
@@ -209,11 +224,11 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   await settle();
 
   // tags: shown on the row, a filter above the list, edited in the note, one suggestion waiting
-  fx.state.notes.filter((n) => n.id === done.id)[0].tags = ["Orion"];
+  fx.state.notes.filter((n) => n.id === done.id)[0].tags = ["Apollo"];
   fx.state.notes.filter((n) => n.id === done.id)[0].tag_suggestions = ["juridique"];
   timers.splice(0).forEach((fn) => fn());
   await settle();
-  check(page.innerHTML.indexOf("#Orion") !== -1 && page.innerHTML.indexOf("+#juridique") !== -1 && page.innerHTML.indexOf('data-a="tagFilter"') !== -1, "the list shows the tags, the suggestion and a filter");
+  check(page.innerHTML.indexOf("#Apollo") !== -1 && page.innerHTML.indexOf("+#juridique") !== -1 && page.innerHTML.indexOf('data-a="tagFilter"') !== -1, "the list shows the tags, the suggestion and a filter");
   click({ "data-a": "row", "data-id": done.id });
   await settle();
   check(page.innerHTML.indexOf('data-a="tagAccept"') !== -1 && page.innerHTML.indexOf('data-a="tagRemove"') !== -1 && page.innerHTML.indexOf('data-a="tagToggle"') !== -1, "the note shows its tags and its suggestion");
@@ -226,10 +241,10 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   (listeners.input || []).forEach((fn) => fn({ target: { id: "tagInput", value: "famille" } }));
   click({ "data-a": "tagAdd" });
   await settle();
-  click({ "data-a": "tagFilter", "data-v": "Orion" });
+  click({ "data-a": "tagFilter", "data-v": "Apollo" });
   await settle();
   check(page.innerHTML.indexOf('data-id="' + waiting.id + '"') === -1 && page.innerHTML.indexOf('data-id="' + done.id + '"') !== -1, "the filter keeps only the notes with that tag");
-  click({ "data-a": "tagFilter", "data-v": "Orion" });
+  click({ "data-a": "tagFilter", "data-v": "Apollo" });
   await settle();
   check(page.innerHTML.indexOf('data-id="' + waiting.id + '"') !== -1, "the filter is lifted by a second tap");
   click({ "data-a": "settings" });
@@ -239,6 +254,134 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   await settle();
   check(page.innerHTML.indexOf('id="pickTagInput"') !== -1, "choosing notes offers to tag them");
   click({ "data-a": "pickCancel" });
+  await settle();
+
+  // the Pocket vault: the ring tells the state, the panel asks for what is needed
+  const typeInto = (id, value) => (listeners.input || []).forEach((fn) => fn({ target: { id, value } }));
+  const setVault = async (state, connected) => {
+    fx.state.pocket = Object.assign({}, fx.state.pocket, { connected, vault: Object.assign({ available: true, plain: 0, sealed: 0, locked: 0, trusted: false }, { state }) });
+    timers.splice(0).forEach((fn) => fn());
+    await settle();
+  };
+  await setVault("none", true);
+  check(page.innerHTML.indexOf('class="secbtn risk') !== -1, "an unprotected Pocket shows an orange shield");
+  check(page.innerHTML.indexOf('id="vPass"') === -1, "the vault panel is closed at first");
+  click({ "data-a": "vault" });
+  await settle();
+  check(page.innerHTML.indexOf('id="vPass"') !== -1 && page.innerHTML.indexOf('id="vPass2"') !== -1 && page.innerHTML.indexOf('data-a="vaultCreate"') !== -1, "the panel asks for a password and its confirmation");
+  typeInto("vPass", "a long passphrase"); typeInto("vPass2", "something else");
+  const before = calls.length;
+  click({ "data-a": "vaultCreate" });
+  await settle();
+  check(calls.slice(before).every((c) => c.indexOf("/api/vault/create") === -1), "two different passwords are never sent");
+  typeInto("vPass2", "a long passphrase");
+  click({ "data-a": "vaultCreate" });
+  await settle();
+  check(calls.indexOf("POST /api/vault/create") !== -1, "matching passwords create the vault");
+  check(page.innerHTML.indexOf('id="vPass"') === -1, "the panel closes once the vault is created");
+  await setVault("partial", true);
+  check(page.innerHTML.indexOf('class="secbtn risk') !== -1, "a Pocket with plain recordings keeps the orange shield");
+  await setVault("locked", true);
+  check(page.innerHTML.indexOf('class="secbtn lock') !== -1, "a locked Pocket shows an orange shield");
+  click({ "data-a": "vault" });
+  await settle();
+  check(page.innerHTML.indexOf('data-a="vaultUnlock"') !== -1 && page.innerHTML.indexOf('id="vPass2"') === -1, "a locked Pocket asks for the password only");
+  click({ "data-a": "vault" });
+  await settle();
+  await setVault("secured", true);
+  check(page.innerHTML.indexOf('class="secbtn ok') !== -1, "a secured Pocket shows a green shield");
+  await setVault("secured", false);
+  check(page.innerHTML.indexOf('class="secbtn idle') !== -1, "without the Pocket the shield is neutral");
+  fx.state.pocket.vault.available = false;
+  timers.splice(0).forEach((fn) => fn());
+  await settle();
+  check(page.innerHTML.indexOf('class="secbtn idle') !== -1, "without the encryption library the shield stays, grey, and says so");
+
+  // the header: the vault, then search, language, tasks, settings, about; the language is one button that switches
+  await setVault("none", true);
+  const order = ['class="secbtn', 'data-a="find"', 'data-a="ui"', 'data-a="tasksToggle"', 'data-a="settings"', 'data-a="about"'].map((n) => page.innerHTML.indexOf(n));
+  check(order.every((at, i) => at !== -1 && (i === 0 || at > order[i - 1])), "the header icons come in the agreed order: " + order.join(","));
+  check((page.innerHTML.match(/data-a="ui"/g) || []).length === 1, "the language is a single button, not a pair");
+  check(page.innerHTML.indexOf('class="seg s34"') === -1, "no language toggle left");
+
+  // names to check: the list opens in the settings, the right spelling is typed, saved
+  fx.state.totals = Object.assign({}, fx.state.totals, { vocab_check: 1 });
+  timers.splice(0).forEach((fn) => fn());
+  await settle();
+  click({ "data-a": "settings" });
+  await settle();
+  check(page.innerHTML.indexOf('data-a="vcToggle"') !== -1 && page.innerHTML.indexOf('class="cnt">1<') !== -1, "the settings show the names to check with a badge");
+  const rowOrder = ['data-a="autoimport"', 'data-a="autoprocess"', 'data-a="tagsSuggest"', 'data-a="autocheck"', 'data-a="vocabAsk"'].map((n) => page.innerHTML.indexOf(n));
+  check(rowOrder.every((at, i) => at !== -1 && (i === 0 || at > rowOrder[i - 1])), "the settings come in the agreed order: " + rowOrder.join(","));
+  click({ "data-a": "vcToggle" });
+  await settle();
+  check(calls.indexOf("GET /api/vocabulary/check") !== -1, "opening the list asks for the names");
+  check(page.innerHTML.indexOf('id="vcR:brandt"') !== -1 && page.innerHTML.indexOf("<mark>Brant</mark>") !== -1, "each name shows its spellings, an example and a field for the right one");
+  typeInto("vcR:brandt", "BRANDT");
+  typeInto("vcC:brandt", "awards");
+  click({ "data-a": "vcApply", "data-id": "brandt" });
+  await settle();
+  check(calls.indexOf("POST /api/vocabulary/check/apply") !== -1, "the typed spelling is saved");
+  check(page.innerHTML.indexOf('id="vcR:brandt"') === -1, "a saved name leaves the list");
+  click({ "data-a": "settings" });
+  await settle();
+
+  // search by meaning: a pause in typing adds related passages below the usual results, whatever order the answers come in
+  fx.state.search = { model: "qwen3-embedding:0.6b", indexed: 3, total: 3 };
+  timers.splice(0).forEach((fn) => fn());
+  await settle();
+  click({ "data-a": "find" });
+  await settle();
+  typeInto("findInput", "why did it slip");
+  for (let round = 0; round < 3; round += 1) { timers.splice(0).forEach((fn) => fn()); await settle(); }
+  check(calls.some((c) => c.indexOf("GET /api/search/meaning?q=why") === 0), "a question is also asked by meaning");
+  check(page.innerHTML.indexOf('data-id="n9"') !== -1, "the related passages are listed below the results");
+  typeInto("findInput", "another question");
+  check(page.innerHTML.indexOf('data-id="n9"') === -1, "related passages of an older question are not shown for a new one");
+  click({ "data-a": "find" });
+  await settle();
+
+  // correcting a passage of the transcript by hand
+  click({ "data-a": "viewText", "data-id": done.id });
+  await settle();
+  check(modal && modal.innerHTML.indexOf('data-tx="editSeg"') !== -1, "each line of the transcript can be corrected");
+  const inModal = (attrs) => modal.handlers.click({ target: { closest: (sel) => (sel === "[data-tx]" ? { getAttribute: (n) => (attrs[n] === undefined ? null : attrs[n]) } : null) } });
+  inModal({ "data-tx": "editSeg", "data-i": "0" });
+  await settle();
+  check(modal.innerHTML.indexOf('id="segInput"') !== -1 && modal.innerHTML.indexOf('data-tx="segAlways"') !== -1 && modal.innerHTML.indexOf('data-tx="segHere"') !== -1, "editing a line offers 'only here' and 'always'");
+  typeInto("segInput", "A corrected line");
+  inModal({ "data-tx": "segHere" });
+  await settle();
+  check(calls.some((c) => /^POST \/api\/note\/.*\/segment$/.test(c)), "the correction is sent");
+  inModal({ "data-tx": "editSeg", "data-i": "0" });
+  await settle();
+  inModal({ "data-tx": "segCancel" });
+  await settle();
+  check(modal.innerHTML.indexOf('id="segInput"') === -1, "cancelling closes the editor");
+  inModal({ "data-tx": "close" });
+  await settle();
+
+  // people: renamed and merged everywhere, voices erased
+  click({ "data-a": "settings" });
+  await settle();
+  click({ "data-a": "pplToggle" });
+  await settle();
+  check(calls.indexOf("GET /api/people") !== -1 && page.innerHTML.indexOf("Anna B") !== -1 && page.innerHTML.indexOf('data-a="pplForgetAll"') !== -1, "the people of all the notes are listed");
+  check(page.innerHTML.indexOf('data-a="pplOpenNote" data-id="n3"') !== -1, "the notes with unnamed speakers are listed");
+  click({ "data-a": "pplEdit", "data-id": "Anna B" });
+  await settle();
+  typeInto("pplInput", "Anna");
+  await settle();
+  check(page.innerHTML.indexOf('data-a="pplSave"') !== -1 && /pplSave[^>]*data-tip="[^"]*(merged|fusionn)/.test(page.innerHTML), "naming a person like another one announces a merge");
+  click({ "data-a": "pplSave" });
+  await settle();
+  check(calls.indexOf("POST /api/people/rename") !== -1, "the new name is sent");
+  click({ "data-a": "pplForget", "data-id": "Anna" });
+  await settle();
+  check(calls.indexOf("POST /api/people/forget") !== -1, "a voiceprint can be erased");
+  click({ "data-a": "pplToggle" });
+  await settle();
+  click({ "data-a": "settings" });
   await settle();
 
   // a running job shows its progress on the right row

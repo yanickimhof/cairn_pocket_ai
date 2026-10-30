@@ -11,6 +11,12 @@ LLM = [
     {"id": "qwen3:14b", "label": "Qwen3 14B", "bytes": int(9.3 * GB), "ram": 32, "tier": "high"},
 ]
 
+# Optional: finds notes by meaning, not only by the words used. Installed on request, kept in the model server's own folder.
+EMBED = [
+    {"id": "qwen3-embedding:0.6b", "label": "Qwen3 Embedding 0.6B", "bytes": int(0.64 * GB), "ram": 4, "tier": "light"},
+    {"id": "bge-m3", "label": "BGE-M3", "bytes": int(1.2 * GB), "ram": 8, "tier": "standard"},
+]
+
 SPEECH = {
     "mlx": [
         {"id": "turbo", "label": "Whisper large-v3-turbo", "repo": "mlx-community/whisper-large-v3-turbo", "revision": "a4aaeec0636e6fef84abdcbe3544cb2bf7e9f6fb", "bytes": int(1.61 * GB), "ram": 8, "tier": "standard"},
@@ -28,5 +34,6 @@ DIAR = [
 ]
 
 LLM_IDS = tuple(m["id"] for m in LLM)
+EMBED_IDS = tuple(m["id"] for m in EMBED)
 SPEECH_IDS = ("turbo", "large")
 DIAR_IDS = tuple(m["id"] for m in DIAR)

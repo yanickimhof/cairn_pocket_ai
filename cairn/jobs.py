@@ -8,7 +8,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import awake, config, diarize, llm, pocket, privacy, score, speech, system, templates, vocab
+from . import awake, config, diarize, embed, llm, pocket, privacy, score, speech, system, templates, vault, vocab, voices
 from .notes import guess_date, make_id
 
 
@@ -31,6 +31,7 @@ class Jobs:
         self._state = {"running": False, "kind": "", "step": "", "id": None, "done": 0, "total": 0, "pct": None, "part": 0, "parts": 0, "errors": []}
         self.cancelled = False
         self.paused = False  # set by Stop: automatic processing waits for new recordings or a manual start
+        self.secure_wanted = False  # the person asked to secure the Pocket while another job was running
         self.llm_blocked_until = 0.0  # after a failed check of the model server, automatic processing waits a little
         self.store.reset_interrupted()
 
@@ -54,19 +55,30 @@ class Jobs:
             self._state["errors"].append(message)
 
     def _start(self, kind, target, *args):
-        with self.lock:
-            if self._state["running"]:
-                raise Busy("A job is already running.")
-            self._state.update(running=True, kind=kind, step="", id=None, done=0, total=0, pct=None, part=0, parts=0, errors=[])
-            self.cancelled = False
-            if kind in ("import", "rerun"):
-                self.paused = False
+        for attempt in range(2):
+            with self.lock:
+                if self._state["running"] and self._state["kind"] == "index" and kind != "index" and attempt == 0:
+                    self.cancelled = True  # reading the notes for the search gives way to what the person asks for
+                elif self._state["running"]:
+                    raise Busy("A job is already running.")
+                else:
+                    self._state.update(running=True, kind=kind, step="", id=None, done=0, total=0, pct=None, part=0, parts=0, errors=[])
+                    self.cancelled = False
+                    if kind == "import":
+                        self.paused = False
+                    break
+            for _ in range(100):  # up to ten seconds for the index to step aside
+                time.sleep(0.1)
+                if not self._state["running"]:
+                    break
         threading.Thread(target=self._guard, args=(target,) + args, daemon=True).start()
 
     def _guard(self, target, *args):
         awake.hold()  # a long batch is not cut short by the computer falling asleep
         try:
             target(*args)
+        except Gone:
+            pass  # the person deleted the note meanwhile: nothing to report, nothing to bring back
         except Exception as error:  # a job must never leave the state stuck
             self._fail(str(error))
         finally:
@@ -218,46 +230,112 @@ class Jobs:
     def _queue(self):
         self._drain(config.load_settings(), automatic=True)
 
-    def _import(self, process=True):
+    def start_index(self, model):
+        """Index the notes for the search by meaning (new and changed notes only)."""
+        self._start("index", self._index, model)
+
+    def _index(self, model):
+        self._set(step="indexing", total=0, done=0)
+
+        def progress(done, total):
+            self._set(done=done, total=total)
+
+        before = self.store.signature()  # a note written while indexing is looked at by the next pass
+        embed.build(self.store, model, progress, lambda: self.cancelled)
+        if not self.cancelled:
+            embed.built[model] = before
+
+    def start_secure(self):
+        """Copy what is new on the Pocket, then encrypt every recording on it."""
+        self._start("secure", self._import, False, True)
+
+    def _import(self, process=True, secure=False):
         settings = config.load_settings()
         source = pocket.find_pocket()
         if source:
-            skip = self.store.ignored()
-            files = [f for f in pocket.list_recordings(source) if f.relative_to(source).as_posix() not in skip]
+            listing = pocket.scan(source)
+            wanted = secure or self.secure_wanted or settings.get("pocket_secure_auto", False)
+            files = [e for e in listing.readable if not self.store.is_ignored(e.rel, e.size, e.mtime)]
             self._set(step="copying", total=len(files), done=0)
             audio_dir = Path(settings["audio_dir"])
-            for index, path in enumerate(files):
+            for index, entry in enumerate(files):
                 self._set(done=index)
                 try:
-                    self._copy_one(source, path, audio_dir)
+                    self._copy_one(entry, audio_dir, listing.key)
                 except OSError as error:
-                    self._fail("%s: %s" % (path.name, error))
+                    self._fail("%s: %s" % (entry.rel, error))
                     if not source.exists():  # the Pocket was unplugged: the rest will be copied at the next connection
                         break
+            if wanted and listing.header and listing.key and source.exists():
+                self.secure_wanted = False
+                self._seal_all(source, listing, audio_dir)
+            elif secure:
+                self.secure_wanted = False
+                self._fail("The Pocket is locked: enter its password first." if listing.header else "The Pocket has no vault yet.")
         self._set(step="", done=0, total=0)
         if process:
             self._drain(settings)
         elif settings.get("autoprocess", False) and not self.paused:
             self._drain(settings, automatic=True)  # automatic processing starts as soon as the copy is done, not at the next check
 
-    def _copy_one(self, source, path, audio_dir):
-        rel = path.relative_to(source).as_posix()
-        stat = path.stat()
-        existing = self.store.find_source(rel)
+    def _seal_all(self, source, listing, audio_dir):
+        """Encrypt the plain recordings of the Pocket. Each one is already on this computer, byte for byte (checked
+        again here) before its plain version is replaced."""
+        pocket.clean_leftovers(source)
+        twins = {(e.rel, e.size, e.mtime) for e in listing.sealed}
+        for entry in [e for e in listing.plain if (e.rel, e.size, e.mtime) in twins]:  # a crash left the same recording twice: one is enough
+            try:
+                pocket.shred(entry.path, entry.size)
+                entry.path.unlink()
+            except OSError as error:
+                self._fail("%s: %s" % (entry.rel, error))
+        todo = [e for e in listing.plain if (e.rel, e.size, e.mtime) not in twins and self.store.find_source(e.rel, e.size, e.mtime, light=True)]
+        self._set(step="securing", total=len(todo), done=0)
+        index = vault.load_index(listing.header["id"])
+        for position, entry in enumerate(todo):
+            if self.cancelled or not source.exists():
+                break
+            self._set(done=position)
+            note = self.store.find_source(entry.rel, entry.size, entry.mtime, light=True)
+            if not note or not note.get("sha256") or not os.path.exists(note.get("audio", "")):
+                continue
+            try:
+                if pocket.sha256(note["audio"]) != note["sha256"]:  # the copy on this computer must still be the recording
+                    raise OSError("the copy on this computer no longer matches: it is copied again first")
+
+                fid, info = pocket.seal_entry(source, entry, listing.key, note["sha256"])
+                index[fid] = info
+                vault.save_index(listing.header["id"], index)
+            except OSError as error:
+                self._fail("%s: %s" % (entry.rel, error))
+                if not source.exists():
+                    break
+
+    def _copy_one(self, entry, audio_dir, key=None):
+        rel = entry.rel
+        existing = self.store.find_source(rel, entry.size, entry.mtime, light=True)
         target = audio_dir / rel
         if (
             existing
             and existing.get("sha256")
-            and existing.get("size") == stat.st_size
-            and existing.get("mtime") == int(stat.st_mtime)
+            and existing.get("size") == entry.size
+            and existing.get("mtime") == entry.mtime
             and os.path.exists(existing.get("audio", ""))
         ):
             return
-        digest = pocket.copy_verified(path, target)
-        note = existing or {"id": make_id(rel), "source": rel, "status": "waiting", "title": "", "level": None}
+        existing = self.store.get(existing["id"]) if existing else None
+        note_id = make_id(rel)
+        if existing and existing.get("size") is not None and (existing.get("size"), existing.get("mtime")) != (entry.size, entry.mtime) \
+                and existing.get("status") not in ("waiting", "error", "skipped"):
+            # the Pocket reuses a name for another recording: the finished note and its audio are left alone, this one is a new note
+            note_id = make_id("%s#%d-%d" % (rel, entry.size, entry.mtime))
+            target = target.with_name("%s-%d%s" % (target.stem, entry.mtime, target.suffix))
+            existing = self.store.get(note_id) if self.store.exists(note_id) else None
+        digest = pocket.fetch(entry, target, key)
+        note = existing or {"id": note_id, "source": rel, "status": "waiting", "title": "", "level": None}
         note.update(
-            audio=str(target), sha256=digest, size=stat.st_size, mtime=int(stat.st_mtime),
-            date=note.get("date") or guess_date(path, stat.st_mtime),
+            audio=str(target), sha256=digest, size=entry.size, mtime=entry.mtime,
+            date=note.get("date") or guess_date(target, entry.mtime),
             duration=note.get("duration") or pocket.estimate_duration(target),
         )
         self.store.save(note)
@@ -311,10 +389,15 @@ class Jobs:
                 else:
                     step("diarizing")
                     began = time.time()
-                    state, turns = diarize.run(note["audio"], timeout=diarize.timeout_for(note.get("duration")))
+                    prints = {}
+                    if settings.get("voices"):
+                        state, turns, prints = diarize.run_with_voices(note["audio"], timeout=diarize.timeout_for(note.get("duration")))
+                    else:
+                        state, turns = diarize.run(note["audio"], timeout=diarize.timeout_for(note.get("duration")))
                     timings["diarizing"] = round(time.time() - began, 1)
                     if state == "ok":
                         diarize.assign(note["segments"], turns, lang)
+                        self._remember_voices(note, turns, prints, lang)
                         note["diarized"] = True
                         keep()
             self._apply_vocab(note, settings)
@@ -415,6 +498,27 @@ class Jobs:
         llm.preflight()
         self._rewrite(note, level, self._lang(note, settings), settings)
 
+    OWNED = ("summary", "lang", "fidelity", "fidelity_basis", "tag_suggestions", "status", "level", "error", "step")
+
+    def _commit(self, note, keys):
+        """Write what a job produced onto the note as it is now: what the person changed meanwhile (a correction, a name, a tag) is
+        kept, and a note that was deleted stays deleted."""
+        with self.store.lock:
+            if not self.store.exists(note["id"]):
+                raise Gone(note["id"])
+            fresh = self.store.get(note["id"])
+            for key in keys:
+                if key == "title":
+                    continue
+                if key in note:
+                    fresh[key] = note[key]
+                else:
+                    fresh.pop(key, None)
+            if not fresh.get("renamed") and note.get("title") and "title" in keys:
+                fresh["title"] = note["title"]
+            self.store.save(fresh)
+            return fresh
+
     def _rewrite(self, note, level, lang, settings):
         """Correct the words from the current vocabulary, then write the note again from the kept transcript."""
         before = note.get("vocab_key")
@@ -423,14 +527,22 @@ class Jobs:
                 self._apply_vocab(note, settings)
             self._summarize(note, level, lang)
             note.update(status="done", level=level, error="", step="")
-            self.store.save(note)
+            fresh = self._commit(note, self.OWNED + ("title",))
+            if fresh.get("segments"):  # the words are corrected again on the note as it is now, corrections by hand included
+                self._apply_vocab(fresh, settings)
+                self.store.save(fresh)
+        except Gone:
+            raise
         except Exception as error:
             note.update(error=str(error))
             if before is None:  # the summary was not written again: the note must not pass for up to date
                 note.pop("vocab_key", None)
             else:
                 note["vocab_key"] = before
-            self.store.save(note)
+            try:
+                self._commit(note, ("error", "vocab_key"))
+            except Gone:
+                pass
             raise
 
     def _apply_vocab(self, note, settings):
@@ -466,10 +578,12 @@ class Jobs:
                     probe = copy.deepcopy(note.get("segments") or [])
                     if (vocab.apply(probe, terms) or None) == (note.get("vocab_fixes") or None):
                         note["vocab_key"] = vocab.key(terms)
-                        self.store.save(note)
+                        self._commit(note, ("vocab_key",))
                         continue
                 level = note.get("level") if note.get("level") in config.LEVELS else "mid"
                 self._rewrite(note, level, self._lang(note, settings), settings)
+            except Gone:
+                continue  # deleted meanwhile
             except Exception as error:  # one note failing does not stop the others
                 self._fail("%s: %s" % (note_id, error))
         self._set(done=len(ids))
@@ -486,22 +600,62 @@ class Jobs:
             raise ValueError("diar_unavailable")
         self._start("rerun", self._rediarize, note_id)
 
+    @staticmethod
+    def _remember_voices(note, turns, prints, lang):
+        """Keep the voiceprints of this recording with the note and name the voices that are known. Without voice memory nothing is kept."""
+        note.pop("voices", None)
+        if prints:
+            note["voices"] = diarize.label_voices(note["segments"], turns, prints, lang)
+            voices.recognise(note)
+
     def _rediarize(self, note_id):
         note = self.store.get(note_id)
         self._set(id=note_id, step="diarizing", total=1)
-        lang = self._lang(note, config.load_settings())
+        settings = config.load_settings()
+        lang = self._lang(note, settings)
         try:
-            state, turns = diarize.run(note["audio"])
+            prints = {}
+            if settings.get("voices"):
+                state, turns, prints = diarize.run_with_voices(note["audio"])
+            else:
+                state, turns = diarize.run(note["audio"])
             if state == "missing":
                 raise RuntimeError("Diarization model missing. Install it again from Settings > Models.")
             if state != "ok":
                 raise RuntimeError("Speaker identification produced no result.")
             diarize.assign(note["segments"], turns, lang)
             note["speaker_names"] = {}
-            note["clean"] = "\n\n".join(speech.raw_lines(note["segments"]))
+            note.pop("speaker_auto", None)
+            self._remember_voices(note, turns, prints, lang)
+            names = note.get("speaker_names") or {}
+            note["clean"] = "\n\n".join(speech.raw_lines(diarize.renamed(note["segments"], names) if names else note["segments"]))
             note.update(status="done", error="", step="")
-            self.store.save(note)
+            with self.store.lock:  # the labels go onto the lines as they are now: a correction made meanwhile stays
+                if not self.store.exists(note_id):
+                    raise Gone(note_id)
+                fresh = self.store.get(note_id)
+                if len(fresh.get("segments") or []) == len(note["segments"]):
+                    for line, labelled in zip(fresh["segments"], note["segments"]):
+                        if labelled.get("speaker"):
+                            line["speaker"] = labelled["speaker"]
+                        else:
+                            line.pop("speaker", None)
+                else:
+                    fresh["segments"] = note["segments"]
+                for key in ("speaker_names", "speaker_auto", "voices", "status", "error", "step"):
+                    if key in note:
+                        fresh[key] = note[key]
+                    else:
+                        fresh.pop(key, None)
+                names = fresh.get("speaker_names") or {}
+                fresh["clean"] = "\n\n".join(speech.raw_lines(diarize.renamed(fresh["segments"], names) if names else fresh["segments"]))
+                self.store.save(fresh)
+        except Gone:
+            raise
         except Exception as error:
             note.update(error=str(error))
-            self.store.save(note)
+            try:
+                self._commit(note, ("error",))
+            except Gone:
+                pass
             raise

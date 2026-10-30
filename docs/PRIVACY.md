@@ -10,7 +10,10 @@ One rule: **your recordings never leave your computer.**
 - Optionally, if you enter your own Pocket session key in Settings (Cairn never captures or asks for one on its own), also reads the firmware version, device state and storage used, the same way: three documented read commands, no write command, no pairing, nothing sent anywhere. Clearing the field removes the key for good.
 - Optionally, if you turn on speaker identification and install its model, runs it fully offline on your computer: your own Hugging Face token is used only once, to download the model, and never sent anywhere afterward. The recording's audio is never sent anywhere either.
 - Searches your notes, plays the recording of a note in your browser and lists your actions, all on your computer. Writing a follow-up email, suggesting tags and applying your own note templates use the same local model: the text of a note never goes anywhere else.
-- Stores everything in that folder: audio, transcripts, summaries, exports, tags, templates and vocabulary (in `settings.json`).
+- Optionally, if you secure the Pocket, encrypts its recordings with a password you choose (AES-256, 10 characters or more). The password is never stored; on a computer you trust, the key derived from it is kept in the system keychain (macOS Keychain, Windows Credential Manager). Nothing about this goes anywhere.
+- Optionally, if you install a search model, finds your notes by meaning. The model runs in your local model server and the index of your notes (`Index` folder) stays on this computer.
+- Optionally, if you turn on voice memory, keeps a voiceprint for each person you name: 256 numbers computed by the speaker model, not the audio and not the words. They stay in `voices.json` and in the notes on this computer, are used only to name the next recordings, and are erased with one click per person or for everybody (turning the option off does not erase them).
+- Keeps the Pocket session key and the Hugging Face token, if you entered them, in `settings.json` in that folder (never sent back to the page, never logged). Stores everything in that folder: audio, transcripts, summaries, exports, tags, templates and vocabulary (in `settings.json`), plus, only if you use these options, `voices.json`, `vault-index.json` and `Index`.
 
 ## What Cairn never does
 
@@ -25,9 +28,13 @@ One rule: **your recordings never leave your computer.**
 |---|---|
 | Installation (once) | Downloads of the engines and models (see [SECURITY.md](../SECURITY.md)) |
 | Everyday use | One request a day to GitHub to look for a new version (nothing about you is sent; turn it off in **Settings, Check for updates**) |
-| When you ask for it | An optional model download (Ollama registry or Hugging Face), after your confirmation. The referral link in **About** opens Pocket's website in your browser only if you click it; Cairn sends nothing. |
+| When you ask for it | An optional model download (Ollama registry or Hugging Face, a search model included), after your confirmation. The referral link in **About** opens a website in your browser only if you click them; Cairn sends nothing and attaches nothing. |
 
 The runtime sets `HF_HUB_OFFLINE=1` and `DO_NOT_TRACK=1`.
+
+## The contact page
+
+The project's contact page (docs/contact.html, on GitHub Pages) is a separate web page, not part of Cairn. It sends what you type through Formspree, a form service, from your browser, only when you press Send. Cairn never opens it by itself and attaches nothing.
 
 ## Sharing is your decision
 
@@ -45,4 +52,13 @@ Cairn also checks for you. Once a day, when idle, it runs a small local test and
 
 Under `~/Cairn` by default (audio, texts, exports). The audio folder can be changed in Settings. Use full disk encryption in case the computer is lost or stolen.
 
-Deleting a recording in the app removes it from the Pocket and from this computer: the file on the Pocket (at its next connection if it is not connected), and the audio, transcript and summary on this computer. The Pocket has no protection of its own, so a file left on it can be read by anyone who holds the device. Nothing is kept: deleting cannot be undone. Copies held by the Pocket cloud account and its apps are out of Cairn's reach (it makes no outside connection). Cairn writes to the Pocket only when you ask for it, by deleting a recording.
+Deleting a recording in the app removes it from the Pocket and from this computer: the file on the Pocket (at its next connection if it is not connected), and the audio, transcript and summary on this computer. The Pocket has no protection of its own, so a file left on it can be read by anyone who holds the device, unless you secured it (below). Nothing is kept: deleting cannot be undone. Copies held by the Pocket cloud account and its apps are out of Cairn's reach (it makes no outside connection). Cairn writes to the Pocket only when you ask for it, by deleting a recording.
+
+## Securing the Pocket
+
+The **Secure my Pocket** button (next to the battery) encrypts the recordings left on the Pocket with a password. The shield is orange while some are readable or when the Pocket is locked here, and green once all are protected.
+
+- **What a thief finds:** a file `.cairn-vault` (the salt and a check value, nothing secret) and files with random names. The name, the date, the length of speech and the content are inside the encrypted files. File sizes remain visible.
+- **On your computer:** the key is in the system keychain, so recordings are decrypted by themselves when the Pocket is connected. On another computer with Cairn, the password is asked once (and you choose whether to trust that computer).
+- **Safe by order:** each recording is first copied to this computer and verified, then encrypted, read back and compared, and only then replaced. If the Pocket is unplugged halfway, nothing is lost and the next connection finishes the work.
+- **Limits, plainly:** a recording made since the last connection stays readable on the Pocket until it next connects to Cairn (turn on **Secure the Pocket on connection** to do it each time). Lose the password and the recordings still on the Pocket are lost; those already copied into Cairn are not affected. The copies on this computer are not encrypted by Cairn: full disk encryption does that. The Pocket firmware and its apps know nothing of this, and a password guessed offline is protected only by its strength and the cost of the key derivation (scrypt), so choose a long one.

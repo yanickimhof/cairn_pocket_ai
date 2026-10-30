@@ -35,9 +35,13 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Interface script syntax
         run: node --check cairn/web/app.js
-      - name: No secrets, no personal paths
+      - name: No secrets, no personal paths, no private names
+        env:
+          PRIVATE_TERMS: ${{ secrets.PRIVATE_TERMS }}
         run: |
           if grep -rIn -E "(/Users/[a-z]+|C:\\\\Users\\\\[A-Za-z]+|BEGIN (RSA|OPENSSH|PRIVATE) KEY|ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16})" . --exclude-dir=.git --exclude-dir=.github; then exit 1; fi
+          # the list of private names is a repository secret: only the names of the files are shown, never the lines
+          if [ -n "$PRIVATE_TERMS" ] && grep -rIlE -i "$PRIVATE_TERMS" . --exclude-dir=.git; then echo "A private name is in the files above"; exit 1; fi
 
   macos:
     runs-on: macos-14

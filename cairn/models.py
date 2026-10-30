@@ -106,7 +106,14 @@ def listing(job):
         if have and os.path.isdir(speech_path(m) or ""):
             entry["bytes"] = dir_size(speech_path(m))
         out_speech.append(dict(entry, installed=have, selected=m["id"] == chosen_speech))
-    return {"llm": out_llm, "speech": out_speech, "diar": diar_entries(), "job": job, "server_up": llm.available()}
+    from . import embed
+
+    chosen_embed = config.load_settings().get("embed")
+    out_embed = [
+        dict(m, installed=embed.installed(m["id"]), selected=m["id"] == chosen_embed, **({"bytes": sizes[m["id"]]} if sizes.get(m["id"]) else {}))
+        for m in catalog.EMBED
+    ]
+    return {"llm": out_llm, "speech": out_speech, "diar": diar_entries(), "embed": out_embed, "job": job, "server_up": llm.available()}
 
 
 class Downloader:
@@ -131,6 +138,8 @@ class Downloader:
                 raise RuntimeError("busy")
             if kind == "llm":
                 entry = next((m for m in catalog.LLM if m["id"] == model_id), None)
+            elif kind == "embed":
+                entry = next((m for m in catalog.EMBED if m["id"] == model_id), None)
             elif kind == "diar":
                 entry = next((m for m in catalog.DIAR if m["id"] == model_id), None)
                 if entry is not None and not config.load_settings().get("hf_token"):
@@ -140,7 +149,7 @@ class Downloader:
             if entry is None:
                 raise ValueError("unknown_model")
             self.job = {"kind": kind, "id": model_id, "state": "running", "pct": 0, "error": ""}
-        target = self._pull_llm if kind == "llm" else self._fetch_diar if kind == "diar" else self._fetch_speech
+        target = self._pull_llm if kind in ("llm", "embed") else self._fetch_diar if kind == "diar" else self._fetch_speech
         threading.Thread(target=target, args=(entry,), daemon=True).start()
 
     def _pull_llm(self, entry):
@@ -165,6 +174,8 @@ class Downloader:
                         raise RuntimeError(str(line["error"])[:160])
                     if line.get("total"):
                         self._set(pct=int(100 * line.get("completed", 0) / line["total"]))
+            if entry in catalog.EMBED and not config.load_settings().get("embed"):
+                config.save_settings({"embed": entry["id"]})  # the first search model installed is the one used
             self._set(state="done", pct=100)
         except Exception as error:  # reported to the page, never raised
             self._set(state="error", error=str(error)[:400])
@@ -264,6 +275,12 @@ def select(kind, model_id):
         if model_id not in catalog.LLM_IDS or model_id not in {m.get("name") for m in llm.models()}:
             raise ValueError("not_installed")
         return config.save_settings({"llm": model_id})
+    if kind == "embed":
+        from . import embed
+
+        if model_id not in catalog.EMBED_IDS or not embed.installed(model_id):
+            raise ValueError("not_installed")
+        return config.save_settings({"embed": model_id})
     entry = next((m for m in speech_entries() if m["id"] == model_id), None)
     if entry is None or not speech_installed(entry):
         raise ValueError("not_installed")
@@ -281,6 +298,19 @@ def remove(kind, model_id):
             llm.delete_model(model_id)
         except (OSError, ValueError, llm.LLMError):
             raise ValueError("remove_failed")
+        return {"ok": True}
+    if kind == "embed":
+        from . import embed
+
+        if model_id not in catalog.EMBED_IDS or not embed.installed(model_id):
+            raise ValueError("not_installed")
+        try:
+            llm.delete_model(model_id)
+        except (OSError, ValueError, llm.LLMError):
+            raise ValueError("remove_failed")
+        embed.forget(model_id)
+        if config.load_settings().get("embed") == model_id:
+            config.save_settings({"embed": None})
         return {"ok": True}
     if kind == "diar":
         if model_id not in catalog.DIAR_IDS or not diar_installed():

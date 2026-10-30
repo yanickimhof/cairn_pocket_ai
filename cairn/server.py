@@ -10,6 +10,9 @@ import secrets
 import shutil
 import subprocess
 import sys
+import threading
+import time
+import traceback
 import urllib.error
 import urllib.request
 from http import cookies
@@ -17,7 +20,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
-from . import battery, catalog, config, diarize, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, speech, tags, templates, vocab
+from . import battery, catalog, config, diarize, embed, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, speech, tags, templates, vault, vocab, vocabcheck, voices
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -96,21 +99,92 @@ class App:
         self.update_info = None  # set by the background watcher
         self.gauge = battery.Gauge()  # battery of the Pocket, shown when it can be read
         self.status = pocket_status.StatusGauge()  # firmware/state/storage, shown only once a session key is set
+        self._check = {"sig": None, "items": [], "busy": False, "at": 0.0}
+        self.check_wait = 20.0  # seconds between two looks at the names, however often the notes change
+        self._check_notes = {}  # note id -> (file signature, what the note says about names)
+        self._check_lock = threading.Lock()
 
     # Pocket
 
     def pocket_state(self):
+        idle = {"connected": False, "count": 0, "new": 0, "vault": {"available": vault.available(), "state": "none", "plain": 0, "sealed": 0, "locked": 0, "trusted": False}}
         try:
             folder = pocket.find_pocket()
             if not folder:
-                return {"connected": False, "count": 0, "new": 0}
-            files = pocket.list_recordings(folder)
-            skip = self.store.ignored()
-            known = {n.get("source") for n in self.store.slim()}
-            fresh = [f for f in files if (rel := f.relative_to(folder).as_posix()) not in skip and rel not in known]
-            return {"connected": True, "count": len(files), "new": len(fresh)}
-        except OSError:
-            return {"connected": False, "count": 0, "new": 0}
+                return idle
+            listing = pocket.scan(folder)
+            known = {(n.get("source"), n.get("size"), n.get("mtime")) for n in self.store.slim()}
+            fresh = [e for e in listing.readable if not self.store.is_ignored(e.rel, e.size, e.mtime) and (e.rel, e.size, e.mtime) not in known]
+            return {"connected": True, "count": len(listing.readable), "new": len(fresh), "vault": {
+                "available": vault.available(), "state": listing.state(), "plain": len(listing.plain), "sealed": len(listing.sealed),
+                "locked": listing.locked, "trusted": bool(listing.header) and vault.trusted(listing.header["id"])}}
+        except (OSError, vault.VaultError):
+            return idle
+
+    def search_state(self):
+        """The search by meaning: which model is used (None when there is none) and how much of the notes it has read."""
+        model = config.load_settings().get("embed")
+        if not model:
+            return {"model": None, "indexed": 0, "total": 0}
+        return embed.status(self.store, model)
+
+    # Pocket vault
+
+    def _vault_target(self):
+        if not vault.available():
+            raise ApiError(501, "vault_unavailable")
+        folder = pocket.find_pocket()
+        if not folder:
+            raise ApiError(409, "no_pocket")
+        return folder
+
+    def vault_create(self, password, trust, auto):
+        folder = self._vault_target()
+        if not isinstance(password, str):
+            raise ApiError(400, "bad_password")
+        try:
+            header, key = vault.create(folder, password)
+        except vault.VaultError as error:
+            raise ApiError(400, str(error))
+        except OSError as error:
+            raise ApiError(500, "The Pocket cannot be written to: %s" % error)
+        trusted = vault.remember(header["id"], key, bool(trust))
+        if auto:
+            config.save_settings({"pocket_secure_auto": True})
+        self.secure_now()
+        return trusted
+
+    def vault_unlock(self, password, trust):
+        folder = self._vault_target()
+        if not isinstance(password, str):
+            raise ApiError(400, "bad_password")
+        try:
+            key = vault.unlock(folder, password)
+        except vault.WrongPassword:
+            time.sleep(0.5)  # slows down guessing; scrypt already makes each try costly
+            raise ApiError(403, "wrong_password")
+        except vault.VaultError as error:
+            raise ApiError(400, str(error))
+        trusted = vault.remember(vault.read_header(folder)["id"], key, bool(trust))
+        try:
+            self.jobs.start_sync()  # the recordings of this Pocket come in now
+        except jobs.Busy:
+            pass
+        return trusted
+
+    def vault_forget(self):
+        """Take the key of this Pocket out of this computer. Without the Pocket at hand, every vault this computer has seen is forgotten."""
+        folder = pocket.find_pocket()
+        header = vault.read_header(folder) if folder else None
+        for vault_id in [header["id"]] if header else vault.known_ids():
+            vault.forget(vault_id)
+
+    def secure_now(self):
+        """Copy what is new and encrypt everything on the Pocket; if another job is running, as soon as it is done."""
+        try:
+            self.jobs.start_secure()
+        except jobs.Busy:
+            self.jobs.secure_wanted = True
 
     def waiting_count(self):
         """Recordings copied and waiting to be processed (a failed one is not retried by itself)."""
@@ -127,16 +201,17 @@ class App:
             "job": self.jobs.snapshot(),
             "ollama": llm.available(),
             "download": self.downloads.state(),
-            "settings": config.load_settings(),
+            "settings": config.public_settings(config.load_settings()),
             "battery": self.gauge.snapshot(),
             "pocket_status": self.status.snapshot(),
             "update": self.update_info,
             "privacy": _privacy_summary(),
             "diar_installed": models.diar_installed(),
+            "search": self.search_state(),
             "gpu": sys.platform == "darwin" and platform.machine() == "arm64",
             "totals": {"notes": len(everything), "done": sum(1 for n in everything if n.get("status") == "done"),
                        "waiting": sum(1 for n in everything if n.get("status") in ("waiting", "error")),
-                       "vocab_todo": len(self.vocab_outdated(everything))},
+                       "vocab_todo": len(self.vocab_outdated(everything)), "vocab_check": self.vocab_check_count()},
         }
         if with_list:
             data["notes"] = rows
@@ -186,6 +261,12 @@ class App:
             comps.append({"name": "Ollama", "ver": version, "size": _size(folder) if folder else real.stat().st_size, "ok": True})
         else:
             comps.append({"name": "Ollama", "ver": "", "size": 0, "ok": False})
+        wanted = config.load_settings().get("embed")
+        if wanted and embed.installed(wanted):
+            found_embed = next((m for m in catalog.EMBED if m["id"] == wanted), None)
+            comps.append({"name": "Search model", "ver": (found_embed or {}).get("label", wanted), "size": found.get(wanted) or found.get(wanted + ":latest") or 0, "ok": True})
+        libs = vault.libraries()
+        comps.append({"name": "Pocket vault", "ver": "AES-256-GCM", "size": sum(_size(d) for _, _, d in libs if d), "ok": vault.available()})
         base = Path(sys.base_prefix)
         owned = config.home() in base.parents or base == config.home()
         comps.append({"name": "Python", "ver": platform.python_version(), "size": _size(base) if owned or base.is_dir() else 0, "ok": True})
@@ -257,6 +338,210 @@ class App:
             return [i for i, n in sorted(rows.items(), key=lambda kv: kv[1].get("date") or "") if low <= (n.get("date") or "")[:10] <= high], True
         return [n["id"] for n in sorted(self.vocab_outdated(list(rows.values())), key=lambda n: n.get("date") or "")], False
 
+    def edit_segment(self, note_id, index, text, scope):
+        """Correct one line of a transcript by hand. scope "here": this line only. "always": the change also becomes entries of the
+        vocabulary, applied to every note. Returns {"ok", "rules": [entries added], "updating": notes being written}."""
+        with self.store.lock:
+            return self._edit_segment(note_id, index, text, scope)
+
+    def _edit_segment(self, note_id, index, text, scope):
+        note = self.get_note(note_id)
+        segments = note.get("segments") or []
+        if not isinstance(index, int) or isinstance(index, bool) or not 0 <= index < len(segments) or scope not in ("here", "always"):
+            raise ApiError(400, "bad_segment")
+        text = " ".join(str(text or "").split())
+        if not text or len(text) > 2000:
+            raise ApiError(400, "bad_text")
+        seg = segments[index]
+        engine = seg.get("orig", seg.get("text", ""))
+        rules = []
+        if scope == "always":
+            rules = vocab.rule_from_edit(engine, text)
+            if not rules:
+                raise ApiError(400, "no_rule")
+        if text == engine:
+            seg.pop("orig", None)
+            seg.pop("edit", None)
+        else:
+            seg["orig"], seg["edit"] = engine, True
+        seg["text"] = text
+        names = note.get("speaker_names") or {}
+        note["clean"] = "\n\n".join(speech.raw_lines(diarize.renamed(segments, names) if names else segments))
+        self.store.save(note)
+        lines = [vocab.rule_line(r) for r in rules]
+        updating = 0
+        if lines:
+            try:
+                config.save_settings({"vocabulary": vocab.add_entries(config.load_settings().get("vocabulary"), lines)})
+            except ValueError as error:
+                raise ApiError(400, str(error))
+            updating = self.refresh_vocab()
+        return {"ok": True, "rules": lines, "updating": updating}
+
+    # People: the speakers named in the notes
+
+    def people(self):
+        """Every named speaker across the notes, and the notes that still have speakers without a name."""
+        found, unnamed = {}, []
+        for note in self.store.all():
+            segments = note.get("segments") or []
+            if note.get("status") != "done" or not segments:
+                continue
+            names, seconds, order = note.get("speaker_names") or {}, {}, []
+            for seg in segments:
+                label = seg.get("speaker")
+                if not label:
+                    continue
+                if label not in order:
+                    order.append(label)
+                seconds[label] = seconds.get(label, 0.0) + max(0.0, float(seg.get("end", 0)) - float(seg.get("start", 0)))
+            row = {"id": note["id"], "title": note.get("title") or "", "date": note.get("date") or ""}
+            for label in order:
+                name = names.get(label)
+                if name:
+                    entry = found.setdefault(name, {"name": name, "seconds": 0.0, "notes": []})
+                    entry["seconds"] += seconds[label]
+                    if not any(n["id"] == row["id"] for n in entry["notes"]):
+                        entry["notes"].append(dict(row))
+            open_labels = [label for label in order if not names.get(label)]
+            if open_labels:
+                unnamed.append(dict(row, labels=open_labels))
+        stored = voices.counts()
+        people = sorted(found.values(), key=lambda p: (-len(p["notes"]), p["name"].lower()))
+        for entry in people:
+            entry["seconds"] = round(entry["seconds"])
+            entry["notes"].sort(key=lambda n: n["date"], reverse=True)
+            entry["voice"] = stored.get(entry["name"], 0)
+        unnamed.sort(key=lambda n: n["date"], reverse=True)
+        return {"people": people, "unnamed": unnamed, "enabled": bool(config.load_settings().get("voices")),
+                "voiceprints": sum(1 for _ in stored), "orphans": sorted(n for n in stored if n not in found)}
+
+    def rename_person(self, old, new):
+        """Write a name differently in every note (or merge two people when the new name already exists). Returns how many notes changed."""
+        old, new = " ".join(str(old or "").split())[:60], " ".join(str(new or "").split())[:60]
+        if not old or not new:
+            raise ApiError(400, "bad_name")
+        changed = 0
+        if old != new:
+            for listed in self.store.all():
+                with self.store.lock:  # read, change and write the note as one step: a job saving at the same time cannot undo it
+                    note = self.store.get(listed["id"])
+                    names = note.get("speaker_names") or {}
+                    labels = [label for label, name in names.items() if " ".join(str(name).split()) == old]
+                    if not labels:
+                        continue
+                    for label in labels:
+                        names[label] = new
+                    note["speaker_names"] = names
+                    if note.get("segments"):
+                        note["clean"] = "\n\n".join(speech.raw_lines(diarize.renamed(note["segments"], names)))
+                    self.store.save(note)
+                    changed += 1
+            voices.rename(old, new)
+        return changed
+
+    def forget_voices(self, name=None):
+        """Erase the voiceprints of one person, or of everybody (those kept with the notes as well)."""
+        erased = voices.forget(name)
+        for note in self.store.all():
+            changed = False
+            if name is None:
+                changed = note.pop("voices", None) is not None
+                changed = note.pop("speaker_auto", None) is not None or changed
+            else:  # the voiceprints kept with the notes would teach the voice again at the next naming
+                labels = [label for label, who in (note.get("speaker_names") or {}).items() if who == name]
+                for label in labels:
+                    changed = (note.get("voices") or {}).pop(label, None) is not None or changed
+                    changed = (note.get("speaker_auto") or {}).pop(label, None) is not None or changed
+            if changed:
+                self.store.save(note)
+        return erased
+
+    # Names to check
+
+    def _check_key(self):
+        settings = config.load_settings()
+        return (self.store.signature(), vocab.key(settings.get("vocabulary")), tuple(settings.get("vocab_ignored") or []))
+
+    def _check_compute(self, sig):
+        """The names to check. What each note says is kept for as long as the note does not change, so a note written again costs
+        its own reading only, and the lock of the store is never held for the whole library."""
+        try:
+            settings = config.load_settings()
+            contributions, live = [], set()
+            for file_sig, note in self.store.iter_notes():
+                live.add(note["id"])
+                cached = self._check_notes.get(note["id"])
+                if not cached or cached[0] != file_sig:
+                    cached = self._check_notes[note["id"]] = (file_sig, vocabcheck.contribution(note))
+                contributions.append(cached[1])
+            for gone in set(self._check_notes) - live:
+                self._check_notes.pop(gone, None)
+            items = vocabcheck.assemble(contributions, settings.get("vocabulary") or [], settings.get("vocab_ignored") or [])
+        except Exception:  # never leaves the badge stuck: the next change tries again
+            traceback.print_exc()
+            items = []
+        with self._check_lock:
+            self._check.update(sig=sig, items=items, busy=False, at=time.time())
+        return items
+
+    def vocab_check(self):
+        """The names worth checking, computed when the notes or the vocabulary changed."""
+        sig = self._check_key()
+        with self._check_lock:
+            if self._check["sig"] == sig:
+                return list(self._check["items"])
+        return self._check_compute(sig)
+
+    def vocab_check_count(self):
+        """How many names are worth checking, for the badge. Never slows the state down: a change is looked at in the background."""
+        sig = self._check_key()
+        with self._check_lock:
+            stale = self._check["sig"] != sig
+            idle = not self.jobs.snapshot().get("running") and time.time() - self._check["at"] >= self.check_wait  # not while a batch rewrites notes, not in a rush
+            if stale and idle and not self._check["busy"]:
+                self._check["busy"] = True
+                threading.Thread(target=self._check_compute, args=(sig,), daemon=True).start()
+            return len(self._check["items"])
+
+    def vocab_check_apply(self, key, right, context):
+        right = " ".join(str(right or "").split())
+        if not right or len(right) > vocab.MAX_LEN or any(c in right for c in "|,;=>\n"):
+            raise ApiError(400, "bad_spelling")
+        item = next((i for i in self.vocab_check() if i["key"] == key), None)
+        if item is None:
+            raise ApiError(404, "not_found")
+        near = [c.strip() for c in str(context or "").split(",") if c.strip() and not any(x in c for x in "|;=>\n")][:5]
+        wrong = [f["text"] for f in item["forms"] if f["text"] != right]
+        if wrong:
+            line = vocab.rule_line({"wrong": ", ".join(wrong), "right": right, "context": near})
+        else:
+            line = right  # the spelling is right: the name goes in the vocabulary so that it stays that way
+        try:
+            terms = vocab.add_entries(config.load_settings().get("vocabulary"), [line])
+            config.save_settings({"vocabulary": terms})
+        except ValueError as error:
+            raise ApiError(400, str(error))
+        return self.refresh_vocab()
+
+    def vocab_check_ignore(self, key):
+        key = vocabcheck.normalise_key(key)
+        if not key:
+            raise ApiError(400, "bad_key")
+        ignored = list(config.load_settings().get("vocab_ignored") or [])
+        config.save_settings({"vocab_ignored": (ignored + [key])[-500:]})
+
+    def refresh_vocab(self):
+        """Write again, with the new vocabulary, the notes it changes. Returns how many are being written (0 when a job is running: the badge shows them)."""
+        ids, force = self.vocab_targets({})
+        if not ids:
+            return 0
+        try:
+            self.jobs.start_vocab(ids, force)
+        except jobs.Busy:
+            return 0
+        return len(ids)
+
     def actions(self):
         """Every action of every finished note, newest note first, with its done flag."""
         out = []
@@ -290,13 +575,28 @@ class App:
         folder = pocket.find_pocket()
         if not folder:
             return 0
+        wanted = self.store.ignored_files()
+        if not wanted:
+            return 0
+        listing = pocket.scan(folder)
+        by_name = {}
+        for entry in listing.readable:
+            by_name.setdefault(entry.rel, []).append(entry)
         erased, root = 0, folder.resolve()
-        for rel in sorted(self.store.ignored()):
-            target = (folder / rel).resolve()
+        for rel, meta in sorted(wanted.items()):
+            entries = by_name.get(rel, [])
             try:
-                if root in target.parents and target.is_file():
-                    target.unlink()
-                    erased += 1
+                if not entries and listing.locked:
+                    continue  # an encrypted file may be the one: its name cannot be read without the key
+                mine = [e for e in entries if meta is None or (e.size, e.mtime) == meta]  # a name used again by another recording is not erased
+                for entry in mine:  # every copy: a crash can leave the same recording twice
+                    target = entry.path.resolve()
+                    if root in target.parents and target.is_file():
+                        pocket.shred(target, entry.size)
+                        target.unlink()
+                        erased += 1
+                        if entry.sealed and listing.header:
+                            vault.drop_index(listing.header["id"], entry.fid)
                 self.store.ignore(rel, on=False)  # gone from the Pocket: nothing left to remember
             except OSError:
                 continue  # read-only or busy: tried again at the next connection
@@ -317,7 +617,7 @@ class App:
         note = self.get_note(note_id)
         rel = note.get("source")
         if rel:
-            self.store.ignore(rel)  # never imported again; also the memo of a Pocket file still to erase
+            self.store.ignore(rel, size=note.get("size"), mtime=note.get("mtime"))  # never imported again; also the memo of the Pocket file still to erase
         audio = note.get("audio")
         if audio and Path(audio).is_file():
             try:
@@ -441,6 +741,19 @@ def make_handler(app):
                 except jobs.Busy:
                     raise ApiError(409, "busy")
                 return self._json(202, {"ok": True})
+            if method == "POST" and path == "/api/vault/create":
+                trusted = app.vault_create(body.get("password"), body.get("trust", True), body.get("auto", False))
+                return self._json(202, {"ok": True, "trusted": trusted})
+            if method == "POST" and path == "/api/vault/unlock":
+                trusted = app.vault_unlock(body.get("password"), body.get("trust", False))
+                return self._json(202, {"ok": True, "trusted": trusted})
+            if method == "POST" and path == "/api/vault/secure":
+                app._vault_target()
+                app.secure_now()
+                return self._json(202, {"ok": True})
+            if method == "POST" and path == "/api/vault/forget":
+                app.vault_forget()
+                return self._json(200, {"ok": True})
             if method == "POST" and path == "/api/privacy/check":
                 try:
                     app.jobs.start_privacy()
@@ -454,7 +767,7 @@ def make_handler(app):
                 return self._json(200, {"ok": True})
             if method == "POST" and path == "/api/settings":
                 try:
-                    return self._json(200, config.save_settings(body))
+                    return self._json(200, config.public_settings(config.save_settings(body)))
                 except (ValueError, OSError) as error:
                     raise ApiError(400, str(error))
             if method == "GET" and path == "/api/models":
@@ -495,6 +808,22 @@ def make_handler(app):
                     except jobs.Busy:
                         raise ApiError(409, "busy")
                 return self._json(202 if ids else 200, {"ok": True, "count": len(ids)})
+            if method == "GET" and path == "/api/vocabulary/check":
+                return self._json(200, {"items": app.vocab_check()})
+            if method == "POST" and path == "/api/vocabulary/check/apply":
+                return self._json(200, {"ok": True, "updating": app.vocab_check_apply(str(body.get("key") or ""), body.get("right"), body.get("context"))})
+            if method == "POST" and path == "/api/vocabulary/check/ignore":
+                app.vocab_check_ignore(body.get("key"))
+                return self._json(200, {"ok": True})
+            if method == "GET" and path == "/api/people":
+                return self._json(200, app.people())
+            if method == "POST" and path == "/api/people/rename":
+                return self._json(200, {"ok": True, "notes": app.rename_person(body.get("from"), body.get("to"))})
+            if method == "POST" and path == "/api/people/forget":
+                name = body.get("name")
+                if name is None and body.get("all") is not True:
+                    raise ApiError(400, "bad_request")
+                return self._json(200, {"ok": True, "erased": app.forget_voices(None if name is None else str(name))})
             if method == "GET" and path == "/api/tags":
                 return self._json(200, {"tags": app.store.tag_counts()})
             if method == "POST" and path == "/api/tags/add":
@@ -522,6 +851,11 @@ def make_handler(app):
                 return self._json(200, {"ok": True, "count": changed})
             if method == "GET" and path == "/api/search":
                 return self._json(200, {"results": search.find(app.store.folder, (query.get("q") or [""])[0][:200])})
+            if method == "GET" and path == "/api/search/meaning":
+                try:
+                    return self._json(200, {"results": embed.search(app.store, (query.get("q") or [""])[0][:300])})
+                except (llm.LLMError, OSError, ValueError) as error:
+                    raise ApiError(503, str(error)[:200])
             if method == "GET" and path == "/api/actions":
                 return self._json(200, {"actions": app.actions()})
             if method == "POST" and path == "/api/pick-folder":
@@ -709,22 +1043,32 @@ def make_handler(app):
                 except ValueError as error:
                     raise ApiError(400, str(error))
                 return self._json(202, {"ok": True})
+            if method == "POST" and action == "segment":
+                return self._json(200, app.edit_segment(note_id, body.get("index"), body.get("text"), body.get("scope")))
             if method == "POST" and action == "speaker":
-                raw = str(body.get("from") or "").strip()[:60]
-                name = str(body.get("name") or "").strip()[:60]
-                if not raw:
-                    raise ApiError(400, "bad_speaker")
-                note = app.get_note(note_id)
-                names = dict(note.get("speaker_names") or {})
-                if name:
-                    names[raw] = name
-                else:
-                    names.pop(raw, None)
-                note["speaker_names"] = names
-                if note.get("segments"):
-                    note["clean"] = "\n\n".join(speech.raw_lines(diarize.renamed(note["segments"], names)))
-                app.store.save(note)
-                return self._json(200, {"ok": True})
+                with app.store.lock:  # read, change and write as one step
+                    raw = str(body.get("from") or "").strip()[:60]
+                    name = " ".join(str(body.get("name") or "").split())[:60]
+                    if not raw:
+                        raise ApiError(400, "bad_speaker")
+                    note = app.get_note(note_id)
+                    names = dict(note.get("speaker_names") or {})
+                    if name:
+                        names[raw] = name
+                    else:
+                        names.pop(raw, None)
+                    note["speaker_names"] = names
+                    auto = dict(note.get("speaker_auto") or {})
+                    auto.pop(raw, None)  # named by hand from now on
+                    note["speaker_auto"] = auto
+                    if not auto:
+                        note.pop("speaker_auto")
+                    if name and config.load_settings().get("voices") and (note.get("voices") or {}).get(raw):
+                        voices.learn(name, note["voices"][raw])  # a voice is only learned from a name the person typed
+                    if note.get("segments"):
+                        note["clean"] = "\n\n".join(speech.raw_lines(diarize.renamed(note["segments"], names)))
+                    app.store.save(note)
+                    return self._json(200, {"ok": True})
             if method == "POST" and action in ("skip", "restore"):
                 app.get_note(note_id)
                 getattr(app.jobs, action)(note_id)

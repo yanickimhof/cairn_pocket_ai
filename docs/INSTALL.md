@@ -4,7 +4,7 @@ The command is in the [README](../README.md). It detects your system, installs e
 
 ## Options
 
-Set before the command: `CAIRN_HOME` (install folder), `CAIRN_LLM` (language model, default `qwen3:4b`), `CAIRN_WHISPER_REPO` (speech model), `CAIRN_REF` (branch or tag), `CAIRN_NO_SERVICE=1` (see below). Models too small to be useful (Whisper tiny or base, language models under 3B) are refused. An existing Ollama and its models are reused.
+Set before the command: `CAIRN_HOME` (install folder), `CAIRN_LLM` (language model, default `qwen3:4b`), `CAIRN_WHISPER_REPO` (speech model), `CAIRN_REF` (branch or tag), `CAIRN_NO_SERVICE=1` (see below). Models too small to be useful (Whisper tiny or base, language models under 3B) are refused. An existing Ollama and its models are reused. The encryption library for the Pocket vault (`cryptography`, `keyring`) is part of the default install.
 
 ### A second copy, next to the one you use
 
@@ -19,7 +19,7 @@ Nothing is registered, so nothing starts by itself. Cairn listens on port 8731, 
 
 ## Update
 
-Cairn looks for a new version once a day (switch in **Settings, Check for updates**) and puts a dot on the info icon when one exists. To update, run the install command again: it replaces the engine and keeps your notes, settings and models. If speaker identification was installed, it is put back. The version it replaces stays in `~/Cairn/src.previous`, in case you need to go back.
+Cairn looks for a new version once a day (switch in **Settings, Check for updates**) and puts a dot on the info icon when one exists. To update, run the install command again: it replaces the engine and keeps your notes, settings and models. If speaker identification was installed, it is put back. The version it replaces stays in `~/Cairn/src.previous`, in case you need to go back. If you secured a Pocket, macOS may ask once to let the new copy of Python use the keychain: allow it, or enter the Pocket password again.
 
 ## Troubleshooting
 

@@ -1,20 +1,26 @@
 # Release notes
 
-## Coming in 0.5
+## 0.5
 
-**Who said what, across all your notes.**
-Rename, merge and review speakers once, and let Cairn recognise voices if you want it to.
+**A Pocket you can afford to lose.**
+One password encrypts every recording Cairn has copied. Plugged into another computer, the Pocket reveals nothing.
 
-**Ask your notes.**
-Ask a question, get an answer with its sources, all on your Mac.
+**Fix it where you read it.**
+Correct a passage in the transcript, here only or everywhere, and every note follows.
 
-**A vocabulary that learns.**
-Cairn lists the words it doubts, you give the spelling, and every note is updated.
+**Words worth a second look.**
+Cairn lists the names spelled several ways and the words it doubted. Pick the spelling once, every note follows.
+
+**Ask in your own words.**
+An optional search model finds the passage that answers your question, even when the words differ.
+
+**One voice, one name, everywhere.**
+Name and merge people once for all your notes, and let Cairn recognise voices if you choose.
 
 ## 0.4
 
 **Find anything, in a second.**
-Search every word of every note, accents ignored, your words highlighted. `#orion` narrows it to a tag.
+Search every word of every note, accents ignored, your words highlighted. `#apollo` narrows it to a tag.
 
 **Hear what was said.**
 Tap a time stamp in the transcript and the recording plays from that line. Checking a doubtful word takes seconds.
@@ -25,7 +31,7 @@ Every action from every note, by person, newest first. Tick them, correct them, 
 **The follow-up email, written.**
 One tap drafts a short email from the note, in its language, ready for your mail app. Cairn sends nothing.
 
-**Your names, spelled right, in context.**
+**Spelled right, in context.**
 Several spellings can point to one name, even only near the right words. One tap updates the notes that need it: all of them, a choice, or a period.
 
 **Notes in your own format.**
@@ -54,7 +60,7 @@ With automatic processing on, Cairn starts as soon as your recordings are copied
 **Easy on your Mac.**
 Memory is freed between steps, so even a 16 GB Mac stays quick.
 
-**Always honest.**
+**Honest about what is installed.**
 Models and About show exactly what is installed on your Mac, sizes and versions included.
 
 ## 0.2
@@ -65,7 +71,7 @@ Cairn tells speakers apart, entirely on your Mac.
 **Your Pocket at a glance.**
 Add your own session key to see its firmware, state and storage, read only.
 
-**Always the latest.**
+**Install gets you the latest.**
 The install command now installs the newest release.
 
 ## 0.1
@@ -99,11 +105,3 @@ No account, no cloud, no telemetry. Cairn checks every day that nothing leaves y
 
 **Always there.**
 Runs quietly in the background, in English or French.
-
-## Later
-
-**Linux, and installs without Internet.**
-
-**Any folder of audio, and more languages.**
-
-**Easier for everyone.** Tested with screen readers, with a full list of what each release contains.

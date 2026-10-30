@@ -68,6 +68,17 @@ class Store:
             except FileNotFoundError:
                 pass
 
+    def iter_notes(self):
+        """Every note, one file at a time, without holding the lock while a big transcript is read: (signature, note)."""
+        for path in sorted(self.folder.glob("*.json")):
+            try:
+                stat = path.stat()
+            except OSError:
+                continue
+            note = config.read_json(path, default=None)
+            if note and note.get("id"):
+                yield (stat.st_mtime_ns, stat.st_size, stat.st_ino), note
+
     def all(self):
         """Every note, complete. Reads each file: for the listing and the queue, use slim()."""
         with self.lock:
@@ -99,21 +110,58 @@ class Store:
                 del self._cache[gone]
             return rows
 
+    def signature(self):
+        """A short value that changes whenever a note is written, added or removed (a cheap look at the files, nothing is read)."""
+        digest = hashlib.sha1(usedforsecurity=False)
+        with self.lock:
+            for path in sorted(self.folder.glob("*.json")):
+                try:
+                    stat = path.stat()
+                except OSError:
+                    continue
+                digest.update(("%s:%d:%d:%d;" % (path.name, stat.st_mtime_ns, stat.st_size, stat.st_ino)).encode("utf-8"))
+        return digest.hexdigest()
+
     # Recordings the person deleted on this computer only: they stay on the Pocket but are never imported again.
 
-    def ignored(self):
+    def ignored_files(self):
+        """{name: (size, mtime) or None}: the deleted recordings, and which file each one was when it was deleted."""
+        out = {}
         try:
-            return {x for x in (self.folder / "ignored.txt").read_text(encoding="utf-8").splitlines() if x}
+            lines = (self.folder / "ignored.txt").read_text(encoding="utf-8").splitlines()
         except OSError:
-            return set()
+            return out
+        for line in lines:
+            name, _tab, rest = line.partition("\t")
+            if not name:
+                continue
+            try:
+                size, mtime = rest.split("\t")
+                out[name] = (int(size), int(mtime))
+            except ValueError:
+                out[name] = None
+        return out
 
-    def ignore(self, rel, on=True):
+    def ignored(self):
+        return set(self.ignored_files())
+
+    def is_ignored(self, rel, size, mtime):
+        """Whether this file is a recording the person deleted. A name used again by another recording is not."""
+        files = self.ignored_files()
+        if rel not in files:
+            return False
+        return files[rel] is None or files[rel] == (size, mtime)
+
+    def ignore(self, rel, on=True, size=None, mtime=None):
         with self.lock:
-            items = self.ignored()
-            items.add(rel) if on else items.discard(rel)
+            items = self.ignored_files()
+            if on:
+                items[rel] = (size, mtime) if size is not None and mtime is not None else items.get(rel)
+            else:
+                items.pop(rel, None)
             fd, tmp = tempfile.mkstemp(dir=str(self.folder), prefix="ignored.", suffix=".tmp")
             with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                handle.write("\n".join(sorted(items)))
+                handle.write("\n".join(name + ("\t%d\t%d" % items[name] if items[name] else "") for name in sorted(items)))
             os.replace(tmp, self.folder / "ignored.txt")  # atomic: a crash cannot empty the list
 
     def tag_counts(self):
@@ -152,11 +200,20 @@ class Store:
         self.save(note)
         return {k: v for k, v in note.items() if k not in HEAVY}
 
-    def find_source(self, rel):
-        for note in self.slim():
-            if note.get("source") == rel:
-                return self.get(note["id"])
-        return None
+    def find_source(self, rel, size=None, mtime=None, light=False):
+        """The note of the recording called rel. When size and date are given, the note of exactly that file comes first: a name
+        can be used again by another recording. `light` gives the listing copy (no transcript): enough to compare, and quick."""
+        same = [n for n in self.slim() if n.get("source") == rel]
+        if size is not None:
+            exact = [n for n in same if n.get("size") == size and n.get("mtime") == mtime]
+            same = exact or same
+        if not same:
+            return None
+        return same[0] if light else self.get(same[0]["id"])
+
+    def sources(self, rel):
+        """Every note made from a recording called rel."""
+        return [self.get(n["id"]) for n in self.slim() if n.get("source") == rel]
 
     def reset_interrupted(self):
         """Recordings left in the middle of processing by a previous run go back to waiting."""

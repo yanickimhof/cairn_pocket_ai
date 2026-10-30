@@ -40,10 +40,21 @@ def abort():
 def run(audio_path, timeout=TIMEOUT):
     """One diarization pass: ("ok", [turns]), ("missing", None) if not installed/importable, else ("none", None).
     Each turn is {"start": float, "end": float, "speaker": "SPEAKER_00"}."""
+    state, payload = _exec(audio_path, timeout, False)
+    return state, (payload["turns"] if state == "ok" else None)
+
+
+def run_with_voices(audio_path, timeout=TIMEOUT):
+    """The same pass, with the voiceprint of every speaker: ("ok", turns, {"SPEAKER_00": [floats]}), else (state, None, {})."""
+    state, payload = _exec(audio_path, timeout, True)
+    return (state, payload["turns"], payload["voices"]) if state == "ok" else (state, None, {})
+
+
+def _exec(audio_path, timeout, voices):
     if not available():
         return "missing", None
     device = config.load_settings().get("diarize_device", "auto")
-    env = dict(os.environ, CAIRN_DIARIZE_DEVICE=device if device in ("auto", "cpu") else "auto")
+    env = dict(os.environ, CAIRN_DIARIZE_DEVICE=device if device in ("auto", "cpu") else "auto", CAIRN_VOICES="1" if voices else "0")
     try:
         proc = subprocess.Popen(  # nosec B603
             [sys.executable, "-m", "cairn.diarize_worker", str(audio_path)], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -68,9 +79,15 @@ def run(audio_path, timeout=TIMEOUT):
         return "missing", None
     if proc.returncode == 0 and (out or "").strip():
         try:
-            return "ok", json.loads(out.strip())
+            data = json.loads(out.strip())
         except ValueError:
             return "none", None
+        if isinstance(data, list):
+            return "ok", {"turns": data, "voices": {}}
+        if isinstance(data, dict) and isinstance(data.get("turns"), list):
+            prints = data.get("voices") if isinstance(data.get("voices"), dict) else {}
+            return "ok", {"turns": data["turns"], "voices": prints}
+        return "none", None
     detail = (err or "").strip().splitlines()[-1:] or ["exit %d" % proc.returncode]
     print("diarize: no result (%s)" % detail[0][:160], file=sys.stderr, flush=True)
     return "none", None
@@ -79,6 +96,22 @@ def run(audio_path, timeout=TIMEOUT):
 def label(index, lang):
     names = {"fr": "Interlocuteur %d", "en": "Speaker %d"}
     return (names.get(lang) or names["en"]) % (index + 1)
+
+
+def _order(segments, turns):
+    """The raw labels of the turns in the order the speakers first speak."""
+    order = []
+    for segment in segments:
+        mid = (float(segment.get("start", 0)) + float(segment.get("end", 0))) / 2
+        turn = next((t for t in turns if t["start"] <= mid < t["end"]), None)
+        if turn is not None and turn["speaker"] not in order:
+            order.append(turn["speaker"])
+    return order
+
+
+def label_voices(segments, turns, prints, lang):
+    """The voiceprints under the readable labels that assign() gave the speakers: {"Speaker 1": [floats]}."""
+    return {label(i, lang): prints[raw] for i, raw in enumerate(_order(segments, turns)) if raw in (prints or {})}
 
 
 def assign(segments, turns, lang):

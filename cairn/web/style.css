@@ -176,3 +176,31 @@ a.ib{text-decoration:none}
 .tgx{border:0;background:transparent;color:inherit;font-size:15px;line-height:1;padding:0 0 0 2px;display:inline-flex;align-items:center}
 .tagpanel{padding:10px 2px 6px}
 .list+.tagbar,.tagbar+.list{margin-top:0}
+
+.secbtn{width:44px;height:44px;padding:0;border:0;background:transparent;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-left:2px;color:#86868B;transition:background .15s}
+.secbtn.ok{color:var(--green)}.secbtn.risk,.secbtn.lock{color:var(--orange)}
+.secbtn .sh{fill:currentColor;fill-opacity:.14}
+.secbtn:hover,.secbtn:focus-visible,.secbtn.open{background:var(--soft)}
+.secbtn.work svg{animation:pulse 1.4s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.secbtn.work svg{animation:none}}
+.vcbtn{position:relative}.cnt{position:absolute;top:2px;right:0;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--orange);color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.vclist{display:flex;flex-direction:column;gap:10px;padding:0 0 14px}.vcitem{background:var(--soft);border-radius:14px;padding:12px 14px}
+.vcforms{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}.vcform{background:#fff;border-radius:999px;padding:3px 10px;font-size:14px;font-weight:600}.vcform i{color:var(--mute);font-style:normal;font-weight:500;font-size:12px}
+.vcex{font-size:13px;color:var(--ink2);margin-top:4px}.vcex mark{background:#FFF1B8;border-radius:4px;padding:0 2px}
+.segpen{border:0;background:transparent;padding:2px 4px;margin-left:6px;vertical-align:middle;opacity:0;border-radius:6px}.mbody p:hover .segpen,.segpen:focus-visible{opacity:.6}
+@media(hover:none){.segpen{opacity:.35}}
+.mbody p.ed{border-bottom:1px dotted var(--blue)}
+.segedit{background:var(--soft);border-radius:14px;padding:10px 12px;margin:0 0 12px;display:flex;flex-direction:column;gap:8px}
+.segedit textarea{width:100%;border:1.5px solid #E5E5EA;border-radius:10px;padding:8px;font:inherit;font-size:15px;color:var(--ink);resize:vertical;background:#fff}
+.langbtn{font-size:13px;font-weight:700;color:var(--ink);letter-spacing:.02em}
+.plist{display:flex;flex-direction:column;gap:2px;padding:0 0 14px}.pitem{border-radius:12px}.prow{display:flex;align-items:center;gap:6px;min-height:42px}
+.pname{flex:1;min-width:0;text-align:left;border:0;background:transparent;padding:6px 2px;font-size:15px;color:var(--ink)}
+.vdot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+.pnote{display:flex;justify-content:space-between;gap:12px;width:100%;border:0;background:var(--soft);border-radius:10px;padding:8px 12px;margin:2px 0;font-size:14px;text-align:left;color:var(--ink2)}
+.vauto{font-size:13px;color:var(--mute);font-weight:700}
+.secbtn.idle .sh{stroke-dasharray:2.4 2.2;fill-opacity:0}
+.cnt{background:#B4562F}
+.segpen{padding:6px 8px;margin-left:2px}.mbody p:hover .segpen,.segpen:focus-visible{opacity:.7}
+@media(hover:none){.segpen{opacity:.55}}
+.comp .cv{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.dotbtn:focus-visible,.secbtn:focus-visible,.langbtn:focus-visible,.ib:focus-visible,.mbtn:focus-visible,.tg:focus-visible{outline:2px solid var(--blue);outline-offset:2px}

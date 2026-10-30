@@ -9,7 +9,7 @@ from pathlib import Path
 
 from . import catalog, templates, vocab
 
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 REPO = "yanickimhof/cairn_pocket_ai"
 REFERRAL_URL = "https://referral.heypocketai.com/refer/39179caf?source=desktop_qr"
 AUDIO_EXT = (".mp3", ".wav", ".m4a", ".opus", ".ogg", ".flac")
@@ -17,7 +17,7 @@ LOOPBACK = re.compile(r"127\.0\.0\.1:\d{2,5}")
 DEFAULT_LLM = "qwen3:4b"
 LEVELS = ("short", "mid", "full")
 LANGS = ("fr", "en")
-DEFAULT_SETTINGS = {"ui": None, "audio_dir": None, "llm": None, "speech": None, "autocheck": True, "autoimport": True, "autoprocess": False, "pocket_key": None, "diarize": False, "diarize_device": "auto", "vocabulary": [], "templates": [], "template_default": "", "tags_suggest": False, "hf_token": None}
+DEFAULT_SETTINGS = {"ui": None, "audio_dir": None, "llm": None, "speech": None, "autocheck": True, "autoimport": True, "autoprocess": False, "pocket_key": None, "diarize": False, "diarize_device": "auto", "vocabulary": [], "templates": [], "template_default": "", "tags_suggest": False, "pocket_secure_auto": False, "vocab_ignored": [], "embed": None, "voices": False, "hf_token": None}
 
 _lock = threading.RLock()
 
@@ -92,6 +92,14 @@ def load_settings():
     return settings
 
 
+def public_settings(settings):
+    """The settings as the page needs them: a secret is shown as set or not, never in full."""
+    shown = dict(settings)
+    for key in ("hf_token", "pocket_key"):
+        shown[key] = True if shown.get(key) else None
+    return shown
+
+
 def save_settings(patch):
     """Validate and store a partial settings update. Returns the new settings."""
     with _lock:
@@ -99,10 +107,12 @@ def save_settings(patch):
         for key, value in patch.items():
             if key == "ui" and value in LANGS:
                 current["ui"] = value
-            elif key in ("autocheck", "autoimport", "autoprocess", "tags_suggest") and isinstance(value, bool):
+            elif key in ("autocheck", "autoimport", "autoprocess", "tags_suggest", "pocket_secure_auto", "voices") and isinstance(value, bool):
                 current[key] = value
             elif key == "llm" and value in catalog.LLM_IDS:
                 current["llm"] = value
+            elif key == "embed" and (value in catalog.EMBED_IDS or value in (None, "")):
+                current["embed"] = value or None
             elif key == "speech" and value in catalog.SPEECH_IDS:
                 current["speech"] = value
             elif key == "audio_dir" and isinstance(value, str) and value.strip():
@@ -117,6 +127,10 @@ def save_settings(patch):
                 current["diarize_device"] = value
             elif key == "vocabulary":
                 current["vocabulary"] = vocab.parse(value)
+            elif key == "vocab_ignored":
+                if not isinstance(value, list) or len(value) > 500 or not all(isinstance(v, str) and 0 < len(v) <= 60 for v in value):
+                    raise ValueError("Invalid list of ignored words.")
+                current["vocab_ignored"] = list(dict.fromkeys(value))
             elif key == "templates":
                 current["templates"] = templates.parse(value)
                 if current.get("template_default") and not templates.find(current["templates"], current["template_default"]):

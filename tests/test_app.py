@@ -444,6 +444,7 @@ class AppTest(unittest.TestCase):
         self.assertEqual(names, sorted(names, key=str.lower))
         self.assertTrue(all({"name", "ver", "size", "ok"} <= set(c) for c in data["components"]))
         self.assertTrue(data["referral"].startswith("https://referral.heypocketai.com/"))
+        self.assertNotIn("suggest", data)
         self.assertEqual(self.c.call("GET", "/referral-qr.svg")[0], 404)
         self.assertNotIn("Diarization", names)  # not installed in this fixture
 
@@ -1228,8 +1229,8 @@ class UnitTest(unittest.TestCase):
     def test_note_fidelity_counts_numbers_and_names_found_in_the_transcript(self):
         from cairn import score
 
-        transcript = "Bonjour, ici Marc Dupont. Le budget est de 12500 francs, livraison le 14 mars à Lausanne."
-        good = {"tldr": "Réunion avec Marc Dupont.", "key_points": ["Budget de 12 500 francs", "Livraison le 14 mars à Lausanne"], "actions": []}
+        transcript = "Bonjour, ici Marc Dupont. Le budget est de 12500 francs, livraison le 14 mars à Lyon."
+        good = {"tldr": "Réunion avec Marc Dupont.", "key_points": ["Budget de 12 500 francs", "Livraison le 14 mars à Lyon"], "actions": []}
         self.assertEqual(score.fidelity(good, transcript), 100)
         invented = dict(good, key_points=["Budget de 99 000 francs", "Livraison le 3 avril à Genève"])
         low = score.fidelity(invented, transcript)
@@ -1567,7 +1568,7 @@ class VocabularyTest(unittest.TestCase):
     def test_entries_are_parsed_and_bounded(self):
         from cairn import vocab
 
-        self.assertEqual(vocab.parse("Acme\nSpringfield; Acme, Yverdon\n\n  Gros-de-Vaud "), ["Acme", "Springfield", "Yverdon", "Gros-de-Vaud"])
+        self.assertEqual(vocab.parse("Brandt\nRotterdam; Brandt, Utrecht\n\n  Val-d’Oise "), ["Brandt", "Rotterdam", "Utrecht", "Val-d’Oise"])
         self.assertEqual(vocab.parse(["A name", "a name"]), ["A name"])
         self.assertEqual(vocab.parse(""), [])
         with self.assertRaises(ValueError):
@@ -1581,35 +1582,35 @@ class VocabularyTest(unittest.TestCase):
         from cairn import vocab
 
         fixed = lambda terms, text: vocab.fix_text(text, terms)[0]
-        self.assertEqual(fixed(["Acme"], "The Sion awards"), "The Acme awards")
-        self.assertEqual(fixed(["Springfield"], "à Eschalens et Échalens"), "à Springfield et Springfield")
-        self.assertEqual(fixed(["Globex"], "chez Kudelsky et Koudelski"), "chez Globex et Globex")
-        self.assertEqual(fixed(["Yverdon"], "à Iverdon"), "à Yverdon")
+        self.assertEqual(fixed(["Brandt"], "The Brant awards"), "The Brandt awards")
+        self.assertEqual(fixed(["Rotterdam"], "à Roterdam et Rotherdam"), "à Rotterdam et Rotterdam")
+        self.assertEqual(fixed(["Danfoss"], "chez Danfos et Danfoss"), "chez Danfoss et Danfoss")
+        self.assertEqual(fixed(["Utrecht"], "à Utreht"), "à Utrecht")
         # a different name, a common word, a word that already is the entry: left alone
         self.assertEqual(fixed(["Laurent"], "Laurence et Laurent"), "Laurence et Laurent")
         self.assertEqual(fixed(["Lise"], "les enfants"), "les enfants")
         self.assertEqual(fixed(["Marc"], "mars et Marc"), "mars et Marc")
-        self.assertEqual(fixed(["Acme"], "Acme et acme"), "Acme et acme")
+        self.assertEqual(fixed(["Brandt"], "Brandt et brandt"), "Brandt et brandt")
 
     def test_exact_rules_always_apply(self):
         from cairn import vocab
 
-        text, found = vocab.fix_text("à Sion puis sion encore", ["Sion => Acme"])
-        self.assertEqual(text, "à Acme puis Acme encore")
+        text, found = vocab.fix_text("à Brant puis brant encore", ["Brant => Brandt"])
+        self.assertEqual(text, "à Brandt puis Brandt encore")
         self.assertEqual(len(found), 2)
-        self.assertEqual(vocab.spellings(["Sion => Acme", "Springfield", "Acme"]), ["Acme", "Springfield"])
+        self.assertEqual(vocab.spellings(["Brant => Brandt", "Rotterdam", "Brandt"]), ["Brandt", "Rotterdam"])
 
     def test_the_original_is_kept_and_comes_back_when_an_entry_is_removed(self):
         from cairn import vocab
 
-        segments = [{"start": 0, "end": 2, "text": "The Sion awards"}, {"start": 2, "end": 4, "text": "nothing here"}]
-        fixes = vocab.apply(segments, ["Acme"])
-        self.assertEqual(fixes, [{"from": "Sion", "to": "Acme", "count": 1}])
-        self.assertEqual((segments[0]["text"], segments[0]["orig"]), ("The Acme awards", "The Sion awards"))
+        segments = [{"start": 0, "end": 2, "text": "The Brant awards"}, {"start": 2, "end": 4, "text": "nothing here"}]
+        fixes = vocab.apply(segments, ["Brandt"])
+        self.assertEqual(fixes, [{"from": "Brant", "to": "Brandt", "count": 1}])
+        self.assertEqual((segments[0]["text"], segments[0]["orig"]), ("The Brandt awards", "The Brant awards"))
         self.assertNotIn("orig", segments[1])
-        self.assertEqual(vocab.apply(segments, ["Acme"]), fixes)  # running it again changes nothing
+        self.assertEqual(vocab.apply(segments, ["Brandt"]), fixes)  # running it again changes nothing
         self.assertEqual(vocab.apply(segments, []), [])
-        self.assertEqual(segments[0]["text"], "The Sion awards")
+        self.assertEqual(segments[0]["text"], "The Brant awards")
         self.assertNotIn("orig", segments[0])
 
     def test_the_setting_is_validated_and_the_summary_is_given_the_spellings(self):
@@ -1619,14 +1620,14 @@ class VocabularyTest(unittest.TestCase):
 
         with mock.patch.object(config, "home", return_value=Path(tempfile.mkdtemp())):
             self.assertEqual(config.load_settings()["vocabulary"], [])
-            self.assertEqual(config.save_settings({"vocabulary": "Acme\nSion => Acme"})["vocabulary"], ["Acme", "Sion => Acme"])
+            self.assertEqual(config.save_settings({"vocabulary": "Brandt\nBrant => Brandt"})["vocabulary"], ["Brandt", "Brant => Brandt"])
             with self.assertRaises(ValueError):
                 config.save_settings({"vocabulary": "x" * 99})
         seen = []
         with mock.patch.object(llm, "chat", side_effect=lambda system, *a, **k: seen.append(system) or '{"title": "T", "tldr": "x", "actions": []}'):
-            llm.summarize("one two three four five six", "mid", "en", vocabulary=["Acme", "Springfield"])
+            llm.summarize("one two three four five six", "mid", "en", vocabulary=["Brandt", "Rotterdam"])
             llm.summarize("one two three four five six", "mid", "en")
-        self.assertIn("Acme; Springfield", seen[0])
+        self.assertIn("Brandt; Rotterdam", seen[0])
         self.assertNotIn("Spell these names", seen[1])
 
     def test_corrections_are_kept_with_the_note_and_speaker_names_survive(self):
@@ -1634,16 +1635,16 @@ class VocabularyTest(unittest.TestCase):
 
         from cairn import jobs
 
-        segments = [{"start": 0.0, "end": 2.0, "text": "The Sion awards today.", "logprob": -0.2, "speaker": "Speaker 1"}]
+        segments = [{"start": 0.0, "end": 2.0, "text": "The Brant awards today.", "logprob": -0.2, "speaker": "Speaker 1"}]
         job, store = RetryAndResumeTest()._jobs(a={"status": "done", "segments": segments, "duration": 2.0, "lang": "en",
                                                    "transcribed_key": "k", "transcribed_lang": "", "speaker_names": {"Speaker 1": "Marc"}})
         with mock.patch.object(jobs.speech, "model_key", return_value="k"), mock.patch.object(jobs.speech, "model_name", return_value="W"), \
                 mock.patch.object(jobs.config, "install_config", return_value={"llm": "m"}), mock.patch.object(job, "_summarize"):
-            job._process("a", {"ui": "en", "diarize": False, "vocabulary": ["Acme"]})
+            job._process("a", {"ui": "en", "diarize": False, "vocabulary": ["Brandt"]})
         note = store.get("a")
-        self.assertEqual(note["vocab_fixes"], [{"from": "Sion", "to": "Acme", "count": 1}])
-        self.assertIn("Marc: The Acme awards today.", note["clean"])
-        self.assertEqual(note["segments"][0]["orig"], "The Sion awards today.")
+        self.assertEqual(note["vocab_fixes"], [{"from": "Brant", "to": "Brandt", "count": 1}])
+        self.assertIn("Marc: The Brandt awards today.", note["clean"])
+        self.assertEqual(note["segments"][0]["orig"], "The Brant awards today.")
         self.assertEqual(note["timings"]["reused"], ["transcribing"])
 
     def test_a_changed_vocabulary_redoes_the_words_without_transcribing_again(self):
@@ -1654,7 +1655,7 @@ class VocabularyTest(unittest.TestCase):
         job, store = RetryAndResumeTest()._jobs(a={"status": "done", "segments": [{"start": 0, "end": 1, "text": "x"}], "vocab_key": vocab.key([]),
                                                    "models": {"speech": "W"}, "speech_lang_used": None, "level": "mid", "lang": "en"})
         started = []
-        for terms, expected in ((["Acme"], "_rerun"), ([], "_rerun")):  # no audio is needed: the kept transcript is corrected and the note written again
+        for terms, expected in ((["Brandt"], "_rerun"), ([], "_rerun")):  # no audio is needed: the kept transcript is corrected and the note written again
             started.clear()
             with mock.patch.object(jobs.speech, "model_name", return_value="W"), mock.patch.object(jobs.config, "load_settings", return_value={"vocabulary": terms}), \
                     mock.patch.object(job, "_start", side_effect=lambda kind, target, *a: started.append(target.__name__)):
@@ -1665,51 +1666,51 @@ class VocabularyTest(unittest.TestCase):
     def test_several_spellings_and_every_arrow_share_one_rule(self):
         from cairn import vocab
 
-        self.assertEqual(vocab.parse("Sion : Acme\nA, B -> C\nlow \u2192 High\nX, Y; Z"), ["Sion => Acme", "A, B => C", "low => High", "X", "Y", "Z"])
-        self.assertEqual(vocab.parse(["Sion, Cion => Acme", "Springfield, Yverdon"]), ["Sion, Cion => Acme", "Springfield, Yverdon"])
+        self.assertEqual(vocab.parse("Brant : Brandt\nA, B -> C\nlow \u2192 High\nX, Y; Z"), ["Brant => Brandt", "A, B => C", "low => High", "X", "Y", "Z"])
+        self.assertEqual(vocab.parse(["Brant, Brand => Brandt", "Rotterdam, Utrecht"]), ["Brant, Brand => Brandt", "Rotterdam, Utrecht"])
         self.assertEqual(vocab.parse("=> x\ny =>"), [])  # an arrow with nothing on one side is not a rule
         with self.assertRaises(ValueError):
-            vocab.parse(", ".join(["abcdefghij"] * 40) + " => Acme")
-        terms = ["Science Day -> ACME Day", "SIGN DAY, Silent  Day => ACME Day", "Martin Yen : Martin Jetter"]
-        text, found = vocab.fix_text("At the science day, then sign day, and silent\nday. Martin Yen spoke.", terms)
-        self.assertEqual(text, "At the ACME Day, then ACME Day, and ACME Day. Martin Jetter spoke.")
+            vocab.parse(", ".join(["abcdefghij"] * 40) + " => Brandt")
+        terms = ["Open Day -> BRANDT Day", "SIGN DAY, Silent  Day => BRANDT Day", "Paul Meyer : Paul Mayer"]
+        text, found = vocab.fix_text("At the open day, then sign day, and silent\nday. Paul Meyer spoke.", terms)
+        self.assertEqual(text, "At the BRANDT Day, then BRANDT Day, and BRANDT Day. Paul Mayer spoke.")
         self.assertEqual(len(found), 4)
-        self.assertEqual(vocab.spellings(terms), ["ACME Day", "Martin Jetter"])
-        self.assertEqual(vocab.fix_text("Sionx", ["Sion => Acme"])[0], "Sionx")  # whole words only
+        self.assertEqual(vocab.spellings(terms), ["BRANDT Day", "Paul Mayer"])
+        self.assertEqual(vocab.fix_text("Brantx", ["Brant => Brandt"])[0], "Brantx")  # whole words only
 
     def test_a_rule_with_a_context_replaces_only_near_those_words(self):
         from cairn import vocab
 
-        terms = vocab.parse("Science Day -> ACME Day | awards, ceremony\nMartin Yen => Martin Jetter")
-        self.assertEqual(terms, ["Science Day => ACME Day | awards, ceremony", "Martin Yen => Martin Jetter"])
-        self.assertEqual(vocab.spellings(terms), ["ACME Day", "Martin Jetter"])  # the summary is told the right spelling only
-        segments = [{"text": "We saw the science day yesterday."}, {"text": "Nothing."}, {"text": "The awards ceremony was great."},
-                    {"text": "x"}, {"text": "y"}, {"text": "At school, science day is on Friday."}]
+        terms = vocab.parse("Open Day -> BRANDT Day | awards, ceremony\nPaul Meyer => Paul Mayer")
+        self.assertEqual(terms, ["Open Day => BRANDT Day | awards, ceremony", "Paul Meyer => Paul Mayer"])
+        self.assertEqual(vocab.spellings(terms), ["BRANDT Day", "Paul Mayer"])  # the summary is told the right spelling only
+        segments = [{"text": "We saw the open day yesterday."}, {"text": "Nothing."}, {"text": "The awards ceremony was great."},
+                    {"text": "x"}, {"text": "y"}, {"text": "At school, open day is on Friday."}]
         fixes = vocab.apply(segments, terms)
-        self.assertEqual(fixes, [{"from": "science day", "to": "ACME Day", "count": 1}])
-        self.assertEqual([s["text"] for s in segments][0], "We saw the ACME Day yesterday.")  # "awards" is two lines away
-        self.assertEqual(segments[5]["text"], "At school, science day is on Friday.")  # no context word near: left alone, a real science day
-        self.assertEqual(vocab.fix_text("science day", terms)[0], "science day")  # alone, without the words that make it the name
-        self.assertEqual(vocab.fix_text("science day awards", terms)[0], "ACME Day awards")
+        self.assertEqual(fixes, [{"from": "open day", "to": "BRANDT Day", "count": 1}])
+        self.assertEqual([s["text"] for s in segments][0], "We saw the BRANDT Day yesterday.")  # "awards" is two lines away
+        self.assertEqual(segments[5]["text"], "At school, open day is on Friday.")  # no context word near: left alone, a real open day
+        self.assertEqual(vocab.fix_text("open day", terms)[0], "open day")  # alone, without the words that make it the name
+        self.assertEqual(vocab.fix_text("open day awards", terms)[0], "BRANDT Day awards")
         self.assertEqual(vocab.parse(["a => b |"]), ["a => b"])  # an empty context means always
 
     def test_the_summary_follows_the_vocabulary_whatever_the_model_wrote(self):
         from cairn import vocab
 
-        terms = ["Science Day => ACME Day | awards, ceremony", "Atelier Nor => Atelier Nord", "Springfield"]
-        summary = {"title": "Science Day awards", "tldr": "The science day ceremony took place with Atelier Nor.", "context": "At Eschalens.",
-                   "actions": [{"what": "Call Atelier Nor", "who": "Marc", "when": "Monday"}], "key_points": ["Science Day was a success", 3],
-                   "decisions": [], "sections": [{"heading": "Goals", "text": "Win the awards at Eschalens"}], "topics": [{"name": "Atelier Nor", "summary": "x"}]}
+        terms = ["Open Day => BRANDT Day | awards, ceremony", "Atelier Nor => Atelier Nord", "Rotterdam"]
+        summary = {"title": "Open Day awards", "tldr": "The open day ceremony took place with Atelier Nor.", "context": "At Roterdam.",
+                   "actions": [{"what": "Call Atelier Nor", "who": "Marc", "when": "Monday"}], "key_points": ["Open Day was a success", 3],
+                   "decisions": [], "sections": [{"heading": "Goals", "text": "Win the awards at Roterdam"}], "topics": [{"name": "Atelier Nor", "summary": "x"}]}
         fixes = vocab.fix_summary(summary, terms)
-        self.assertEqual(summary["title"], "ACME Day awards")
-        self.assertEqual(summary["tldr"], "The ACME Day ceremony took place with Atelier Nord.")
-        self.assertEqual(summary["context"], "At Springfield.")  # a name the vocabulary lists, written close to it
+        self.assertEqual(summary["title"], "BRANDT Day awards")
+        self.assertEqual(summary["tldr"], "The BRANDT Day ceremony took place with Atelier Nord.")
+        self.assertEqual(summary["context"], "At Rotterdam.")  # a name the vocabulary lists, written close to it
         self.assertEqual(summary["actions"][0]["what"], "Call Atelier Nord")
-        self.assertEqual(summary["key_points"], ["ACME Day was a success", 3])  # the rule's context words are found elsewhere in the summary
-        self.assertEqual(summary["sections"][0]["text"], "Win the awards at Springfield")
+        self.assertEqual(summary["key_points"], ["BRANDT Day was a success", 3])  # the rule's context words are found elsewhere in the summary
+        self.assertEqual(summary["sections"][0]["text"], "Win the awards at Rotterdam")
         self.assertEqual(summary["topics"][0]["name"], "Atelier Nord")
-        self.assertTrue(all(isinstance(f["count"], int) for f in fixes) and {f["to"] for f in fixes} == {"ACME Day", "Atelier Nord", "Springfield"})
-        self.assertEqual(vocab.fix_summary({"tldr": "A science day at school."}, terms), [])  # no context word: a real science day
+        self.assertTrue(all(isinstance(f["count"], int) for f in fixes) and {f["to"] for f in fixes} == {"BRANDT Day", "Atelier Nord", "Rotterdam"})
+        self.assertEqual(vocab.fix_summary({"tldr": "A open day at school."}, terms), [])  # no context word: a real open day
         self.assertEqual(vocab.fix_summary({"tldr": "x"}, []), [])
         self.assertEqual(vocab.fix_summary("not a summary", terms), [])
 
@@ -1719,26 +1720,26 @@ class VocabularyTest(unittest.TestCase):
         from cairn import jobs, llm
 
         job, store = RetryAndResumeTest()._jobs(a={"status": "done", "clean": "words " * 20})
-        reply = {"title": "The Sion awards", "tldr": "Sion won the awards.", "actions": [], "template": "meeting"}
-        with mock.patch.object(jobs.config, "load_settings", return_value={"vocabulary": ["Sion => Acme"], "templates": []}), \
+        reply = {"title": "The Brant awards", "tldr": "Brant won the awards.", "actions": [], "template": "meeting"}
+        with mock.patch.object(jobs.config, "load_settings", return_value={"vocabulary": ["Brant => Brandt"], "templates": []}), \
                 mock.patch.object(llm, "summarize", return_value=reply):
             note = store.get("a")
             job._summarize(note, "mid", "en")
-        self.assertEqual((note["title"], note["summary"]["tldr"]), ("The Acme awards", "Acme won the awards."))
+        self.assertEqual((note["title"], note["summary"]["tldr"]), ("The Brandt awards", "Brandt won the awards."))
 
     def test_the_words_are_redone_and_the_summary_written_again_without_any_audio(self):
         from unittest import mock
 
         from cairn import jobs
 
-        segments = [{"start": 0.0, "end": 2.0, "text": "The Sion awards today.", "speaker": "Speaker 1"}]
+        segments = [{"start": 0.0, "end": 2.0, "text": "The Brant awards today.", "speaker": "Speaker 1"}]
         job, store = RetryAndResumeTest()._jobs(a={"status": "done", "segments": segments, "lang": "en", "level": "mid", "speaker_names": {"Speaker 1": "Marc"}, "audio": "/nowhere.wav"})
-        with mock.patch.object(jobs.config, "load_settings", return_value={"ui": "en", "vocabulary": ["Sion => Acme"]}), \
+        with mock.patch.object(jobs.config, "load_settings", return_value={"ui": "en", "vocabulary": ["Brant => Brandt"]}), \
                 mock.patch.object(jobs.llm, "preflight"), mock.patch.object(job, "_summarize"):
             job._rerun("a", "mid")
         note = store.get("a")
-        self.assertIn("Marc: The Acme awards today.", note["clean"])
-        self.assertEqual(note["vocab_fixes"], [{"from": "Sion", "to": "Acme", "count": 1}])
+        self.assertIn("Marc: The Brandt awards today.", note["clean"])
+        self.assertEqual(note["vocab_fixes"], [{"from": "Brant", "to": "Brandt", "count": 1}])
         self.assertEqual(note["status"], "done")
 
 
@@ -1932,11 +1933,11 @@ class LibraryTest(unittest.TestCase):
         cls.wav = audio / "a.wav"
         tone(cls.wav, seconds=2)
         cls.app.store.save({
-            "id": "a", "status": "done", "title": "Appel Acme", "date": "2026-10-01T10:00:00", "lang": "fr", "audio": str(cls.wav),
-            "summary": {"template": "call", "title": "Appel Acme", "tldr": "Budget de 300 000 francs approuv\u00e9",
+            "id": "a", "status": "done", "title": "Appel Brandt", "date": "2026-10-01T10:00:00", "lang": "fr", "audio": str(cls.wav),
+            "summary": {"template": "call", "title": "Appel Brandt", "tldr": "Budget de 300 000 francs approuv\u00e9",
                         "actions": [{"what": "Envoyer le plan", "who": "Sophie", "when": "vendredi"}, {"what": "Appeler le fournisseur", "who": "Marc"}],
                         "key_points": ["Certification en retard"], "decisions": ["Lancement en mars"]},
-            "segments": [{"start": 12.0, "end": 15.0, "text": "On a vu l'association Acme \u00e0 \u00c9vian", "speaker": "Speaker 1"}],
+            "segments": [{"start": 12.0, "end": 15.0, "text": "On a vu l'association Brandt \u00e0 Bordeaux", "speaker": "Speaker 1"}],
             "speaker_names": {"Speaker 1": "Marc"}})
         cls.app.store.save({
             "id": "b", "status": "done", "title": "Point projet", "date": "2026-10-05T10:00:00", "lang": "en", "audio": str(root / "gone.wav"),
@@ -1966,25 +1967,25 @@ class LibraryTest(unittest.TestCase):
         return out
 
     def test_search_ignores_accents_and_needs_every_word(self):
-        status, body = self.c.call("GET", "/api/search?q=evian+acme")
+        status, body = self.c.call("GET", "/api/search?q=bordeaux+brandt")
         self.assertEqual(status, 200)
         self.assertEqual([r["id"] for r in body["results"]], ["a"])
         hit = body["results"][0]["hits"][0]
         self.assertEqual(hit["where"], "transcript")
         self.assertEqual(hit["start"], 12.0)
         self.assertIn("Marc", "".join(p["t"] for p in hit["parts"]))  # the speaker's chosen name is searched, not the raw label
-        self.assertEqual({p["t"].lower() for p in hit["parts"] if p["m"]}, {"acme", "\u00e9vian"})
-        self.assertEqual(self.c.call("GET", "/api/search?q=evian+nothingelse")[1]["results"], [])
+        self.assertEqual({p["t"].lower() for p in hit["parts"] if p["m"]}, {"brandt", "bordeaux"})
+        self.assertEqual(self.c.call("GET", "/api/search?q=bordeaux+nothingelse")[1]["results"], [])
         self.assertEqual(self.c.call("GET", "/api/search?q=")[1]["results"], [])
 
     def test_search_ranks_titles_first_and_skips_unfinished_notes(self):
         ids = [r["id"] for r in self.c.call("GET", "/api/search?q=sophie")[1]["results"]]
         self.assertEqual(sorted(ids), ["a", "b"])
-        self.assertNotIn("w", [r["id"] for r in self.c.call("GET", "/api/search?q=acme")[1]["results"]])
-        self.assertEqual(self.c.call("GET", "/api/search?q=acme")[1]["results"][0]["id"], "a")
+        self.assertNotIn("w", [r["id"] for r in self.c.call("GET", "/api/search?q=brandt")[1]["results"]])
+        self.assertEqual(self.c.call("GET", "/api/search?q=brandt")[1]["results"][0]["id"], "a")
 
     def test_search_needs_the_session(self):
-        self.assertEqual(self.c.call("GET", "/api/search?q=acme", cookie=False)[0], 403)
+        self.assertEqual(self.c.call("GET", "/api/search?q=brandt", cookie=False)[0], 403)
 
     def test_audio_is_served_whole_and_by_range(self):
         size = self.wav.stat().st_size
@@ -2033,8 +2034,8 @@ class LibraryTest(unittest.TestCase):
 
         from cairn import config, jobs, vocab
 
-        with mock.patch.object(config, "load_settings", return_value=dict(config.DEFAULT_SETTINGS, vocabulary=["Sion => Acme"])):
-            key = vocab.key(["Sion => Acme"])
+        with mock.patch.object(config, "load_settings", return_value=dict(config.DEFAULT_SETTINGS, vocabulary=["Brant => Brandt"])):
+            key = vocab.key(["Brant => Brandt"])
             self.assertEqual(self.c.call("GET", "/api/state")[1]["totals"]["vocab_todo"], 2)  # the two finished notes were made without it
             self.assertEqual(self.app.vocab_targets({}), (["a", "b"], False))
             self.assertEqual(self.app.vocab_targets({"from": "2026-10-03"}), (["b"], True))
@@ -2062,7 +2063,7 @@ class LibraryTest(unittest.TestCase):
 
         from cairn import config, jobs
 
-        self.app.store.save(dict(self.app.store.get("b"), segments=[{"start": 0.0, "end": 1.0, "text": "Hello Sion"}]))
+        self.app.store.save(dict(self.app.store.get("b"), segments=[{"start": 0.0, "end": 1.0, "text": "Hello Brant"}]))
         calls = []
 
         def summarize(note, level, lang):
@@ -2070,14 +2071,14 @@ class LibraryTest(unittest.TestCase):
             if note["id"] == "a":
                 raise RuntimeError("model down")
 
-        with mock.patch.object(config, "load_settings", return_value=dict(config.DEFAULT_SETTINGS, ui="en", vocabulary=["Sion => Acme"])), \
+        with mock.patch.object(config, "load_settings", return_value=dict(config.DEFAULT_SETTINGS, ui="en", vocabulary=["Brant => Brandt"])), \
                 mock.patch.object(jobs.llm, "preflight"), mock.patch.object(self.app.jobs, "_summarize", side_effect=summarize):
             self.app.jobs._vocab_batch(["a", "b"])
         self.assertEqual(calls, ["a", "b"])
         self.assertIn("a: model down", self.app.jobs.snapshot()["errors"][0])
         self.assertNotIn("vocab_key", self.app.store.get("a"))  # its summary was not written again: still to do
-        self.assertIn("Hello Acme", self.app.store.get("b")["clean"])
-        self.assertEqual(self.app.store.get("b")["vocab_fixes"], [{"from": "Sion", "to": "Acme", "count": 1}])
+        self.assertIn("Hello Brandt", self.app.store.get("b")["clean"])
+        self.assertEqual(self.app.store.get("b")["vocab_fixes"], [{"from": "Brant", "to": "Brandt", "count": 1}])
         self.assertEqual(self.app.jobs.snapshot()["done"], 2)
 
     def test_updating_all_only_writes_again_the_notes_the_vocabulary_changes(self):
@@ -2085,12 +2086,12 @@ class LibraryTest(unittest.TestCase):
 
         from cairn import config, jobs
 
-        self.app.store.save(dict(self.app.store.get("b"), segments=[{"start": 0.0, "end": 1.0, "text": "Hello Sion"}]))
+        self.app.store.save(dict(self.app.store.get("b"), segments=[{"start": 0.0, "end": 1.0, "text": "Hello Brant"}]))
         calls = []
-        with mock.patch.object(config, "load_settings", return_value=dict(config.DEFAULT_SETTINGS, ui="en", vocabulary=["Sion => Acme"])), \
+        with mock.patch.object(config, "load_settings", return_value=dict(config.DEFAULT_SETTINGS, ui="en", vocabulary=["Brant => Brandt"])), \
                 mock.patch.object(jobs.llm, "preflight"), mock.patch.object(self.app.jobs, "_summarize", side_effect=lambda note, *a: calls.append(note["id"])):
             self.app.jobs._vocab_batch(["a", "b"], force=False)
-            self.assertEqual(calls, ["b"])  # a has no "Sion": it is only marked as up to date
+            self.assertEqual(calls, ["b"])  # a has no "Brant": it is only marked as up to date
             self.assertTrue(self.app.store.get("a")["vocab_key"])
             self.assertEqual(self.app.store.get("a")["summary"]["tldr"], self.initial["a"]["summary"]["tldr"])
             self.assertEqual(self.app.vocab_outdated(), [])
@@ -2123,34 +2124,34 @@ class LibraryTest(unittest.TestCase):
     def test_tags_are_cleaned_counted_and_set_on_notes_and_in_bulk(self):
         from cairn import tags
 
-        self.assertEqual(tags.clean(["#Orion", " orion ", "legal  matters", "", "x" * 50]), ["Orion", "legal matters", "x" * 30])
+        self.assertEqual(tags.clean(["#Apollo", " apollo ", "legal  matters", "", "x" * 50]), ["Apollo", "legal matters", "x" * 30])
         with self.assertRaises(ValueError):
-            tags.clean("orion")
+            tags.clean("apollo")
         with self.assertRaises(ValueError):
             tags.clean([str(i) for i in range(13)])
-        self.assertEqual(self.c.call("POST", "/api/note/a/tags", {"tags": ["#Orion", "juridique"]})[0], 200)
-        self.assertEqual(self.app.store.get("a")["tags"], ["Orion", "juridique"])
-        self.assertEqual(self.c.call("POST", "/api/note/b/tags", {"tags": ["orion"]})[0], 200)
-        self.assertEqual(self.c.call("GET", "/api/tags")[1]["tags"], [{"tag": "Orion", "count": 2}, {"tag": "juridique", "count": 1}])
+        self.assertEqual(self.c.call("POST", "/api/note/a/tags", {"tags": ["#Apollo", "juridique"]})[0], 200)
+        self.assertEqual(self.app.store.get("a")["tags"], ["Apollo", "juridique"])
+        self.assertEqual(self.c.call("POST", "/api/note/b/tags", {"tags": ["apollo"]})[0], 200)
+        self.assertEqual(self.c.call("GET", "/api/tags")[1]["tags"], [{"tag": "Apollo", "count": 2}, {"tag": "juridique", "count": 1}])
         self.assertEqual(self.c.call("POST", "/api/note/a/tags", {"tags": "nope"})[0], 400)
         self.assertEqual(self.c.call("POST", "/api/note/a/tags", {"tags": [str(i) for i in range(13)]})[0], 400)
         status, out = self.c.call("POST", "/api/tags/add", {"ids": ["a", "b", "nope"], "tag": "A suivre"})
         self.assertEqual((status, out["count"]), (200, 2))
-        self.assertEqual(self.app.store.get("b")["tags"], ["orion", "A suivre"])
+        self.assertEqual(self.app.store.get("b")["tags"], ["apollo", "A suivre"])
         self.assertEqual(self.c.call("POST", "/api/tags/add", {"ids": ["a"], "tag": "a SUIVRE", "remove": True})[1]["count"], 1)  # case does not matter
-        self.assertEqual(self.app.store.get("a")["tags"], ["Orion", "juridique"])
+        self.assertEqual(self.app.store.get("a")["tags"], ["Apollo", "juridique"])
         self.assertEqual(self.c.call("POST", "/api/tags/add", {"ids": ["a"], "tag": "  "})[0], 400)
         self.assertEqual(self.c.call("POST", "/api/note/a/tags", {"tags": ["x"]}, cookie=False)[0], 403)
 
     def test_search_finds_notes_by_tag_alone_or_with_words(self):
-        self.c.call("POST", "/api/note/a/tags", {"tags": ["Orion", "legal matters"]})
-        self.c.call("POST", "/api/note/b/tags", {"tags": ["Orion"]})
+        self.c.call("POST", "/api/note/a/tags", {"tags": ["Apollo", "legal matters"]})
+        self.c.call("POST", "/api/note/b/tags", {"tags": ["Apollo"]})
         ids = lambda q: sorted(r["id"] for r in self.c.call("GET", "/api/search?q=" + q.replace(" ", "+").replace("#", "%23"))[1]["results"])
-        self.assertEqual(ids("#orion"), ["a", "b"])
-        self.assertEqual(ids("#ORION+acme"), ["a"])  # the tag narrows, the word searches
+        self.assertEqual(ids("#apollo"), ["a", "b"])
+        self.assertEqual(ids("#APOLLO+brandt"), ["a"])  # the tag narrows, the word searches
         self.assertEqual(ids("#legal"), [])  # a tag is a whole word: "legal matters" is found by its words
         self.assertEqual(ids("legal+matters"), ["a"])
-        self.assertEqual(ids("#orion+#legal+matters"), [])
+        self.assertEqual(ids("#apollo+#legal+matters"), [])
         self.assertEqual(ids("#nothing"), [])
 
     def test_tags_suggested_from_the_existing_ones_only_when_asked_for(self):
@@ -2158,17 +2159,17 @@ class LibraryTest(unittest.TestCase):
 
         from cairn import config, jobs, llm
 
-        existing = [{"tag": "Orion", "count": 3}, {"tag": "juridique", "count": 2}, {"tag": "Famille", "count": 1}]
+        existing = [{"tag": "Apollo", "count": 3}, {"tag": "juridique", "count": 2}, {"tag": "Famille", "count": 1}]
         note = {"title": "T", "tags": ["Famille"], "summary": {"tldr": "A dispute about the permit", "actions": [{"what": "Call the lawyer"}]}}
         seen = []
 
         def chat(system, user, schema=None, **kw):
             seen.append(schema)
-            return json.dumps({"tags": ["Orion", "juridique", "invented", "Orion"]})
+            return json.dumps({"tags": ["Apollo", "juridique", "invented", "Apollo"]})
 
         with mock.patch.object(llm, "chat", side_effect=chat):
-            self.assertEqual(llm.suggest_tags(note, existing), ["Orion", "juridique"])  # no invention, no duplicate
-            self.assertEqual(seen[0]["properties"]["tags"]["items"]["enum"], ["Orion", "juridique"])  # the tag the note has is not offered again
+            self.assertEqual(llm.suggest_tags(note, existing), ["Apollo", "juridique"])  # no invention, no duplicate
+            self.assertEqual(seen[0]["properties"]["tags"]["items"]["enum"], ["Apollo", "juridique"])  # the tag the note has is not offered again
             self.assertEqual(llm.suggest_tags(note, []), [])
             self.assertEqual(llm.suggest_tags({"title": "T", "summary": {}}, existing), [])
         with mock.patch.object(llm, "chat", return_value="not json"):
@@ -2178,11 +2179,11 @@ class LibraryTest(unittest.TestCase):
         for on in (False, True):
             with mock.patch.object(jobs.config, "load_settings", return_value={"vocabulary": [], "templates": [], "tags_suggest": on}), \
                     mock.patch.object(llm, "summarize", return_value=dict(summary)), mock.patch.object(job.store, "tag_counts", return_value=existing), \
-                    mock.patch.object(llm, "suggest_tags", return_value=["Orion"]):
+                    mock.patch.object(llm, "suggest_tags", return_value=["Apollo"]):
                 note = store.get("a")
                 note.pop("tag_suggestions", None)
                 job._summarize(note, "mid", "en")
-            self.assertEqual(note.get("tag_suggestions"), ["Orion"] if on else None)
+            self.assertEqual(note.get("tag_suggestions"), ["Apollo"] if on else None)
         with mock.patch.object(jobs.config, "load_settings", return_value={"vocabulary": [], "templates": [], "tags_suggest": True}), \
                 mock.patch.object(llm, "summarize", return_value=dict(summary)), mock.patch.object(job.store, "tag_counts", return_value=existing), \
                 mock.patch.object(llm, "suggest_tags", side_effect=RuntimeError("model down")):
@@ -2194,20 +2195,20 @@ class LibraryTest(unittest.TestCase):
         self.c.call("POST", "/api/settings", {"tags_suggest": False})
 
     def test_a_suggestion_is_accepted_or_dismissed_by_the_person(self):
-        note = dict(self.app.store.get("a"), tag_suggestions=["Orion", "juridique"])
+        note = dict(self.app.store.get("a"), tag_suggestions=["Apollo", "juridique"])
         self.app.store.save(note)
-        self.c.call("POST", "/api/note/a/tags", {"tags": ["Orion"]})  # accepted: it leaves the suggestions
+        self.c.call("POST", "/api/note/a/tags", {"tags": ["Apollo"]})  # accepted: it leaves the suggestions
         self.assertEqual(self.app.store.get("a")["tag_suggestions"], ["juridique"])
         self.c.call("POST", "/api/note/a/tags", {"dismiss": True})
         self.assertNotIn("tag_suggestions", self.app.store.get("a"))
-        self.assertEqual(self.app.store.get("a")["tags"], ["Orion"])
+        self.assertEqual(self.app.store.get("a")["tags"], ["Apollo"])
 
     def test_tags_show_in_every_export(self):
         from cairn import render
 
-        note = dict(self.app.store.get("a"), tags=["Orion", "legal matters"])
-        self.assertIn("#Orion #legal-matters", render.to_markdown(note))
-        self.assertIn("#Orion #legal-matters", render.to_text(note))
+        note = dict(self.app.store.get("a"), tags=["Apollo", "legal matters"])
+        self.assertIn("#Apollo #legal-matters", render.to_markdown(note))
+        self.assertIn("#Apollo #legal-matters", render.to_text(note))
         self.assertIn("#legal-matters", render.to_html(note))
 
     def test_follow_up_email_is_written_once_and_redone_on_request(self):

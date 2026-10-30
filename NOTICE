@@ -7,6 +7,14 @@ repository: they are installed separately and remain under their own licenses.
 - Ollama: MIT License
 - Qwen3 (Alibaba Cloud): Apache License 2.0
 - uv (Astral): MIT or Apache 2.0, at your option
+- pyannote.audio and its speaker models (optional): MIT License. The speaker model is gated on Hugging Face: accept its conditions there.
+- cryptography (PyCA): Apache License 2.0 or BSD 3-Clause, at your option
+- keyring and its small helpers (jaraco): MIT License
+- Qwen3 Embedding (Alibaba Cloud, optional): Apache License 2.0
+- BGE-M3 (BAAI, optional): MIT License
+- Hugging Face Hub client and Bleak: Apache License 2.0 and MIT License
+- ffmpeg, through imageio-ffmpeg: its own license (LGPL or GPL, depending on the build)
+- The other packages pinned in requirements/ (PyTorch, NumPy, SciPy, Numba, ONNX Runtime, PyAV, tokenizers and their dependencies) are under permissive licenses (BSD, MIT, Apache 2.0) or the weak copyleft MPL 2.0 (certifi, tqdm).
 - Llama (Meta), optional alternative: Llama Community License. It requires the
   "Built with Llama" attribution when redistributing and sets conditions of use.
 

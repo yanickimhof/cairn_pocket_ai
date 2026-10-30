@@ -1,13 +1,14 @@
 """A personal vocabulary: names of people and places and rare terms the speech engine often writes wrongly.
 
-One entry per line. "Acme" is a name to look for: a word that sounds close to it is written as "Acme". "Sion => Acme" is an
-exact rule: "Sion" is always written "Acme". Several spellings can share one rule: "Sion, Cion, Scyon => Acme". "->", the
-arrow character and ":" work like "=>". A rule can be limited to a context: "Science Day => ACME Day | awards, ceremony" replaces
+One entry per line. "Brandt" is a name to look for: a word that sounds close to it is written as "Brandt". "Brant => Brandt" is an
+exact rule: "Brant" is always written "Brandt". Several spellings can share one rule: "Brant, Brand, Brandh => Brandt". "->", the
+arrow character and ":" work like "=>". A rule can be limited to a context: "Open Day => BRANDT Day | awards, ceremony" replaces
 the words only when one of the words after the bar is spoken close by (in the same line or the two before and after). Every correction is kept with the note and shown, so nothing changes silently.
 The speech engine cannot be told the names itself: with the setting Cairn uses (each 30 s window decoded on its own, which
 avoids repetition loops) its prompt only reaches the first window."""
 
 import difflib
+import functools
 import hashlib
 import re
 import unicodedata
@@ -90,11 +91,13 @@ def spellings(terms):
     return out
 
 
+@functools.lru_cache(maxsize=1 << 16)
 def _plain(text):
     text = unicodedata.normalize("NFKD", str(text).lower())
     return "".join(c for c in text if c.isalnum() and not unicodedata.combining(c) and ord(c) < 128)
 
 
+@functools.lru_cache(maxsize=1 << 16)
 def _skeleton(text):
     """What a word sounds like, roughly, in French and English: for telling a misheard name from a different one."""
     s = _plain(text)
@@ -139,10 +142,10 @@ def _rules(terms):
     return exact, sorted(fuzzy, key=lambda f: -len(f[1]))
 
 
-def fix_text(text, terms, context=None):
+def fix_text(text, terms, context=None, rules=None):
     """(new text, corrections) for one text. A correction is {"from", "to"}. `context` is the text around it, for the rules
-    that apply only near certain words (the text itself when it is not given)."""
-    exact, fuzzy = _rules(terms)
+    that apply only near certain words (the text itself when it is not given). `rules` is the vocabulary already read, for a loop."""
+    exact, fuzzy = rules if rules is not None else _rules(terms)
     found = []
     around = text if context is None else context
     for pattern, wrong, right, near in exact:
@@ -207,13 +210,16 @@ def fix_summary(summary, terms):
 
 def apply(segments, terms):
     """Correct the segments in place from the current vocabulary, starting again from what the speech engine wrote,
-    so that removing an entry puts the original word back. Returns the corrections: [{"from", "to", "count"}]."""
+    so that removing an entry puts the original word back. A segment corrected by hand is left as it is. Returns the corrections: [{"from", "to", "count"}]."""
     totals = {}
     segments = segments or []
     originals = [seg.get("orig", seg.get("text", "")) for seg in segments]
+    rules = _rules(terms)  # read once for the whole transcript
     for i, seg in enumerate(segments):
+        if seg.get("edit"):
+            continue  # corrected by hand: that text is the person's, no entry changes it
         original = originals[i]
-        text, found = fix_text(original, terms, " ".join(originals[max(0, i - NEAR):i + NEAR + 1]))
+        text, found = fix_text(original, terms, " ".join(originals[max(0, i - NEAR):i + NEAR + 1]), rules)
         if text != original:
             seg["orig"], seg["text"] = original, text
         else:
@@ -223,3 +229,60 @@ def apply(segments, terms):
             pair = (fix["from"], fix["to"])
             totals[pair] = totals.get(pair, 0) + 1
     return [{"from": a, "to": b, "count": n} for (a, b), n in sorted(totals.items(), key=lambda kv: (-kv[1], kv[0]))]
+
+
+_EDGE = ".,;:!?\u2026\u00ab\u00bb\"'()[]\u201c\u201d\u2019\u2018"
+_SPAN_MAX = 6  # words in the part of a line a rule replaces
+
+
+def _words(text):
+    return re.findall(r"\S+", str(text))
+
+
+def _trim(words):
+    return " ".join(words).strip(_EDGE + " ")
+
+
+def rule_from_edit(old, new):
+    """The rules that turn `old` (what the speech engine wrote) into `new` (what the person typed): a list of
+    {"wrong", "right", "context"}. Only the words that changed are replaced. When the changed words are short or very common
+    ("a", "brant"), the rule is tied to other words of the same line so that it does not rewrite every other line."""
+    a, b = _words(old), _words(new)
+    ka = [w.strip(_EDGE).casefold() for w in a]
+    kb = [w.strip(_EDGE).casefold() for w in b]
+    rules = []
+    for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, ka, kb, autojunk=False).get_opcodes():
+        if tag == "equal":
+            continue
+        if i1 == i2 or j1 == j2:
+            continue  # words added or removed alone: nothing to look for in other notes
+        wrong, right = _trim(a[i1:i2]), _trim(b[j1:j2])
+        if not wrong or not right or wrong == right or i2 - i1 > _SPAN_MAX or j2 - j1 > _SPAN_MAX:
+            continue
+        if BAR in wrong + right or any(x in wrong for x in ARROWS) or "," in wrong:
+            continue  # the characters that structure a rule cannot be part of one
+        plain = _plain(wrong)
+        words = [_plain(w) for w in wrong.split()]
+        # a short word, a very common one, a number: written the same way in a thousand other lines
+        needs_context = (len(words) == 1 and (len(plain) < 6 or plain in _COMMON)) or all(w in _COMMON or w.isdigit() for w in words)
+        context = []
+        if needs_context:
+            around = [(abs(k - i1), a[k].strip(_EDGE)) for k in range(len(a)) if not i1 <= k < i2]
+            for _distance, word in sorted(around):
+                if len(_plain(word)) >= 4 and _plain(word) not in _COMMON and BAR not in word and "," not in word and word not in context:
+                    context.append(word)
+                if len(context) == 2:
+                    break
+            if not context:
+                continue  # nothing to tie it to: a rule for it would rewrite every other line
+        rules.append({"wrong": wrong, "right": right, "context": context})
+    return rules
+
+
+def rule_line(rule):
+    return "%s %s %s%s" % (rule["wrong"], ARROW, rule["right"], " %s %s" % (BAR, ", ".join(rule["context"])) if rule.get("context") else "")
+
+
+def add_entries(terms, lines):
+    """The vocabulary with these lines added (an entry already there is not repeated)."""
+    return parse(list(terms or []) + list(lines))
