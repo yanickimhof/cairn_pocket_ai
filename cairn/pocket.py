@@ -68,6 +68,26 @@ def find_pocket():
     return None
 
 
+def volumes_without_record():
+    """Names of drives that look like a Pocket (by name) but show no RECORD folder: USB Mode is not on, or the drive is not ready."""
+    names = []
+    if sys.platform == "darwin":
+        bases = [Path("/Volumes")]
+    elif sys.platform.startswith("win"):
+        return names
+    else:
+        user = os.environ.get("USER", "")
+        bases = [Path("/media") / user, Path("/run/media") / user, Path("/mnt")]
+    for base in bases:
+        try:
+            for volume in base.iterdir():
+                if volume.name.lower().startswith("pocket") and not _record_folder(volume):
+                    names.append(volume.name)
+        except OSError:
+            continue
+    return names
+
+
 def list_recordings(folder):
     """Audio files under the RECORD folder, oldest first."""
     found = []

@@ -67,6 +67,11 @@
       vaultSetting: "Sécuriser le Pocket à la connexion", vaultSettingHint: "Chiffre les enregistrements du Pocket dès qu’il est branché, une fois le coffre créé avec le bouton de l’en-tête.",
       exportLabel: "Exporter", exportHint: "Copier ou exporter la fiche", copyRich: "Copier", copyRichHint: "Copier, prêt à coller dans un courriel",
       copiedRich: "Copié", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exporté en ",
+      setupTitle: "Premiers pas", setupSub: "Cairn vérifie que tout est prêt.", setupDone: "Terminer", setupCheck: "Vérifier l’installation", setupReady: "Tout est prêt. Branchez la Pocket ou ajoutez des fichiers audio avec l’icône en haut.", setupNotReady: "Il reste à régler :",
+      cSpeech: "Transcription", cOllama: "Serveur de modèles", cLlm: "Modèle de notes", cFfmpeg: "Lecture audio (ffmpeg)", cMemory: "Mémoire", cDisk: "Espace disque", cPocket: "Pocket",
+      hSpeech: "Le modèle de transcription n’est pas installé.", hOllama: "Le serveur de modèles (Ollama) ne répond pas : relancez Cairn ou réinstallez-le.", hLlm: "Le modèle de notes n’est pas installé.", hFfmpeg: "ffmpeg est introuvable : réinstallez Cairn.",
+      hMemory: "{n} Go de mémoire : Cairn fonctionne, mais les modèles légers sont conseillés.", hDisk: "Il reste {n} Go : libérez de la place avant de télécharger des modèles.",
+      pOk: "Pocket connectée", pAbsent: "Pas de Pocket ? Ajoutez des fichiers audio. Sinon : câble USB-C de données, USB Mode (Web Sync) activé, et synchronisation automatique de l’application désactivée.", pNoRecord: "La Pocket est vue, mais sans enregistrements : activez USB Mode (Web Sync) puis rebranchez-la.", cOk: "Prêt",
       addFiles: "Ajouter des fichiers audio", dropHere: "Déposez vos fichiers audio", uploading: "Envoi de {name}", filesAdded: "{n} fichier(s) ajouté(s)", filesDup: "{n} déjà présent(s)", fileBad: "Fichier refusé : ce n’est pas un enregistrement audio pris en charge",
       importLabel: "Importer et transcrire", importHint: "Importer et traiter les enregistrements", count: "Enregistrements sur le Pocket",
       batTip: "Batterie du Pocket : {n} %", batCharging: " · en charge (branché)",
@@ -149,6 +154,11 @@
       vaultSetting: "Secure the Pocket on connection", vaultSettingHint: "Encrypts the recordings on the Pocket as soon as it is plugged in, once the vault was created with the button in the header.",
       exportLabel: "Export", exportHint: "Copy or export the note", copyRich: "Copy", copyRichHint: "Copy, ready to paste in an email",
       copiedRich: "Copied", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exported as ",
+      setupTitle: "First steps", setupSub: "Cairn checks that everything is ready.", setupDone: "Done", setupCheck: "Check the installation", setupReady: "All set. Plug in the Pocket or add audio files with the icon at the top.", setupNotReady: "Still to fix:",
+      cSpeech: "Transcription", cOllama: "Model server", cLlm: "Notes model", cFfmpeg: "Audio reading (ffmpeg)", cMemory: "Memory", cDisk: "Disk space", cPocket: "Pocket",
+      hSpeech: "The transcription model is not installed.", hOllama: "The model server (Ollama) does not answer: restart Cairn or reinstall it.", hLlm: "The notes model is not installed.", hFfmpeg: "ffmpeg is missing: reinstall Cairn.",
+      hMemory: "{n} GB of memory: Cairn works, but the light models are advised.", hDisk: "{n} GB left: free some space before downloading models.",
+      pOk: "Pocket connected", pAbsent: "No Pocket? Add audio files. Otherwise: USB-C data cable, USB Mode (Web Sync) on, and the app's automatic sync off.", pNoRecord: "The Pocket is seen but shows no recordings: turn USB Mode (Web Sync) on, then plug it in again.", cOk: "Ready",
       addFiles: "Add audio files", dropHere: "Drop your audio files", uploading: "Sending {name}", filesAdded: "{n} file(s) added", filesDup: "{n} already here", fileBad: "File refused: it is not a supported audio recording",
       importLabel: "Import and transcribe", importHint: "Import and process the recordings", count: "Recordings on the Pocket",
       batTip: "Pocket battery: {n}%", batCharging: " · charging (plugged in)",
@@ -670,8 +680,31 @@
     if (ref) {
       h += '<div class="ref"><a href="' + esc(ref) + '" target="_blank" rel="noopener noreferrer"' + tip(t.refNote) + ">" + esc(t.refText) + " ↗</a></div>";
     }
+    h += '<div class="row gap8"><button type="button" class="mbtn" data-a="setup">' + esc(t.setupCheck) + "</button></div>";
     h += '<div class="hr"></div><div class="legal">' + esc(t.aboutLegal.replace("{v}", (S.server && S.server.version) || "")) + "</div></div>";
     return h;
+  }
+
+  function viewSetup(t) {
+    var r = S.setup, h = '<div class="card about"><div><div class="t">' + esc(t.setupTitle) + '</div><div class="small">' + esc(t.setupSub) + "</div></div>";
+    var names = { speech: "cSpeech", ollama: "cOllama", llm: "cLlm", ffmpeg: "cFfmpeg", memory: "cMemory", disk: "cDisk", pocket: "cPocket" };
+    var hints = { speech: "hSpeech", ollama: "hOllama", llm: "hLlm", ffmpeg: "hFfmpeg", memory: "hMemory", disk: "hDisk" };
+    h += '<div style="display:flex;flex-direction:column;gap:8px">';
+    ((r && r.checks) || []).forEach(function (c) {
+      var ok = c.status === "ok", text = t.cOk;
+      if (c.id === "pocket") { text = ok ? t.pOk : (c.status === "norecord" ? t.pNoRecord : t.pAbsent); }
+      else if (!ok) { text = t[hints[c.id]].replace("{n}", c.gb); }
+      var fix = !ok && (c.id === "speech" || c.id === "llm") ? '<button type="button" class="mbtn" data-a="fixModel">' + esc(t.getIt) + "</button>" : "";
+      h += '<div class="comp"><span class="cn">' + esc(t[names[c.id]]) + '</span><span class="cv" style="white-space:normal">' + esc(text) + "</span><span></span>" + (ok ? I.checkB : (fix || I.warnB)) + "</div>";
+    });
+    h += "</div>";
+    if (r) { h += '<div class="text">' + esc(r.ready ? t.setupReady : t.setupNotReady) + "</div>"; }
+    h += '<div class="row gap8"><button type="button" class="mbtn" data-a="setupDone">' + esc(t.setupDone) + "</button></div></div>";
+    return h;
+  }
+  function loadSetup() {
+    S.setupAt = Date.now();
+    api("GET", "/api/setup").then(function (r) { S.setup = r; render(); }).catch(function () {});
   }
 
   function stepText(job, t) {
@@ -1146,6 +1179,7 @@
     if (S.findOpen) { h += viewFind(t); }
     if (S.tasksOpen) { h += viewTasks(t); }
     if (S.aboutOpen) { h += viewAbout(t); }
+    if (S.setupOpen) { h += viewSetup(t); }
     if (S.upload) { h += '<div class="upl" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + S.upload.pct + '"' + tip(t.uploading.replace("{name}", S.upload.name)) + '><i style="width:' + S.upload.pct + '%"></i></div>'; }
     h += '<div class="side"><div class="hero"><div class="ring"' + (job.running ? tip(stepText(job, t)) : "") + '><svg class="arc" width="156" height="156" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="#E5E5EA" stroke-width="3"></circle>' +
       '<circle cx="50" cy="50" r="46" fill="none" stroke="#3368A0" stroke-width="3" stroke-linecap="round" stroke-dasharray="' + (ring * 289).toFixed(1) + ' 289" transform="rotate(-90 50 50)"></circle></svg>';
@@ -1388,6 +1422,8 @@
         S.full = {};
       }
       if (S.open && !S.hidden) { loadFull(S.open); }
+      if (!S.setupSeen && st.totals && st.totals.notes === 0 && st.settings && !st.settings.setup_done) { S.setupSeen = true; S.setupOpen = true; }
+      if (S.setupOpen && Date.now() - (S.setupAt || 0) > 3000) { loadSetup(); }
       if (S.vcOpen && st.totals && st.totals.vocab_check !== S.vcCount && S.vc) { S.vcCount = st.totals.vocab_check; loadVc(); }
       if (S.modelsOpen && (!S.models || (st.download && st.download.state === "running") || (S.models.job && S.models.job.state === "running"))) { loadModels(); }
       render();
@@ -1757,7 +1793,9 @@
       S.modelsOpen = !S.modelsOpen; S.mAsk = null;
       if (S.modelsOpen) { loadModels(); }
     },
-    fixModel: function () { S.aboutOpen = false; S.settingsOpen = true; S.modelsOpen = true; loadModels(); },
+    setup: function () { S.setupOpen = !S.setupOpen; S.setupSeen = true; if (S.setupOpen) { S.aboutOpen = false; loadSetup(); } },
+    setupDone: function () { S.setupOpen = false; api("POST", "/api/settings", { setup_done: true }).then(refresh); },
+    fixModel: function () { S.setupOpen = false; S.aboutOpen = false; S.settingsOpen = true; S.modelsOpen = true; loadModels(); },
     procOne: function (v, id) { noteAction(id, "process"); },
     skipOne: function (v, id) { noteAction(id, "skip"); },
     restoreOne: function (v, id) { noteAction(id, "restore"); },

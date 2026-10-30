@@ -238,5 +238,54 @@ class UploadTest(unittest.TestCase):
         self.assertEqual([p.name for p in folder.glob("*cut*")] + list(folder.glob(".upload-*")), [])
 
 
+class SetupTest(unittest.TestCase):
+    def run_check(self, **patches):
+        from unittest import mock
+
+        from cairn import setup
+
+        with tempfile.TemporaryDirectory() as tmp:
+            speech = Path(tmp) / "whisper"
+            speech.mkdir()
+            env = {"CAIRN_HOME": tmp, "CAIRN_ENGINE": "mlx", "CAIRN_WHISPER_MODEL": str(speech), "CAIRN_LLM": "qwen3:4b"}
+            base = dict(available=True, models=[{"name": "qwen3:4b"}], find_ollama="/bin/ollama", ram=16.0, free=50.0, pocket=("ok", []))
+            base.update(patches)
+            with mock.patch.dict(os.environ, env), mock.patch.object(setup.llm, "available", return_value=base["available"]), \
+                    mock.patch.object(setup.llm, "models", return_value=base["models"]), mock.patch.object(setup.llm, "find_ollama", return_value=base["find_ollama"]), \
+                    mock.patch.object(setup.system, "ram_gb", return_value=base["ram"]), mock.patch.object(setup, "_free_gb", return_value=base["free"]), \
+                    mock.patch.object(setup.shutil, "which", return_value="/bin/ffmpeg"), \
+                    mock.patch.object(setup.pocket, "find_pocket", return_value=("x" if base["pocket"][0] == "ok" else None)), \
+                    mock.patch.object(setup.pocket, "volumes_without_record", return_value=base["pocket"][1]):
+                if patches.get("no_speech"):
+                    speech.rmdir()
+                return {c["id"]: c for c in setup.check()["checks"]}, setup.check()["ready"]
+
+    def test_everything_in_place(self):
+        checks, ready = self.run_check()
+        self.assertTrue(ready)
+        self.assertEqual({c["status"] for c in checks.values()}, {"ok"})
+
+    def test_what_is_missing_is_named(self):
+        checks, ready = self.run_check(available=False, models=[])
+        self.assertFalse(ready)
+        self.assertEqual((checks["ollama"]["status"], checks["llm"]["status"]), ("todo", "todo"))
+        checks, ready = self.run_check(models=[{"name": "other:7b"}])
+        self.assertEqual((checks["llm"]["status"], ready), ("todo", False))
+        checks, ready = self.run_check(no_speech=True)
+        self.assertEqual((checks["speech"]["status"], ready), ("todo", False))
+
+    def test_the_pocket_never_blocks(self):
+        checks, ready = self.run_check(pocket=("absent", []))
+        self.assertEqual((checks["pocket"]["status"], ready), ("absent", True))  # audio files can be added by hand
+        checks, _ = self.run_check(pocket=("absent", ["Pocket"]))
+        self.assertEqual(checks["pocket"]["status"], "norecord")  # seen, but USB Mode is not on
+
+    def test_small_machines_are_warned_not_stopped(self):
+        checks, ready = self.run_check(ram=6.0, free=5.0)
+        self.assertEqual((checks["memory"]["status"], checks["disk"]["status"], ready), ("warn", "warn", True))
+        checks, ready = self.run_check(free=1.0)
+        self.assertEqual((checks["disk"]["status"], ready), ("todo", False))
+
+
 if __name__ == "__main__":
     unittest.main()

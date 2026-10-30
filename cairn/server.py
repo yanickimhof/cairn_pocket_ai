@@ -20,7 +20,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-from . import ask, battery, catalog, config, diarize, embed, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, speech, tags, templates, upload, vault, vocab, vocabcheck, voices
+from . import ask, battery, catalog, config, diarize, embed, jobs, llm, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, setup, speech, tags, templates, upload, vault, vocab, vocabcheck, voices
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -779,6 +779,8 @@ def make_handler(app):
         def _api(self, method, path, body, query):
             if method == "GET" and path == "/api/state":
                 return self._json(200, app.state(query.get("list", ["1"])[0] != "0"))
+            if method == "GET" and path == "/api/setup":
+                return self._json(200, setup.check())
             if method == "GET" and path == "/api/about":
                 return self._json(200, app.about())
             if method == "POST" and path == "/api/import":
