@@ -5,25 +5,19 @@
 **Lose your Pocket, not your privacy.**
 One password and every recording on it is unreadable to anyone else. Turn on automatic securing and every new recording is protected the moment you plug it in.
 
-**Fix it once, right where you read it.**
-Correct a word in the transcript and every note that has it follows, or only this one, your choice.
+**Hear it, fix it, once.**
+Tap a time stamp to hear the passage, then correct the word in the transcript: every note that has it follows, or only this one, your choice.
 
-**Cairn spots the doubtful words.**
-It lists the names it saw written several ways and the words it was unsure of, so you stop hunting. Pick the spelling once and all your notes agree.
+**Find anything, even without the words.**
+Search every word of every note, accents ignored. Add the optional search model and ask in your own words: Cairn finds where it was said, even if nobody used those words.
 
-**Search now understands you.**
-Add the optional search model and describe what you are looking for in your own words: Cairn finds where it was said, even if nobody used those words.
+**Names spelled right, without the hunt.**
+Teach Cairn your names and places. It also lists the names it saw written several ways and the words it was unsure of: pick the spelling once and all your notes agree.
 
 **Everyone you talk to, remembered.**
-Name a voice once and, if you want, Cairn recognises it in your next notes. Rename or merge people in one place.
+Cairn tells speakers apart on your Mac. Name a voice once and, if you want, it recognises it in your next notes. Rename or merge people in one place.
 
 ## 0.4
-
-**Find anything, in a second.**
-Search every word of every note, accents ignored, your words highlighted. `#apollo` narrows it to a tag.
-
-**Hear what was said.**
-Tap a time stamp in the transcript and the recording plays from that line. Checking a doubtful word takes seconds.
 
 **All your actions, one list.**
 Every action from every note, by person, newest first. Tick them, correct them, copy them.
@@ -39,12 +33,6 @@ Free words to organize your notes, a filter above the list, tagging by the dozen
 
 ## 0.3
 
-**Your names, spelled right.**
-Teach Cairn the names and places it gets wrong. Every transcript and summary then spells them your way.
-
-**Speakers, 4.5 times faster.**
-Cairn now uses your Mac's graphics chip to tell who is speaking. Same result, a fraction of the time.
-
 **It keeps going without you.**
 With automatic processing on, Cairn starts as soon as your recordings are copied, keeps your Mac awake, and tries again if something fails. Your notes are ready when you are.
 
@@ -52,9 +40,6 @@ With automatic processing on, Cairn starts as soon as your recordings are copied
 Memory is freed between steps, so even a 16 GB Mac stays quick.
 
 ## 0.2
-
-**Who said what.**
-Cairn tells speakers apart, entirely on your Mac.
 
 **Your Pocket at a glance.**
 Add your own session key to see its firmware, state and storage, read only.
