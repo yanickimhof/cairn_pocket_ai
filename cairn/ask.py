@@ -12,7 +12,7 @@ from . import config, embed, llm
 
 MAX_QUESTION = 500
 PASSAGES = 6          # what the model reads: enough to answer, little enough to be quick
-STRUCTURED = 8        # actions or decisions read at once when the question is about all of them
+STRUCTURED = 30       # actions or decisions read at once when the question is about all of them
 HISTORY = 3           # earlier exchanges kept for a follow-up
 RECENT_NOTES = 40
 NUM_CTX = 8192        # the same window as the other tasks: the model is not loaded a second time
@@ -91,9 +91,12 @@ def intent(question):
     return ""
 
 
-def structured(store, kind, since="", tag="", note=""):
-    """The actions or the decisions of the most recent notes, one passage each: the answer to 'what is still open?' is in the
-    summaries, and a search through the spoken words would only find pieces of it."""
+DONE = re.compile(r"\b(fait|faits|faite|faites|termine\w*|done|completed?|finished|closed)\b")
+
+
+def structured(store, kind, since="", tag="", note="", with_done=False):
+    """The actions or the decisions of the most recent notes, as one passage each: the answer to 'what is still open?' is in the
+    summaries, and a search through the spoken words would only find pieces of it. Returns (items, how many more there were)."""
     wanted = str(tag or "").strip().casefold()
     notes = [n for n in store.all() if n.get("status") == "done" and (not note or n["id"] == note) and (not since or (n.get("date") or "") >= since)
              and (not wanted or wanted in [str(t).casefold() for t in n.get("tags") or []])]
@@ -105,16 +108,15 @@ def structured(store, kind, since="", tag="", note=""):
         if kind == "actions":
             for a in summary.get("actions") or []:
                 what = str(a.get("what") or "").strip()
-                if what:
-                    line = " / ".join(x for x in [what, str(a.get("who") or "").strip(), str(a.get("when") or "").strip()] if x)
-                    text = "Action: " + line + (" (done)" if what in finished else " (open)")
-                    out.append((n, text))
+                if not what or (what in finished and not with_done):
+                    continue
+                extra = ", ".join(x for x in [str(a.get("who") or "").strip(), str(a.get("when") or "").strip()] if x)
+                out.append((n, what + (" (%s)" % extra if extra else "") + (" \u2713" if what in finished else "")))
         else:
-            for d in summary.get("decisions") or []:
-                if str(d).strip():
-                    out.append((n, "Decision: " + str(d).strip()))
-    return [{"id": n["id"], "title": n.get("title") or "", "date": n.get("date") or "", "where": "summary", "start": None, "text": text[:400], "score": 1.0}
-            for n, text in out[:STRUCTURED]]
+            out.extend((n, str(d).strip()) for d in summary.get("decisions") or [] if str(d).strip())
+    items = [{"id": n["id"], "title": n.get("title") or "", "date": n.get("date") or "", "where": "summary", "start": None, "text": text[:400], "score": 1.0}
+             for n, text in out[:STRUCTURED]]
+    return items, max(0, len(out) - STRUCTURED)
 
 
 def standalone(question, history):
@@ -157,9 +159,15 @@ def stream(store, question, note="", since="", tag="", history=None):
         alone = standalone(question, history)
         since = since or period(alone)
         kind = intent(alone)
-        found = structured(store, kind, since=since, tag=tag, note=note) if kind else []
-        if not found:
-            found = embed.passages(store, alone, model, limit=PASSAGES, note=note, since=since, tag=tag)
+        found, more = structured(store, kind, since=since, tag=tag, note=note, with_done=bool(DONE.search(embed.fold(alone)))) if kind else ([], 0)
+        if found:  # the list is already in the summaries: it is shown as it is, at once, with nothing to wait for and nothing to get wrong
+            yield {"type": "sources", "sources": sources(found)}
+            lines = ["- %s [%d]" % (p["text"], n) for n, p in enumerate(found, 1)] + (["\u2026 +%d" % more] if more else [])
+            for line in lines:
+                yield {"type": "delta", "text": line + "\n"}
+            yield {"type": "done", "cited": list(range(1, len(found) + 1)), "empty": False, "instant": True, "ms": int((time.time() - started) * 1000)}
+            return
+        found = embed.passages(store, alone, model, limit=PASSAGES, note=note, since=since, tag=tag)
     except (llm.LLMError, OSError, ValueError) as error:
         yield {"type": "error", "error": "search_failed", "detail": str(error)[:200]}
         return

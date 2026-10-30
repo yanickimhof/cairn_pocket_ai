@@ -219,15 +219,36 @@ class AskTest(unittest.TestCase):
         self.assertEqual(self.ask.period("aujourd'hui", friday), "2026-10-30")
         self.assertEqual(self.ask.period("quel budget ?", friday), "")
 
-    def test_a_question_about_all_the_actions_reads_the_summaries(self):
+    def test_a_question_about_all_the_actions_is_answered_from_the_summaries_at_once(self):
         events = self.events("quelles sont les actions a faire ?")
+        self.assertEqual(Stub.chats, [])  # no model: the list is already in the notes
+        self.assertTrue(events[-1]["instant"] and events[-1]["type"] == "done")
         found = events[0]["sources"]
         self.assertTrue(found and all(s["where"] == "summary" for s in found))
-        content = Stub.chats[-1]["messages"][-1]["content"]
-        self.assertIn("Action: Appeler Zorglub / Marc / lundi (open)", content)
-        self.assertIn("Action: Signer le contrat / Anna (done)", content)
+        text = "".join(e["text"] for e in events if e["type"] == "delta")
+        self.assertIn("- Appeler Zorglub (Marc, lundi) [", text)
+        self.assertNotIn("Signer le contrat", text)  # done: not open
+        self.assertEqual(events[-1]["cited"], list(range(1, len(found) + 1)))
+        text = "".join(e["text"] for e in self.events("quelles actions sont deja faites ?") if e["type"] == "delta")
+        self.assertIn("Signer le contrat (Anna) \u2713", text)
+
+    def test_the_decisions_come_the_same_way_and_can_be_narrowed(self):
         events = self.events("quelles decisions ont ete prises ?", tag="rh")
-        self.assertIn("Decision: Embaucher Zorglub en janvier", Stub.chats[-1]["messages"][-1]["content"])
+        self.assertEqual(Stub.chats, [])
+        self.assertIn("- Embaucher Zorglub en janvier [1]", "".join(e["text"] for e in events if e["type"] == "delta"))
+        self.assertEqual({s["id"] for s in events[0]["sources"]}, {"z"})
+
+    def test_a_long_list_says_how_many_are_left_out(self):
+        for i in range(35):
+            self.store.save({"id": "m%d" % i, "status": "done", "title": "M", "date": "2026-10-%02dT09:00:00" % (1 + i % 28), "tags": ["many"],
+                             "summary": {"decisions": ["Decision %d" % i]}, "segments": []})
+        try:
+            text = "".join(e["text"] for e in self.events("quelles decisions ?", tag="many") if e["type"] == "delta")
+            self.assertEqual(text.count("- Decision"), self.ask.STRUCTURED)
+            self.assertIn("\u2026 +5", text)
+        finally:
+            for i in range(35):
+                (self.config.home() / "Texts" / ("m%d.json" % i)).unlink(missing_ok=True)
 
     def test_a_follow_up_is_rewritten_and_the_conversation_goes_with_it(self):
         Stub.rewrites.clear()
