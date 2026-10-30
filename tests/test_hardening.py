@@ -132,18 +132,44 @@ class ServerTest(unittest.TestCase):
             status, body = self.c.call("GET", "/api/state")
         self.assertEqual((status, body), (500, {"error": "server_error"}))
 
-    def test_the_session_cookie_lasts_thirty_days(self):
+    def test_no_cookie_is_issued_and_an_old_one_is_told_to_go(self):
+        """A cookie goes to every server on 127.0.0.1 whatever its port: the key travels in a header and lives in the page's own storage."""
         import http.client
 
         conn = http.client.HTTPConnection("127.0.0.1", self.app.port, timeout=10)
         conn.request("GET", "/?k=" + self.app.token, headers={"Host": "127.0.0.1:%d" % self.app.port})
         resp = conn.getresponse()
+        resp.read()
         cookie = resp.getheader("Set-Cookie")
         conn.close()
-        self.assertEqual(resp.status, 303)
-        self.assertIn("Max-Age=%d" % (30 * 86400), cookie)
-        self.assertIn("HttpOnly", cookie)
-        self.assertIn("SameSite=Strict", cookie)
+        self.assertEqual(resp.status, 200)  # the page is served as it is; it keeps the key for itself
+        self.assertIn("Max-Age=0", cookie)  # what an older version left is removed
+        self.assertNotIn(self.app.token, cookie)
+
+    def test_the_key_is_taken_from_a_header_and_for_a_recording_from_the_address(self):
+        import http.client
+
+        def call(path, headers=None):
+            conn = http.client.HTTPConnection("127.0.0.1", self.app.port, timeout=10)
+            conn.request("GET", path, headers=dict({"Host": "127.0.0.1:%d" % self.app.port}, **(headers or {})))
+            resp = conn.getresponse()
+            resp.read()
+            conn.close()
+            return resp.status
+
+        self.assertEqual(call("/api/lock"), 403)  # nothing without the key
+        self.assertEqual(call("/api/lock", {"X-Cairn-Key": "wrong"}), 403)
+        self.assertEqual(call("/api/lock", {"X-Cairn-Key": self.app.token}), 200)
+        self.assertEqual(call("/api/lock?k=" + self.app.token), 200)  # for what the browser fetches by itself (a recording)
+        self.assertEqual(call("/api/lock", {"X-Cairn-Key": self.app.token, "Host": "evil.example"}), 403)
+        self.assertEqual(call("/app.js"), 200)  # the page's files hold nothing secret
+        self.assertEqual(call("/app.js", {"Host": "evil.example"}), 403)
+
+    def test_the_page_keeps_the_key_in_its_own_storage_and_sends_it_in_a_header(self):
+        source = (ROOT / "cairn" / "web" / "app.js").read_text(encoding="utf-8")
+        self.assertIn('localStorage.setItem("cairn.k"', source)
+        self.assertIn('"X-Cairn-Key": KEY', source)
+        self.assertNotIn("document.cookie", source)
 
 
 class UploadTest(unittest.TestCase):

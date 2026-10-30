@@ -26,8 +26,8 @@ WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
           "/manifest.webmanifest": "manifest.webmanifest", "/icon-192.png": "icon-192.png", "/icon-512.png": "icon-512.png"}
 PUBLIC = {"/favicon.svg", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"}  # nothing private: the browser fetches them without the session cookie
-COOKIE = "cairn_session"
-COOKIE_DAYS = 30  # renewed each time Cairn is opened from its launcher
+COOKIE = "cairn_session"  # only read, for older pages: Cairn no longer issues it (a cookie goes to every server on 127.0.0.1, whatever the port)
+KEY_HEADER = "X-Cairn-Key"
 MAX_BODY = 1 << 20
 EXPORTS = {"md": ("text/markdown", ".md"), "html": ("text/html", ".html"), "text": ("text/plain", ".txt")}
 CSP = (
@@ -668,13 +668,21 @@ def make_handler(app):
         def _json(self, status, payload):
             self._send(status, json.dumps(payload, ensure_ascii=False))
 
+        def _host_ok(self):
+            return self.headers.get("Host", "") in ("127.0.0.1:%d" % app.port, "localhost:%d" % app.port)
+
         def _authorized(self):
-            host = self.headers.get("Host", "")
-            if host not in ("127.0.0.1:%d" % app.port, "localhost:%d" % app.port):
+            """The page sends its key in a header (kept in the page's own storage, which belongs to this address and port only); a recording
+            played by the browser carries it in the address, because an audio element cannot add a header."""
+            if not self._host_ok():
                 return False
-            jar = cookies.SimpleCookie(self.headers.get("Cookie", ""))
-            morsel = jar.get(COOKIE)
-            return bool(morsel) and hmac.compare_digest(morsel.value, app.token)
+            given = self.headers.get(KEY_HEADER, "")
+            if not given:
+                given = parse_qs(urlparse(self.path).query).get("k", [""])[0] if self.command == "GET" else ""
+            if not given:
+                morsel = cookies.SimpleCookie(self.headers.get("Cookie", "")).get(COOKIE)
+                given = morsel.value if morsel else ""
+            return bool(given) and hmac.compare_digest(given, app.token)
 
         def _body(self):
             if self.headers.get("X-Cairn") != "1" or "application/json" not in self.headers.get("Content-Type", ""):
@@ -837,21 +845,12 @@ def make_handler(app):
                 events.close()
 
         def _static(self, url):
-            if url.path in ("/", "/index.html"):
-                key = parse_qs(url.query).get("k", [""])[0]
-                host = self.headers.get("Host", "")
-                if host not in ("127.0.0.1:%d" % app.port, "localhost:%d" % app.port):
-                    raise ApiError(403, "forbidden")
-                if key and hmac.compare_digest(key, app.token):
-                    cookie = "%s=%s; HttpOnly; SameSite=Strict; Path=/; Max-Age=%d" % (COOKIE, app.token, COOKIE_DAYS * 86400)
-                    return self._send(303, b"", "text/plain", {"Location": "/", "Set-Cookie": cookie})
-                if not self._authorized():
-                    return self._send(403, "Open Cairn from its launcher.", "text/plain")
-            elif url.path not in PUBLIC and not self._authorized():
+            if not self._host_ok():
                 raise ApiError(403, "forbidden")
-            name = STATIC[url.path]
+            name = STATIC[url.path]  # the page and its files hold no secret: the key is only asked for what they ask the server
             ctype = "application/manifest+json" if name.endswith(".webmanifest") else mimetypes.guess_type(name)[0] or "application/octet-stream"
-            return self._send(200, (WEB / name).read_bytes(), ctype)
+            # an older page left a cookie that every server on 127.0.0.1 would receive: it is told to go
+            return self._send(200, (WEB / name).read_bytes(), ctype, {"Set-Cookie": "%s=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict" % COOKIE} if name == "index.html" else None)
 
         def _api(self, method, path, body, query):
             if method == "GET" and path == "/api/state":

@@ -148,15 +148,17 @@ class AppTest(unittest.TestCase):
         self.assertEqual(self.c.call("GET", "/api/state", cookie=False)[0], 403)
         self.assertEqual(self.c.call("GET", "/api/state", host="evil.example:%d" % self.c.port)[0], 403)
         self.assertEqual(self.c.call("POST", "/api/import", headers={"X-Cairn": "0"})[0], 403)
-        self.assertEqual(self.c.call("GET", "/", cookie=False)[0], 403)
+        self.assertEqual(self.c.call("GET", "/", host="evil.example:%d" % self.c.port)[0], 403)  # the page is served to this address only
         self.assertEqual(self.c.call("GET", "/api/note/..%2F..%2Fetc%2Fpasswd")[0], 404)
 
-    def test_02_token_cookie(self):
-        status, _ = self.c.call("GET", "/?k=" + self.app.token, cookie=False)
-        self.assertEqual(status, 303)
-        status, body = self.c.call("GET", "/")
-        self.assertEqual(status, 200)
+    def test_02_the_page_is_served_and_the_key_is_for_the_api(self):
+        status, body = self.c.call("GET", "/?k=" + self.app.token, cookie=False)
+        self.assertEqual(status, 200)  # no redirect and no cookie: the page keeps the key itself
         self.assertIn("Cairn", body)
+        status, body = self.c.call("GET", "/", cookie=False)
+        self.assertEqual(status, 200)
+        self.assertEqual(self.c.call("GET", "/api/state", cookie=False)[0], 403)
+        self.assertEqual(self.c.call("GET", "/api/state", cookie=False, headers={"X-Cairn-Key": self.app.token})[0], 200)
 
     def test_03_state_and_pocket(self):
         _, st = self.c.call("GET", "/api/state")
@@ -425,7 +427,8 @@ class AppTest(unittest.TestCase):
         status, _ = self.c.call("GET", "/manifest.webmanifest", cookie=False)
         self.assertEqual(status, 200)
         self.assertEqual(self.c.call("GET", "/icon-192.png", cookie=False)[0], 200)
-        self.assertEqual(self.c.call("GET", "/app.js", cookie=False)[0], 403)  # the app itself still needs the session
+        self.assertEqual(self.c.call("GET", "/app.js", cookie=False)[0], 200)  # the page and its files hold nothing secret: the key is asked for the API
+        self.assertEqual(self.c.call("GET", "/app.js", host="evil.example:%d" % self.c.port)[0], 403)
         from cairn import server
 
         self.assertEqual(server.session_key(), server.session_key())

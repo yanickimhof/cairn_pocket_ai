@@ -72,6 +72,7 @@
       hSpeech: "Le modèle de transcription n’est pas installé.", hOllama: "Le serveur de modèles (Ollama) ne répond pas : relancez Cairn ou réinstallez-le.", hLlm: "Le modèle de notes n’est pas installé.", hFfmpeg: "ffmpeg est introuvable : réinstallez Cairn.",
       hMemory: "{n} Go de mémoire : Cairn fonctionne, mais les modèles légers sont conseillés.", hDisk: "Il reste {n} Go : libérez de la place avant de télécharger des modèles.",
       pOk: "Pocket connectée", pAbsent: "Pas de Pocket ? Ajoutez des fichiers audio. Sinon : câble USB-C de données, USB Mode (Web Sync) activé, et synchronisation automatique de l’application désactivée.", pNoRecord: "La Pocket est vue, mais sans enregistrements : activez USB Mode (Web Sync) puis rebranchez-la.", cOk: "Prêt",
+      noKey: "Ouvrez Cairn depuis son lanceur (Cairn.app) : cette page n’a pas sa clé de session.",
       lockTitle: "Cairn est verrouillé", lockPw: "Mot de passe", lockGo: "Déverrouiller", lockBio: "Déverrouiller avec Touch ID", lockWrong: "Mot de passe incorrect", lockNow: "Verrouiller", lockBusy: "Chiffrement en cours",
       lockSection: "Verrou", lockHint: "Chiffre vos notes, réglages et enregistrements sur ce Mac. Le mot de passe est demandé à l’ouverture et après un temps d’inactivité.",
       lockOn: "Activer", lockPw1: "Mot de passe (10 caractères minimum)", lockPw2: "Confirmez le mot de passe", lockShort: "10 caractères minimum", lockMismatch: "Les deux mots de passe diffèrent", lockOpen: "Verrou activé",
@@ -168,6 +169,7 @@
       hSpeech: "The transcription model is not installed.", hOllama: "The model server (Ollama) does not answer: restart Cairn or reinstall it.", hLlm: "The notes model is not installed.", hFfmpeg: "ffmpeg is missing: reinstall Cairn.",
       hMemory: "{n} GB of memory: Cairn works, but the light models are advised.", hDisk: "{n} GB left: free some space before downloading models.",
       pOk: "Pocket connected", pAbsent: "No Pocket? Add audio files. Otherwise: USB-C data cable, USB Mode (Web Sync) on, and the app's automatic sync off.", pNoRecord: "The Pocket is seen but shows no recordings: turn USB Mode (Web Sync) on, then plug it in again.", cOk: "Ready",
+      noKey: "Open Cairn from its launcher (Cairn.app): this page does not have its session key.",
       lockTitle: "Cairn is locked", lockPw: "Password", lockGo: "Unlock", lockBio: "Unlock with Touch ID", lockWrong: "Wrong password", lockNow: "Lock", lockBusy: "Encrypting",
       lockSection: "Lock", lockHint: "Encrypts your notes, settings and recordings on this Mac. The password is asked when Cairn opens and after a time of inactivity.",
       lockOn: "Turn on", lockPw1: "Password (10 characters minimum)", lockPw2: "Confirm the password", lockShort: "10 characters minimum", lockMismatch: "The two passwords differ", lockOpen: "Lock is on",
@@ -299,8 +301,15 @@
     if (e.message === "vault_unavailable") { return t.vaultMissing; }
     return e.message;
   }
+  var KEY = "";
+  try {  // the key comes in the address once, then lives in this page's own storage (it belongs to this address and port only)
+    var fromUrl = new URLSearchParams(window.location.search).get("k");
+    if (fromUrl) { window.localStorage.setItem("cairn.k", fromUrl); window.history.replaceState(null, "", window.location.pathname); }
+    KEY = window.localStorage.getItem("cairn.k") || "";
+  } catch (e) { KEY = ""; }
+  function keyed(path) { return KEY ? path + (path.indexOf("?") < 0 ? "?" : "&") + "k=" + encodeURIComponent(KEY) : path; }
   function api(method, path, body) {
-    var opt = { method: method, headers: {} };
+    var opt = { method: method, headers: { "X-Cairn-Key": KEY } };
     if (method === "POST") { opt.headers["Content-Type"] = "application/json"; opt.headers["X-Cairn"] = "1"; opt.body = JSON.stringify(body || {}); }
     return fetch(path, opt).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (data) {
@@ -328,6 +337,7 @@
       var xhr = new XMLHttpRequest();
       xhr.open("POST", "/api/import/file");
       xhr.setRequestHeader("X-Cairn", "1");
+      xhr.setRequestHeader("X-Cairn-Key", KEY);
       xhr.setRequestHeader("Content-Type", "application/octet-stream");
       xhr.setRequestHeader("X-Filename", encodeURIComponent(f.name));
       xhr.setRequestHeader("X-Last-Modified", String(f.lastModified || ""));
@@ -346,7 +356,7 @@
     next();
   }
   function fetchText(path) {
-    return fetch(path).then(function (r) { if (!r.ok) { throw new Error("error"); } return r.text(); });
+    return fetch(path, { headers: { "X-Cairn-Key": KEY } }).then(function (r) { if (!r.ok) { throw new Error("error"); } return r.text(); });
   }
 
   function flash(msg) {
@@ -1050,7 +1060,7 @@
     if (box) { box.value = ""; }  // the box is ready for the next question
     S.findQ = ""; S.findRes = null; S.findSem = null;
     render();
-    fetch("/api/ask", { method: "POST", headers: { "Content-Type": "application/json", "X-Cairn": "1" }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined }).then(function (r) {
+    fetch("/api/ask", { method: "POST", headers: { "Content-Type": "application/json", "X-Cairn": "1", "X-Cairn-Key": KEY }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined }).then(function (r) {
       if (!r.ok || !r.body || !r.body.getReader) { throw new Error("ask"); }
       var reader = r.body.getReader(), dec = new TextDecoder(), buf = "";
       function pump() {
@@ -1223,6 +1233,7 @@
 
   function view() {
     var st = S.server;
+    if (S.noKey) { return '<main class="wrap"><div class="card about" style="max-width:420px;margin:12vh auto 0;text-align:center"><div class="text">' + esc(T().noKey) + "</div></div></main>"; }
     if (S.locked) { return viewLocked(T()); }
     if (!st) { return ""; }
     var t = T(), job = st.job, ring = 0;
@@ -1417,7 +1428,7 @@
         '<div class="mhead"><div class="mtitle">' + esc(full.title || id) + '</div><div class="row gap8">' +
         '<button type="button" class="ib" data-tx="copy"' + tip(t.copyText) + ">" + I.copy.replace("#FFFFFF", "#1D1D1F") + "</button>" +
         '<button type="button" class="ib grey2" data-tx="close"' + tip(t.closeLbl) + ">" + I.x + "</button></div></div>" +
-        (full.has_audio ? '<div class="mleg"><audio id="txtaudio" controls preload="metadata" src="/api/note/' + encodeURIComponent(id) + '/audio"></audio></div>' : "") +
+        (full.has_audio ? '<div class="mleg"><audio id="txtaudio" controls preload="metadata" src="' + esc(keyed("/api/note/" + encodeURIComponent(id) + "/audio")) + '"></audio></div>' : "") +
         speakerPanel(id, full, t) +
         (full.quality != null ? '<div class="mleg">' + esc(t.rawLegend) + colon() + pct(full.quality) + "</div>" : "") + (weak.length ? '<div class="mleg">' + esc(t.textLegend) + "</div>" : "") + '<div class="mbody">' + body + "</div></div>";
       box.addEventListener("click", function (ev) {
@@ -1512,6 +1523,7 @@
       if (S.modelsOpen && (!S.models || (st.download && st.download.state === "running") || (S.models.job && S.models.job.state === "running"))) { loadModels(); }
       render();
     }).catch(function (e) {
+      if (e && e.status === 403 && !KEY) { S.noKey = true; render(); return; }
       if (e && e.status === 423) {
         S.locked = true; S.server = null;
         api("GET", "/api/lock").then(function (info) { S.lockInfo = info; render(); });
@@ -1529,7 +1541,7 @@
   function download(id, fmt) {
     var path = "/api/note/" + encodeURIComponent(id) + "/export?fmt=" + fmt;
     api("POST", "/api/note/" + encodeURIComponent(id) + "/export", { fmt: fmt }).catch(function () {});  // the copy kept in Exports is written by a POST
-    return fetch(path).then(function (r) { if (!r.ok) { throw new Error("error"); } return r.blob(); }).then(function (blob) {
+    return fetch(path, { headers: { "X-Cairn-Key": KEY } }).then(function (r) { if (!r.ok) { throw new Error("error"); } return r.blob(); }).then(function (blob) {
       var a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = ((S.server.notes.filter(function (n) { return n.id === id; })[0] || {}).title || id).replace(/[^\w.-]+/g, "_") + (fmt === "md" ? ".md" : ".html");

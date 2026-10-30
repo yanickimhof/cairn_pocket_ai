@@ -137,7 +137,7 @@ class Client:
         port, key = target
         try:
             conn = http.client.HTTPConnection("127.0.0.1", port, timeout=timeout)
-            headers = {"Host": "127.0.0.1:%d" % port, "Cookie": "cairn_session=" + key}
+            headers = {"Host": "127.0.0.1:%d" % port, "X-Cairn-Key": key}
             if method == "POST":
                 headers.update({"Content-Type": "application/json", "X-Cairn": "1"})
             conn.request(method, path, json.dumps(body or {}) if method == "POST" else None, headers)
