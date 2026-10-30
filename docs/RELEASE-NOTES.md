@@ -8,13 +8,13 @@ One password and every recording on it is unreadable to anyone else. Turn on aut
 **Fix it once, right where you read it.**
 Correct a word in the transcript and every note that has it follows, or only this one, your choice.
 
-**Names spelled right, without the hunt.**
-Cairn finds the names written several ways and the words it doubted. You pick the spelling once and all your notes agree.
+**Cairn spots the doubtful words.**
+It lists the names it saw written several ways and the words it was unsure of, so you stop hunting. Pick the spelling once and all your notes agree.
 
 **Ask a question, get the passage.**
 With the optional search model, describe what you are looking for in your own words and Cairn finds where it was said, even if nobody used those words.
 
-**Know who said what, everywhere.**
+**Everyone you talk to, remembered.**
 Name a voice once and, if you want, Cairn recognises it in your next notes. Rename or merge people in one place.
 
 ## 0.4
@@ -31,8 +31,8 @@ Every action from every note, by person, newest first. Tick them, correct them, 
 **The follow-up email, written.**
 One tap drafts a short email from the note, in its language, ready for your mail app. Cairn sends nothing.
 
-**Spelled right, in context.**
-Several spellings can point to one name, even only near the right words. One tap updates the notes that need it: all of them, a choice, or a period.
+**Right spelling, only where it belongs.**
+A rule can apply only near the right words, so a real word is left alone. One tap updates the notes that need it: all of them, a choice, or a period.
 
 **Notes in your own format.**
 Write a template once, a name and an instruction, and every note follows it, sections included. A star makes it the default.
