@@ -37,9 +37,6 @@ Write a template once, a name and an instruction, and every note follows it, sec
 **Tags, not folders.**
 Free words to organize your notes, a filter above the list, tagging by the dozen, and suggestions drawn from your own tags.
 
-**Fresher engine.**
-The libraries behind transcription are rebuilt for macOS 14 and later, closing five security advisories. A second copy can now run beside the first for testing.
-
 ## 0.3
 
 **Your names, spelled right.**
@@ -53,9 +50,6 @@ With automatic processing on, Cairn starts as soon as your recordings are copied
 
 **Easy on your Mac.**
 Memory is freed between steps, so even a 16 GB Mac stays quick.
-
-**Honest about what is installed.**
-Models and About show exactly what is installed on your Mac, sizes and versions included.
 
 ## 0.2
 
@@ -93,6 +87,3 @@ Start small, add bigger models when you want them, remove them whenever you like
 
 **Private, and provably.**
 No account, no cloud, no telemetry. Cairn checks every day that nothing leaves your Mac.
-
-**Always there.**
-Runs quietly in the background, in English or French.
