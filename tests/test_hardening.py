@@ -128,7 +128,7 @@ class ServerTest(unittest.TestCase):
     def test_an_error_page_names_no_exception(self):
         from unittest import mock
 
-        with mock.patch.object(self.app, "state", side_effect=RuntimeError("/Users/someone/secret/path")):
+        with mock.patch.object(self.app, "state", side_effect=RuntimeError("/srv/someone/secret/path")):
             status, body = self.c.call("GET", "/api/state")
         self.assertEqual((status, body), (500, {"error": "server_error"}))
 
