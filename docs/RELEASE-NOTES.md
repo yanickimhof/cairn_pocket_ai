@@ -12,7 +12,7 @@ Download Cairn.dmg, double-click Install Cairn, and the same guided install runs
 At the end of the install, Cairn opens in your browser by itself.
 
 **Updates while Cairn runs.**
-Replacing a running Cairn no longer fails with an input/output error.
+Replacing a running Cairn no longer fails with an input/output error. An update keeps the Python environment when nothing in it changes, and a slow self test warns instead of stopping it.
 
 ## 0.7
 

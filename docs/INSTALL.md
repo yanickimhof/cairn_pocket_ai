@@ -32,6 +32,7 @@ Set before the command.
 | `CAIRN_REF` | Branch or tag to install (default: the release the script belongs to) |
 | `CAIRN_NO_SERVICE=1` | macOS: no background mode (see below) |
 | `CAIRN_NO_OPEN=1` | macOS: do not open the app in the browser when the install is done |
+| `CAIRN_FRESH=1` | macOS: rebuild the Python environment even if it is up to date |
 
 In a script, in CI or without a keyboard, nothing is asked: an update keeps what is installed and a first install gets the Light models. An existing Ollama and its models are reused. The encryption library for the Pocket vault (`cryptography`, `keyring`) is part of the default install.
 
@@ -48,7 +49,7 @@ Nothing is registered, so nothing starts by itself. Cairn listens on port 8731, 
 
 ## Update
 
-Cairn looks for a new version once a day (switch in **Settings, Check for updates**) and puts a dot on the info icon when one exists. To update, run the install command again (from a clone: `git pull`, then `bash install.sh`): it replaces the engine, keeps your notes, settings and models, and offers to keep the models you have. If speaker identification was installed, it is put back from its own hashed list. The version it replaces stays in `~/Cairn/src.previous`, in case you need to go back. If you secured a Pocket, macOS may ask once to let the new copy of Python use the keychain: allow it, or enter the Pocket password again.
+Cairn looks for a new version once a day (switch in **Settings, Check for updates**) and puts a dot on the info icon when one exists. To update, run the install command again (from a clone: `git pull`, then `bash install.sh`): it replaces the Cairn files, keeps your notes, settings and models, and offers to keep the models you have. The Python environment is kept when nothing in it changes (the pinned lists are compared), a model that is already there is not downloaded again, and the end of the install says what was kept. If the language model is slow to answer the self test, a warning explains why (often another model held in memory) and the install goes on. If speaker identification was installed, it is put back from its own hashed list. The version it replaces stays in `~/Cairn/src.previous`, in case you need to go back. If you secured a Pocket, macOS may ask once to let the new copy of Python use the keychain: allow it, or enter the Pocket password again.
 
 ## Troubleshooting
 

@@ -6,6 +6,7 @@ import json
 import math
 import os
 import re
+import socket
 import struct
 import sys
 import tempfile
@@ -16,6 +17,8 @@ ENGINE = os.environ.get("CAIRN_ENGINE", "")
 MODEL_DIR = os.environ.get("CAIRN_WHISPER_MODEL", "")
 LLM = os.environ.get("CAIRN_LLM", "qwen3:4b")
 HOST = os.environ.get("OLLAMA_HOST", "127.0.0.1:11434")
+# a slow first answer is a warning on a computer (another model may hold the memory), a failure in the automatic tests
+LLM_TIMEOUT = int(os.environ.get("CAIRN_SELFTEST_TIMEOUT", "300" if os.environ.get("CI") else "150"))
 
 
 def fail(message):
@@ -54,6 +57,23 @@ def test_speech(path):
     print("OK: speech engine (%s) ran on a test file" % ENGINE)
 
 
+def unload_others():
+    """Another model kept in memory by the model server (a larger Qwen3, for instance) can make the first answer very slow
+    on a small Mac: ask the server to let it go. It is loaded again when Cairn needs it."""
+    try:
+        with urllib.request.urlopen("http://%s/api/ps" % HOST, timeout=10) as response:  # nosec B310
+            running = json.load(response).get("models") or []
+        for item in running:
+            name = item.get("name") or item.get("model")
+            if name and name != LLM:
+                body = json.dumps({"model": name, "keep_alive": 0}).encode()
+                request = urllib.request.Request("http://%s/api/generate" % HOST, data=body, headers={"Content-Type": "application/json"})
+                urllib.request.urlopen(request, timeout=30).read()  # nosec B310
+                print("Freed memory: %s was unloaded (it loads again when Cairn needs it)" % name)
+    except Exception:  # nosec B110 (best effort: the test goes on without it)
+        pass
+
+
 def test_llm():
     if not re.fullmatch(r"127\.0\.0\.1:\d{2,5}", HOST):
         fail("the model server must listen on 127.0.0.1, found %r" % HOST)
@@ -68,12 +88,21 @@ def test_llm():
     request = urllib.request.Request(
         "http://%s/api/generate" % HOST, data=body, headers={"Content-Type": "application/json"}
     )
+    unload_others()
     # The address is validated above: loopback only, plain http, fixed scheme.
-    with urllib.request.urlopen(request, timeout=300) as response:  # nosec B310
-        data = json.load(response)
+    try:
+        with urllib.request.urlopen(request, timeout=LLM_TIMEOUT) as response:  # nosec B310
+            data = json.load(response)
+    except (TimeoutError, socket.timeout):
+        if os.environ.get("CI"):
+            fail("the language model did not answer in %d seconds" % LLM_TIMEOUT)
+        print("WARNING: the language model (%s) did not answer in %d seconds." % (LLM, LLM_TIMEOUT))
+        print("Another model may be holding the memory: run `ollama ps`, then `ollama stop <name>`, and open Cairn again.")
+        return False
     if "response" not in data:
         fail("unexpected answer from the model server")
     print("OK: language model (%s) answered locally" % LLM)
+    return True
 
 
 def main():
@@ -81,8 +110,10 @@ def main():
         path = os.path.join(tmp, "test.wav")
         make_wav(path)
         test_speech(path)
-    test_llm()
-    print("Self test passed.")
+    if test_llm():
+        print("Self test passed.")
+    else:
+        print("Self test: the speech engine works, the language model was too slow to answer (see above). The installation goes on.")
 
 
 if __name__ == "__main__":

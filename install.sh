@@ -216,21 +216,36 @@ if [ -z "$UV" ]; then
 fi
 [ -x "$UV" ] || die "uv could not be installed."
 
+# --- environment begin
 HAD_DIAR=0
 [ -f "$CAIRN_HOME/models/diar/.cairn-complete" ] && HAD_DIAR=1   # speaker identification was installed: it is put back after the update
-say "Creating the isolated Python environment"
-UV_VENV_CLEAR=1 "$UV" venv --python 3.11 "$CAIRN_HOME/.venv"
 PY="$CAIRN_HOME/.venv/bin/python"
-say "Installing the speech engine (versions and hashes pinned)"
-"$UV" pip install --python "$PY" --require-hashes --no-deps -r "$HERE/requirements/$REQ"
-if [ "$HAD_DIAR" = 1 ]; then
-  if [ "$ARCH" = "arm64" ] && [ -f "$HERE/requirements/diar-macos-arm64.txt" ]; then
-    say "Putting back speaker identification (pyannote.audio, versions and hashes pinned)"
-    "$UV" pip install --python "$PY" --quiet --require-hashes --no-deps -r "$HERE/requirements/diar-macos-arm64.txt" || printf 'Speaker identification could not be put back: install it again from Settings, Models.\n'
-  else
-    printf 'Speaker identification is not available on this Mac (it needs Apple silicon).\n'
+# The Python environment is rebuilt only when what it holds would change: the same pinned lists (their SHA-256), the same Mac,
+# and an environment that still runs. CAIRN_FRESH=1 rebuilds it anyway.
+ENV_STAMP="$CAIRN_HOME/.venv/.cairn-env"
+ENV_WANT="$(sha256_of "$HERE/requirements/$REQ") $ENGINE $ARCH diar=$HAD_DIAR"
+if [ "$HAD_DIAR" = 1 ] && [ -f "$HERE/requirements/diar-macos-arm64.txt" ]; then ENV_WANT="$ENV_WANT $(sha256_of "$HERE/requirements/diar-macos-arm64.txt")"; fi
+ENV_NOTE="rebuilt"
+if [ -z "${CAIRN_FRESH:-}" ] && [ -x "$PY" ] && [ -f "$ENV_STAMP" ] && [ "$(cat "$ENV_STAMP")" = "$ENV_WANT" ] && "$PY" -c "import sys" >/dev/null 2>&1; then
+  say "The Python environment is already up to date: kept as it is"
+  ENV_NOTE="kept, nothing to change"
+else
+  say "Creating the isolated Python environment"
+  UV_VENV_CLEAR=1 "$UV" venv --python 3.11 "$CAIRN_HOME/.venv"
+  say "Installing the speech engine (versions and hashes pinned)"
+  "$UV" pip install --python "$PY" --require-hashes --no-deps -r "$HERE/requirements/$REQ"
+  ENV_OK=1
+  if [ "$HAD_DIAR" = 1 ]; then
+    if [ "$ARCH" = "arm64" ] && [ -f "$HERE/requirements/diar-macos-arm64.txt" ]; then
+      say "Putting back speaker identification (pyannote.audio, versions and hashes pinned)"
+      "$UV" pip install --python "$PY" --quiet --require-hashes --no-deps -r "$HERE/requirements/diar-macos-arm64.txt" || { ENV_OK=0; printf 'Speaker identification could not be put back: install it again from Settings, Models.\n'; }
+    else
+      printf 'Speaker identification is not available on this Mac (it needs Apple silicon).\n'
+    fi
   fi
+  if [ "$ENV_OK" = 1 ]; then printf '%s\n' "$ENV_WANT" >"$ENV_STAMP"; fi   # written last: an interrupted install never looks complete
 fi
+# --- environment end
 rm -rf "$CAIRN_HOME/.cache/uv"   # download cache, not needed once installed (saves about 0.9 GB)
 if [ "$ENGINE" = "mlx" ]; then
   # The speech engine reads audio through ffmpeg: use the build shipped in a pinned package.
@@ -277,11 +292,19 @@ if [ "$LLM_LOCKED" = 0 ] && [ -z "${CAIRN_LLM:-}" ] && "$OLLAMA" list 2>/dev/nul
   LLM="qwen3:8b"
   say "Found $LLM in your Ollama: using it, nothing to download"
 fi
-say "Downloading the language model: $LLM"
-"$OLLAMA" pull "$LLM"
+# --- llm begin
+LLM_NOTE="downloaded"
+if "$OLLAMA" list 2>/dev/null | awk '{print $1}' | grep -qx "$LLM"; then
+  say "Language model $LLM is already installed"
+  LLM_NOTE="$LLM already installed, nothing downloaded"
+else
+  say "Downloading the language model: $LLM"
+  "$OLLAMA" pull "$LLM"
+fi
+# --- llm end
 
 # 5. Speech model
-say "Downloading the speech model: $WHISPER_REPO"
+say "Speech model: $WHISPER_REPO (only what is missing is downloaded)"
 "$PY" -c "import sys; from huggingface_hub import snapshot_download as d; d(sys.argv[1], revision=sys.argv[3] or None, local_dir=sys.argv[2])" "$WHISPER_REPO" "$CAIRN_HOME/models/whisper" "$WHISPER_REV"
 
 # 6. Settings: everything stays local
@@ -330,6 +353,7 @@ source "$CAIRN_HOME/env.sh"
 PYTHONPATH="$HERE" "$PY" -c "import cairn.server"
 
 say "Done. Cairn is ready."
+printf 'Cairn files: updated. Python environment: %s. Language model: %s.\n' "$ENV_NOTE" "$LLM_NOTE"
 if [ "$(uname -s)" = "Darwin" ] && [ -z "${CI:-}" ] && [ -z "${CAIRN_NO_SERVICE:-}" ]; then
   # Background mode: starts at login and restarts by itself if it stops (remove with: cairn service uninstall)
   "$CAIRN_HOME/bin/cairn" service install || true

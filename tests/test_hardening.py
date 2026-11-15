@@ -35,7 +35,7 @@ class ReleaseTest(unittest.TestCase):
             self.assertNotIn("astral.sh", text)  # no script piped into a shell
         self.assertNotIn("Invoke-Expression", ps)  # nothing downloaded is executed as a script
         self.assertNotIn("| sh", sh.replace("| bash", ""))
-        self.assertEqual(len(re.findall(r"sha256_of", sh)), 3)  # defined once, used for uv and for Ollama
+        self.assertEqual(len(re.findall(r"sha256_of", sh)), 5)  # defined once, used for uv and for Ollama, and twice for the environment stamp
         self.assertIn("-ne 'acfde570451cfdb8689fa159a138ee805ba4e241c466432750302c86254b0984'", ps)
         self.assertNotRegex(sh + ps, r"pip install[^\n]*--quiet pyannote")  # speaker identification is installed from a hashed list
 
