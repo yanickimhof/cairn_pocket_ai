@@ -135,6 +135,12 @@ class BenchTest(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 bench.run([], 3)  # nothing to measure
 
+class BenchInputTest(unittest.TestCase):
+    def test_a_word_that_is_not_a_file_is_named_instead_of_sent_to_ffmpeg(self):
+        with self.assertRaises(SystemExit) as caught:
+            bench.run(["#", "your"])
+        self.assertIn("Not an audio file: #, your", str(caught.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

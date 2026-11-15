@@ -142,6 +142,9 @@ def report(rows, when=None):
 
 def run(paths=None, limit=3, out=None):
     files = [Path(p) for p in paths] if paths else recordings(limit)
+    missing = [str(f) for f in files if not f.is_file()]
+    if missing:
+        raise SystemExit("Not an audio file: %s. Give the path of a recording, and nothing else on the line (a # comment is not ignored by every shell)." % ", ".join(missing[:3]))
     if not files:
         raise SystemExit("No recording to measure: give audio files, or record something first.")
     candidates = installed_models()
