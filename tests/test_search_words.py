@@ -15,8 +15,8 @@ def write(folder, note_id, title, text, date="2026-11-01"):
 class WordSearchTest(unittest.TestCase):
     def setUp(self):
         self.folder = Path(tempfile.mkdtemp())
-        write(self.folder, "a", "Ventilation Alpenda", "On a parlé de la ventilation et du budget de la maison.")
-        write(self.folder, "b", "Réunion SICPA", "Premier jour chez SICPA, visite des départements.", "2026-11-02")
+        write(self.folder, "a", "Ventilation Acme", "On a parlé de la ventilation et du budget de la maison.")
+        write(self.folder, "b", "Réunion Nordwind", "Premier jour chez Nordwind, visite des départements.", "2026-11-02")
 
     def ids(self, query):
         return [r["id"] for r in search.find(self.folder, query)]
@@ -35,7 +35,7 @@ class WordSearchTest(unittest.TestCase):
     def test_when_no_note_has_every_word_the_notes_with_part_of_them_come(self):
         self.assertEqual(self.ids("budget voiture"), [])  # two words: both are needed
         self.assertEqual(self.ids("voiture bateau avion"), [])  # none of the words
-        self.assertEqual(self.ids("reunion sicpa toiture isolation"), ["b"])
+        self.assertEqual(self.ids("reunion nordwind toiture isolation"), ["b"])
 
     def test_every_word_still_ranks_first(self):
         write(self.folder, "c", "Budget", "Le budget de la ventilation de la maison.", "2026-11-03")
