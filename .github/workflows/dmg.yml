@@ -45,7 +45,7 @@ jobs:
           codesign --verify --deep --strict "$RUNNER_TEMP/cairn-dmg/Install Cairn.app"
           grep -q "$(sed -n 's/^VERSION = "\(.*\)"/\1/p' cairn/config.py)" "$RUNNER_TEMP/cairn-dmg/Install Cairn.app/Contents/Info.plist"
           hdiutil detach "$RUNNER_TEMP/cairn-dmg"
-          shasum -a 256 -c dist/Cairn.dmg.sha256
+          (cd dist && shasum -a 256 -c Cairn.dmg.sha256)
       - name: Attach to the release
         if: ${{ env.TAG != '' }}
         env:
