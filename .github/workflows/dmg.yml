@@ -1,0 +1,53 @@
+name: dmg
+
+# Builds Cairn.dmg (a small installer app and a note, in a disk image) and checks it.
+# For a published release, or when started by hand with a tag, the image is attached to that release.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build and attach (for example v0.8.0)"
+        required: true
+  release:
+    types: [published]
+  push:
+    paths:
+      - packaging/**
+      - scripts/build-dmg.sh
+      - install.sh
+      - .github/workflows/dmg.yml
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ github.event.release.tag_name || inputs.tag }}
+
+jobs:
+  dmg:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag || github.ref }}
+      - name: Build the disk image
+        run: bash scripts/build-dmg.sh dist
+      - name: Check the image (opens, content, signature)
+        run: |
+          plutil -lint "packaging/macos/Install Cairn.app/Contents/Info.plist"
+          hdiutil attach dist/Cairn.dmg -nobrowse -readonly -mountpoint "$RUNNER_TEMP/cairn-dmg"
+          ls -la "$RUNNER_TEMP/cairn-dmg"
+          test -x "$RUNNER_TEMP/cairn-dmg/Install Cairn.app/Contents/MacOS/install-cairn"
+          cmp install.sh "$RUNNER_TEMP/cairn-dmg/Install Cairn.app/Contents/Resources/install.sh"
+          test -f "$RUNNER_TEMP/cairn-dmg/Read me first.txt"
+          codesign --verify --deep --strict "$RUNNER_TEMP/cairn-dmg/Install Cairn.app"
+          grep -q "$(sed -n 's/^VERSION = "\(.*\)"/\1/p' cairn/config.py)" "$RUNNER_TEMP/cairn-dmg/Install Cairn.app/Contents/Info.plist"
+          hdiutil detach "$RUNNER_TEMP/cairn-dmg"
+          shasum -a 256 -c dist/Cairn.dmg.sha256
+      - name: Attach to the release
+        if: ${{ env.TAG != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$TAG" dist/Cairn.dmg dist/Cairn.dmg.sha256 --clobber

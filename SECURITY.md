@@ -9,6 +9,7 @@ Use GitHub's private vulnerability reporting (Security tab, "Report a vulnerabil
 | Component | Version | Size | From | Protection |
 |---|---|---|---|---|
 | Cairn files | The release named in the install command (`v0.8.0`), or the tag in `CAIRN_REF` | Under 1 MB | GitHub | HTTPS only (TLS 1.2 or later), fixed release rather than a moving branch |
+| Cairn.dmg (optional, macOS) | Same version as the release | A few hundred KB | GitHub release (built by the `dmg` workflow) | Contains only a launcher that opens Terminal on the `install.sh` of that release; ad hoc signed, not notarized; SHA-256 published next to it (`Cairn.dmg.sha256`) |
 | Python manager (uv) | 0.11.32 | About 30 MB | GitHub (astral-sh/uv releases) | Fixed version, SHA-256 checked before use, kept in the Cairn folder, your shell profile is untouched; no installer script is run |
 | Python | 3.11 | About 90 MB | uv | Kept in the Cairn folder |
 | Python packages | Pinned in `requirements/` | Under 1 GB | PyPI | Versions and SHA-256 hashes pinned, installed with `--require-hashes --no-deps`, so nothing outside the hashed list is pulled in. `torch` is not part of this list: speaker identification adds it, with its own packages, from a second hashed list |

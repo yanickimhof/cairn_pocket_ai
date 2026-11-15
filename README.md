@@ -65,8 +65,13 @@ Cairn installs itself in one folder of your home folder (`~/Cairn`): no administ
 
 | | macOS | Windows |
 |---|---|---|
+| **Download** | [Cairn.dmg](https://github.com/yanickimhof/cairn_pocket_ai/releases/latest/download/Cairn.dmg): double-click Install Cairn, same guided installer | not yet |
 | **One command** | Guided: reads your Mac and advises the models | Installs the Light models |
 | **From a Git clone** | `bash install.sh` | `.\install.ps1` |
+
+### macOS: the disk image
+
+Download [Cairn.dmg](https://github.com/yanickimhof/cairn_pocket_ai/releases/latest/download/Cairn.dmg) (a few hundred KB; the models come afterwards), open it and double-click **Install Cairn**. It opens Terminal and runs the same guided installer as the command below. The app is not signed with an Apple developer certificate, so macOS asks once: on macOS 15 use System Settings, Privacy & Security, **Open Anyway**; on macOS 14 Control-click, Open. The page of the release gives the SHA-256 of the image.
 
 ### macOS: one command, guided
 

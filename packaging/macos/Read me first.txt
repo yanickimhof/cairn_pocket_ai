@@ -1,0 +1,11 @@
+Cairn: your Pocket, your computer, your data.
+
+1. Double-click "Install Cairn". A Terminal window opens and asks which models to install; press Enter to take the advised ones.
+2. When it is done, Cairn opens in your browser. Next time, open Cairn from the Cairn folder in your home folder.
+
+If macOS says it cannot check "Install Cairn":
+  - macOS 15 and later: open System Settings, Privacy & Security, scroll down to the message about "Install Cairn" and press "Open Anyway", then confirm with your password or Touch ID.
+  - macOS 14: Control-click "Install Cairn", choose Open, then Open again.
+The installer is not signed with an Apple developer certificate, so macOS asks once. Cairn is open source, and you can read what the installer does: https://github.com/yanickimhof/cairn_pocket_ai
+
+Nothing leaves your computer. To uninstall, delete the Cairn folder in your home folder.

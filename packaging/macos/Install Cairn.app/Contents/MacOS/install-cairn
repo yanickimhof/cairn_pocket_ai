@@ -1,0 +1,25 @@
+#!/bin/bash
+# Install Cairn: opens Terminal and runs the installer of this release, which asks which models to install.
+# If Cairn is already there, it offers to open it or to update it.
+set -u
+RES="$(cd "$(dirname "$0")/../Resources" && pwd)"
+
+if [ -x "$HOME/Cairn/bin/cairn" ]; then
+  choice="$(osascript -e 'button returned of (display dialog "Cairn is already installed on this Mac." buttons {"Cancel", "Update", "Open Cairn"} default button "Open Cairn" with title "Cairn")' 2>/dev/null)" || exit 0
+  if [ "$choice" = "Open Cairn" ]; then exec "$HOME/Cairn/bin/cairn" service open; fi
+fi
+
+dir="$(mktemp -d)"
+cmd="$dir/Install Cairn.command"
+# shellcheck disable=SC2016  # the single quotes are meant: these lines are written as they are into the command file
+{
+  echo '#!/bin/bash'
+  echo 'clear'
+  echo 'echo "Installing Cairn. Everything goes in the Cairn folder of your home folder, with no administrator rights."'
+  printf 'bash %q\n' "$RES/install.sh"
+  echo 'status=$?'
+  echo 'echo'
+  echo 'if [ "$status" -eq 0 ]; then echo "You can close this window."; else echo "The installation stopped, see above. You can close this window and open Install Cairn again."; fi'
+} >"$cmd"
+chmod 700 "$cmd"
+open -a Terminal "$cmd"

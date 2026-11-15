@@ -6,6 +6,7 @@ on:
     paths:
       - install.sh
       - install.ps1
+      - packaging/**
       - cairn/**
       - tests/**
       - scripts/**
@@ -29,7 +30,7 @@ jobs:
       - name: Shell and Python checks
         run: |
           pip install shellcheck-py bandit cryptography
-          shellcheck install.sh
+          shellcheck install.sh scripts/build-dmg.sh "packaging/macos/Install Cairn.app/Contents/MacOS/install-cairn"
           bandit -q -ll -r cairn scripts
       - name: Unit and application tests (stub speech engine and stub model server)
         run: python -m unittest discover -s tests -v
