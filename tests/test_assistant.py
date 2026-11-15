@@ -96,6 +96,22 @@ class CheckListTest(unittest.TestCase):
         self.assertEqual(items[0]["reason"], "variants")  # variants come first
         self.assertTrue(all(e["text"] for i in items for e in i["examples"]))
 
+    def test_the_name_is_always_in_the_excerpt_and_each_spelling_has_its_line(self):
+        long = "Un long passage sans rapport " * 8 + "puis Brandt arrive " + "et la suite continue encore " * 8
+        note = {"id": "z", "status": "done", "title": "Z", "segments": [
+            {"start": 5.0, "end": 9.0, "text": long, "logprob": -1.5},
+            {"start": 12.0, "end": 14.0, "text": "On parle de Brant ici.", "logprob": -0.1},
+            {"start": 20.0, "end": 22.0, "text": "Et Brandt encore, puis Brant.", "logprob": -0.1},
+        ]}
+        items = vocabcheck.candidates([note], [])
+        item = items[0]
+        words = {e["word"] for e in item["examples"]}
+        self.assertEqual(words, {"Brandt", "Brant"})
+        for e in item["examples"]:
+            self.assertIn(e["word"], e["text"])
+            self.assertLessEqual(len(e["text"]), vocabcheck.EXCERPT + 4)
+        self.assertEqual(vocabcheck.excerpt("Short line with Brandt.", 16, 6), "Short line with Brandt.")
+
     def test_notes_not_finished_and_corrected_lines_are_not_looked_at(self):
         items = vocabcheck.candidates(self.notes(), [])
         self.assertFalse(any("Brantne" in f["text"] for i in items for f in i["forms"]))

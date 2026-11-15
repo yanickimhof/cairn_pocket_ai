@@ -51,7 +51,7 @@
       segHelp: "Corrigez le texte. « Ici seulement » ne change que cette ligne. « Toujours » ajoute une règle au vocabulaire pour toutes les notes.",
       segSaved: "Passage corrigé", segRule: "Règle ajoutée : {r}", segNoRule: "Pour apprendre une correction, modifiez un mot existant",
       vcTitle: "Mots à vérifier", vcOpen: "Mots à vérifier", vcNone: "Rien à vérifier pour le moment.", vcVariants: "Écrit de plusieurs façons dans {n} note(s)", vcDoubtful: "Le moteur n’était pas sûr de ce mot",
-      vcRight: "Bonne orthographe", vcContext: "Seulement près de ces mots", vcApply: "Enregistrer et mettre à jour les notes", vcIgnore: "Ignorer ce mot", vcApplied: "Ajouté au vocabulaire",
+      vcRight: "Bonne orthographe", vcOpenNote: "Ouvrir la note à ce moment", vcContext: "Seulement près de ces mots", vcApply: "Enregistrer et mettre à jour les notes", vcIgnore: "Ignorer ce mot", vcApplied: "Ajouté au vocabulaire",
       vault: "Sécuriser mon Pocket", vaultTipRisk: "Des enregistrements du Pocket sont lisibles par n’importe qui. Ouvrez pour les sécuriser.", vaultTipOk: "Pocket sécurisé : ses enregistrements sont chiffrés. Un nouvel enregistrement l’est à la prochaine connexion.",
       vaultTipLocked: "Pocket verrouillé : saisir le mot de passe.", vaultTipOff: "Branchez le Pocket pour le sécuriser.", vaultTipWork: "Sécurisation en cours",
       vaultIntro: "Chiffre les enregistrements du Pocket avec un mot de passe : sur un autre ordinateur, personne ne peut les lire. Sur celui-ci, le déchiffrement reste automatique.",
@@ -148,7 +148,7 @@
       segHelp: "Fix the text. “Only here” changes this line only. “Always” adds a rule to the vocabulary for every note.",
       segSaved: "Passage corrected", segRule: "Rule added: {r}", segNoRule: "To teach a correction, change an existing word",
       vcTitle: "Words to check", vcOpen: "Words to check", vcNone: "Nothing to check for now.", vcVariants: "Written several ways in {n} note(s)", vcDoubtful: "The engine was not sure of this word",
-      vcRight: "Correct spelling", vcContext: "Only near these words", vcApply: "Save and update the notes", vcIgnore: "Ignore this word", vcApplied: "Added to the vocabulary",
+      vcRight: "Correct spelling", vcOpenNote: "Open the note at this moment", vcContext: "Only near these words", vcApply: "Save and update the notes", vcIgnore: "Ignore this word", vcApplied: "Added to the vocabulary",
       vault: "Secure my Pocket", vaultTipRisk: "Some recordings on the Pocket can be read by anyone. Open to secure them.", vaultTipOk: "Pocket secured: its recordings are encrypted. A new recording is, at the next connection.",
       vaultTipLocked: "Pocket locked: enter the password.", vaultTipOff: "Connect the Pocket to secure it.", vaultTipWork: "Securing in progress",
       vaultIntro: "Encrypts the recordings on the Pocket with a password: on another computer, nobody can read them. On this one, decryption stays automatic.",
@@ -631,8 +631,8 @@
   }
 
   function highlight(text, word) {
-    var at = word ? text.indexOf(word) : -1;
-    return at < 0 ? esc(text) : esc(text.slice(0, at)) + "<mark>" + esc(word) + "</mark>" + esc(text.slice(at + word.length));
+    if (!word) { return esc(text); }
+    return text.split(word).map(esc).join("<mark>" + esc(word) + "</mark>");  // every occurrence of the name in the extract
   }
 
   function viewVocabCheck(t) {
@@ -641,10 +641,13 @@
     if (!items.length) { return '<div class="small" style="padding:8px 0 14px">' + esc(t.vcNone) + "</div>"; }
     return '<div class="vclist">' + items.map(function (item) {
       var right = S.vcDraft[item.key] != null ? S.vcDraft[item.key] : item.suggest;
-      var ex = item.examples[0];
+      var exs = item.examples.map(function (ex) {
+        return '<button type="button" class="vcex" data-a="vcOpen" data-id="' + esc(ex.note) + '" data-v="' + esc(String(ex.start)) + '"' + tip(t.vcOpenNote) + ">" + highlight(ex.text, ex.word) +
+          '<span class="small"> · ' + esc((ex.title || ex.note) + " · " + fmtStamp(ex.start)) + "</span></button>";
+      }).join("");
       return '<div class="vcitem"><div class="vcforms">' + item.forms.map(function (f) { return '<span class="vcform">' + esc(f.text) + " <i>×" + f.count + "</i></span>"; }).join("") + "</div>" +
         '<div class="small">' + esc(item.reason === "variants" ? t.vcVariants.replace("{n}", item.notes) : t.vcDoubtful) + "</div>" +
-        (ex ? '<div class="vcex">' + highlight(ex.text, ex.word) + "</div>" : "") +
+        exs +
         '<div class="name" style="margin:6px 0 0"><input id="vcR:' + esc(item.key) + '" type="text" class="dinput" style="flex:1;width:auto" maxlength="60" value="' + esc(right) + '" placeholder="' + esc(t.vcRight) + '" aria-label="' + esc(t.vcRight) + '"></div>' +
         '<div class="name" style="margin:6px 0 0"><input id="vcC:' + esc(item.key) + '" type="text" class="dinput" style="flex:1;width:auto" maxlength="120" value="' + esc(S.vcCtx[item.key] || "") + '" placeholder="' + esc(t.vcContext) + '" aria-label="' + esc(t.vcContext) + '">' +
         '<button type="button" class="ib sm grey2" data-a="vcIgnore" data-id="' + esc(item.key) + '"' + tip(t.vcIgnore) + ">" + I.x + '</button><button type="button" class="ib sm blue" data-a="vcApply" data-id="' + esc(item.key) + '"' + tip(t.vcApply) + ">" + I.checkW + "</button></div></div>";
@@ -1584,6 +1587,7 @@
     pplForget: function (v, id) { api("POST", "/api/people/forget", { name: id }).then(function () { flash(T().pplForgotten); loadPeople(); }); },
     pplForgetAll: function () { S.confirmKey = "pplForgetAll"; },
     pplForgetAllGo: function () { S.confirmKey = null; api("POST", "/api/people/forget", { all: true }).then(function () { flash(T().pplForgotten); S.full = {}; loadPeople(); }); },
+    vcOpen: function (v, id) { S.settingsOpen = false; A.findGo(v == null ? "" : v, id); },
     pplOpenNote: function (v, id) { S.settingsOpen = false; A.findGo("", id); },
     vcToggle: function () { S.vcOpen = !S.vcOpen; if (S.vcOpen) { S.vc = null; loadVc(); } },
     vcApply: function (v, id) {

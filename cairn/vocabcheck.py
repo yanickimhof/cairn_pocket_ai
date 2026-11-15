@@ -36,6 +36,11 @@ def weak(seg):
 
 def _names(text):
     """The capitalised words of a line that are not at the start of a sentence."""
+    return [word for word, _ in _names_at(text)]
+
+
+def _names_at(text):
+    """The same, with where each one starts in the line: [(word, position)]."""
     found, previous = [], ""
     for match in _TOKEN.finditer(text):
         word = _POSSESSIVE.sub("", match.group(0).strip("'’-"))  # Adrian's is Adrian
@@ -46,8 +51,27 @@ def _names(text):
             continue
         plain = _plain(word)
         if len(plain) >= 4 and plain not in _NOT_NAMES and plain not in vocab._COMMON:
-            found.append(word)
+            found.append((word, match.start()))
     return found
+
+
+EXCERPT = 150  # characters of context shown around a name, so that the name is always in what is shown
+
+
+def excerpt(text, at, length):
+    """A piece of the line around the name (at, length), cut at word boundaries, with … where the line goes on."""
+    if len(text) <= EXCERPT:
+        return text
+    start = max(0, at - EXCERPT // 2)
+    end = min(len(text), max(at + length, start + EXCERPT))
+    start = max(0, min(start, end - EXCERPT))
+    if start > 0:
+        space = text.find(" ", start)
+        start = space + 1 if 0 <= space < at else start
+    if end < len(text):
+        space = text.rfind(" ", at + length, end)
+        end = space if space > 0 else end
+    return ("…" if start > 0 else "") + text[start:end].strip() + ("…" if end < len(text) else "")
 
 
 def _cluster(plains):
@@ -83,17 +107,22 @@ def contribution(note):
             continue  # corrected by hand
         text = str(seg.get("text") or "")
         doubtful = weak(seg)
-        for word in _names(text):
+        for word, at in _names_at(text):
             info = seen.setdefault(_plain(word), {"surfaces": {}, "weak": 0, "all": 0, "examples": []})
             info["surfaces"][word] = info["surfaces"].get(word, 0) + 1
             info["all"] += 1
             info["weak"] += 1 if doubtful else 0
-            if len(info["examples"]) < 3 and (doubtful or not info["examples"]):
+            mine = [e for e in info["examples"] if e["word"] == word]
+            if not mine or (doubtful and not mine[0]["weak"]):  # one example per spelling, an unsure one rather than a clear one
                 try:
                     start = float(seg.get("start") or 0)
                 except (TypeError, ValueError):
                     start = 0.0
-                info["examples"].append({"note": note.get("id"), "title": note.get("title") or "", "start": start, "text": text[:160], "word": word, "weak": doubtful})
+                example = {"note": note.get("id"), "title": note.get("title") or "", "start": start, "text": excerpt(text, at, len(word)), "word": word, "weak": doubtful}
+                if mine:
+                    info["examples"][info["examples"].index(mine[0])] = example
+                elif len(info["examples"]) < 4:
+                    info["examples"].append(example)
     return note.get("id"), seen
 
 
@@ -121,7 +150,10 @@ def assemble(contributions, terms, ignored=(), limit=MAX_ITEMS):
             info["weak"] += part["weak"]
             info["notes"].add(note_id)
             for example in part["examples"]:
-                if len(info["examples"]) < 3 and (example["weak"] or not info["examples"]):
+                same = [e for e in info["examples"] if e["word"] == example["word"]]
+                if not same or (example["weak"] and not same[0]["weak"]):
+                    if same:
+                        info["examples"].remove(same[0])
                     info["examples"].append(example)
     groups = {}
     for plain, group in _cluster(list(seen)).items():
@@ -154,7 +186,10 @@ def assemble(contributions, terms, ignored=(), limit=MAX_ITEMS):
             continue
         forms = sorted(({"text": t, "count": c} for t, c in surfaces.items()), key=lambda f: (-f["count"], f["text"]))
         suggest = next((f["text"] for f in forms if _plain(f["text"]) in known), forms[0]["text"])
-        examples = sorted((e for i in infos for e in i["examples"]), key=lambda e: not e["weak"])[:2]
+        first = {}  # one line for each spelling, the unsure ones first
+        for e in sorted((e for i in infos for e in i["examples"]), key=lambda e: not e["weak"]):
+            first.setdefault(e["word"], e)
+        examples = sorted(first.values(), key=lambda e: (not e["weak"], e["word"]))[:3]
         out.append({"key": primary, "forms": forms, "suggest": suggest, "reason": reason, "notes": len(set().union(*(i["notes"] for i in infos))),
                     "examples": examples, "_rank": (reason != "variants", -total)})
     out.sort(key=lambda c: (c["_rank"], c["key"]))
