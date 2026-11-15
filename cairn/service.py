@@ -76,6 +76,16 @@ def loaded():
     return _launchctl("print", _target()).returncode == 0
 
 
+def _bootstrap():
+    return _launchctl("bootstrap", "gui/%d" % os.getuid(), str(agent_path()))
+
+
+def _wait_unloaded(seconds):
+    end = time.time() + seconds
+    while loaded() and time.time() < end:
+        time.sleep(0.5)
+
+
 def install():
     config.home().mkdir(parents=True, exist_ok=True)
     agent_path().parent.mkdir(parents=True, exist_ok=True)
@@ -90,7 +100,13 @@ def install():
     launcher.chmod(0o755)
     if loaded():
         _launchctl("bootout", _target())
-    result = _launchctl("bootstrap", "gui/%d" % os.getuid(), str(agent_path()))
+        _wait_unloaded(15)  # the system stops the old one in its own time: starting before that fails with "Input/output error"
+    result = _bootstrap()
+    for _ in range(5):
+        if result.returncode == 0:
+            break
+        time.sleep(2)
+        result = _bootstrap()
     if result.returncode != 0:
         raise RuntimeError("launchctl: " + (result.stderr or result.stdout).strip())
 
