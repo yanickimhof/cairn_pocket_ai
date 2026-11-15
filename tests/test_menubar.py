@@ -34,6 +34,18 @@ class ModelTest(unittest.TestCase):
         self.assertEqual(texts(built), ["Cairn", "Ouvrir Cairn", "Rien n’a quitté ce Mac · 06:00", "Quitter"])
         self.assertEqual(actions(built), ["open", "quit"])
 
+    def test_the_icon_has_a_tip_for_the_pointer(self):
+        self.assertEqual(menubar.model(None, "en", away=True)["tip"], "Cairn \u00b7 Cairn is not answering")
+        self.assertEqual(menubar.model(None, "fr", locked=True)["tip"], "Cairn \u00b7 Verrouill\u00e9")
+        busy = menubar.model(state(job={"running": True, "step": "transcribing", "done": 1, "total": 3}, totals={"waiting": 2}), "en")["tip"]
+        self.assertTrue(busy.startswith("Cairn \u00b7 Transcribing \u00b7 2 of 3"))
+        self.assertNotIn("SECRET", menubar.model(state(job={"running": True, "step": "summarizing", "id": "SECRET-ID"}), "en")["tip"])
+
+    def test_the_setting_explains_itself_on_hover(self):
+        js = (Path(__file__).resolve().parent.parent / "cairn" / "web" / "app.js").read_text(encoding="utf-8")
+        self.assertEqual(js.count("menubarHint:"), 2)  # French and English
+        self.assertIn("tip(t.menubarHint)", js)
+
     def test_the_pocket_and_what_can_be_imported(self):
         built = menubar.model(state(pocket={"connected": True, "new": 3}, battery={"level": 78}), "fr")
         self.assertIn("Pocket connectée · 78 %", texts(built))

@@ -50,6 +50,15 @@ def _clock(when):
 
 
 def model(state, lang="en", locked=False, away=False):
+    """The menu (see _build) and, for the pointer resting on the icon, a one line tip: the title and the lines of text."""
+    built = _build(state, lang, locked, away)
+    texts = [text for kind, text, _ in built["lines"] if kind == "text"]
+    title = next((text for kind, text, _ in built["lines"] if kind == "title"), "Cairn")
+    built["tip"] = title + (" \u00b7 " + " \u00b7 ".join(texts) if texts else "")
+    return built
+
+
+def _build(state, lang, locked, away):
     """What the menu holds for this state of Cairn: the icon (idle, work, attention, locked, away), the lines and the actions.
 
     Each line is (kind, text, action): kind is "title", "text", "action" or "separator"; action is the code the click sends back."""
@@ -274,6 +283,9 @@ def run(parent):
             if built["icon"] != shown["icon"]:
                 self.item.button().setImage_(image(built["icon"]))
                 shown["icon"] = built["icon"]
+            if built.get("tip") != shown.get("tip"):
+                self.item.button().setToolTip_(built.get("tip") or "Cairn")
+                shown["tip"] = built.get("tip")
             if built["lines"] == shown["lines"]:
                 return
             shown["lines"] = built["lines"]
