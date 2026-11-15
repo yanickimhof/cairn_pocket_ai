@@ -23,7 +23,7 @@
 Your recordings never leave your computer. No account, no cloud, no telemetry, and everything works offline. A vault encrypts what stays on the Pocket, an app lock encrypts your notes and recordings, a secure mode hides the screen, and you choose the models that run. You hold the keys.
 
 
-What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
+Everything Cairn does, feature by feature: [Guide](docs/GUIDE.md). What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
 
 | Secure by default | Your recordings | Your notes |
 |---|---|---|

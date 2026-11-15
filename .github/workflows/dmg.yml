@@ -37,7 +37,11 @@ jobs:
       - name: Check the image (opens, content, signature)
         run: |
           plutil -lint "packaging/macos/Install Cairn.app/Contents/Info.plist"
-          hdiutil attach dist/Cairn.dmg -nobrowse -readonly -mountpoint "$RUNNER_TEMP/cairn-dmg"
+          for try in 1 2 3 4 5; do
+            hdiutil attach dist/Cairn.dmg -nobrowse -readonly -mountpoint "$RUNNER_TEMP/cairn-dmg" && break
+            echo "attach failed (try $try), waiting"; sleep 5
+            [ "$try" = 5 ] && exit 1
+          done
           ls -la "$RUNNER_TEMP/cairn-dmg"
           test -x "$RUNNER_TEMP/cairn-dmg/Install Cairn.app/Contents/MacOS/install-cairn"
           cmp install.sh "$RUNNER_TEMP/cairn-dmg/Install Cairn.app/Contents/Resources/install.sh"
