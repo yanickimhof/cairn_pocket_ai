@@ -220,3 +220,16 @@ a.ib{text-decoration:none}
 .upl{height:3px;border-radius:2px;background:#E5E5EA;margin:0 0 12px;overflow:hidden}.upl i{display:block;height:100%;background:var(--blue);transition:width .2s}
 body.dropping::after{content:attr(data-drop);position:fixed;inset:14px;z-index:50;display:flex;align-items:center;justify-content:center;border:2px dashed var(--blue);border-radius:22px;background:rgba(245,245,247,.88);color:var(--blue);font-size:20px;font-weight:600;pointer-events:none}
 .setcol{display:flex;flex-direction:column;gap:10px}
+
+.grp{font-size:12px;font-weight:600;color:var(--mute);margin:20px 0 10px}.grp.first{margin-top:4px}
+.tiles{display:flex;flex-wrap:wrap;gap:8px 6px}
+.tl{display:flex;flex-direction:column;align-items:center;gap:5px;width:70px}
+.tl>span{font-size:11px;line-height:1.2;color:var(--mute);text-align:center;max-width:70px}
+.tile{position:relative;width:48px;height:48px;border:0;border-radius:50%;background:var(--soft);color:var(--mute);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.tile.on{background:var(--blue);color:#fff}
+.tile:not(.on):hover{background:#E5E5EA}
+.tile[data-tip]:hover:not(:has([data-tip]:hover))::after{white-space:pre-line;max-width:250px}
+.tile .tdot{min-width:0;position:absolute;top:9px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px var(--soft)}
+.tile.on .tdot{background:#fff;box-shadow:0 0 0 2px var(--blue)}
+.tile .tdot.hot{background:var(--orange)}
+.spanel{border-top:1px solid var(--line);margin-top:16px;padding-top:8px}

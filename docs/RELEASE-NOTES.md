@@ -17,6 +17,9 @@ Replacing a running Cairn no longer fails with an input/output error. An update 
 **A search that understands a sentence.**
 Filler words and plurals no longer get in the way, and the search by meaning says "nothing" when nothing is close. The menu bar icon, which did not start, now does, with a tip on hover.
 
+**Settings at a glance.**
+One icon per setting, blue when on, grey when off, a tip on hover. What needs more opens below, one panel at a time.
+
 ## 0.7
 
 **Any recording, with or without a Pocket.**

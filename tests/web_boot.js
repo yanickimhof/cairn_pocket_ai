@@ -180,7 +180,15 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   timers.splice(0).forEach((fn) => fn());
   click({ "data-a": "settings" });
   await settle();
+  click({ "data-a": "tile", "data-v": "vocab" });
+  await settle();
   check(page.innerHTML.indexOf('data-a="vocabAll"') !== -1 && page.innerHTML.indexOf('data-a="vocabRangeToggle"') !== -1 && page.innerHTML.indexOf('id="vFrom"') === -1, "the vocabulary offers to update the notes with icons");
+  check((page.innerHTML.match(/class="tile/g) || []).length >= 10 && page.innerHTML.indexOf('class="seg s38"') === -1, "the settings are tiles, no Off and On rows");
+  click({ "data-a": "tile", "data-v": "tpl" });
+  await settle();
+  check(page.innerHTML.indexOf('data-a="vocabAll"') === -1 && page.innerHTML.indexOf('aria-expanded="true"') !== -1, "one panel at a time: opening the templates closes the vocabulary");
+  click({ "data-a": "tile", "data-v": "vocab" });
+  await settle();
   click({ "data-a": "vocabRangeToggle" });
   await settle();
   check(page.innerHTML.indexOf('id="vFrom"') !== -1 && page.innerHTML.indexOf('data-a="vocabRange"') !== -1, "the period opens on its icon");
@@ -203,8 +211,8 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   await settle();
   click({ "data-a": "settings" });
   await settle();
-  check(page.innerHTML.indexOf('data-a="tplAsk"') !== -1, "the settings offer the templates");
-  click({ "data-a": "tplAsk" });
+  check(page.innerHTML.indexOf('data-a="tile" data-v="tpl"') !== -1, "the settings offer the templates");
+  click({ "data-a": "tile", "data-v": "tpl" });
   await settle();
   check(page.innerHTML.indexOf('data-a="tplStar"') !== -1 && page.innerHTML.indexOf("Client report") !== -1 && page.innerHTML.indexOf('data-a="tplNew"') !== -1, "the templates are listed with their star");
   click({ "data-a": "tplNew" });
@@ -219,7 +227,7 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   await settle();
   check(page.innerHTML.indexOf('data-a="tplDelGo"') !== -1, "deleting a template asks first");
   click({ "data-a": "tplDelNo" });
-  click({ "data-a": "tplAsk" });
+  click({ "data-a": "tile", "data-v": "tpl" });
   click({ "data-a": "settings" });
   await settle();
 
@@ -310,6 +318,8 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   await settle();
   click({ "data-a": "settings" });
   await settle();
+  click({ "data-a": "tile", "data-v": "vocab" });
+  await settle();
   check(page.innerHTML.indexOf('data-a="vcToggle"') !== -1 && page.innerHTML.indexOf('class="cnt">1<') !== -1, "the settings show the names to check with a badge");
   const rowOrder = ['data-a="autoimport"', 'data-a="autoprocess"', 'data-a="tagsSuggest"', 'data-a="autocheck"', 'data-a="vocabAsk"'].map((n) => page.innerHTML.indexOf(n));
   check(rowOrder.every((at, i) => at !== -1 && (i === 0 || at > rowOrder[i - 1])), "the settings come in the agreed order: " + rowOrder.join(","));
@@ -364,7 +374,7 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   // people: renamed and merged everywhere, voices erased
   click({ "data-a": "settings" });
   await settle();
-  click({ "data-a": "pplToggle" });
+  click({ "data-a": "tile", "data-v": "ppl" });
   await settle();
   check(calls.indexOf("GET /api/people") !== -1 && page.innerHTML.indexOf("Anna B") !== -1 && page.innerHTML.indexOf('data-a="pplForgetAll"') !== -1, "the people of all the notes are listed");
   check(page.innerHTML.indexOf('data-a="pplOpenNote" data-id="n3"') !== -1, "the notes with unnamed speakers are listed");
@@ -379,7 +389,7 @@ const tipOf = (key) => { const m = page.innerHTML.match(new RegExp('data-a="cycl
   click({ "data-a": "pplForget", "data-id": "Anna" });
   await settle();
   check(calls.indexOf("POST /api/people/forget") !== -1, "a voiceprint can be erased");
-  click({ "data-a": "pplToggle" });
+  click({ "data-a": "tile", "data-v": "ppl" });
   await settle();
   click({ "data-a": "settings" });
   await settle();
