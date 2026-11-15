@@ -1,6 +1,15 @@
 (function () {
   "use strict";
 
+  // Installed as a web app, the window opens once at a calm height (the browser remembers any size you give it afterwards).
+  (function sizeTheWindow() {
+    try {
+      if (!window.matchMedia || !window.matchMedia("(display-mode: standalone)").matches || window.localStorage.getItem("cairn.sized")) { return; }
+      window.localStorage.setItem("cairn.sized", "1");
+      window.resizeTo(window.outerWidth, Math.min(720, window.screen.availHeight));
+    } catch (e) { /* a browser that does not allow it keeps its own size */ }
+  })();
+
   var D = {
     fr: {
       brand: "Cairn · Pocket AI souverain", components: "Composants",

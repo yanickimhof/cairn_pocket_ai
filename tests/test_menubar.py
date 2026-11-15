@@ -52,6 +52,12 @@ class ModelTest(unittest.TestCase):
         self.assertTrue(busy.startswith("Cairn \u00b7 Transcribing \u00b7 2 of 3"))
         self.assertNotIn("SECRET", menubar.model(state(job={"running": True, "step": "summarizing", "id": "SECRET-ID"}), "en")["tip"])
 
+    def test_the_web_app_window_opens_at_a_calm_height_once(self):
+        js = (Path(__file__).resolve().parent.parent / "cairn" / "web" / "app.js").read_text(encoding="utf-8")
+        self.assertIn('matchMedia("(display-mode: standalone)")', js)
+        self.assertIn('getItem("cairn.sized")', js)  # once: a size given by the person is then kept by the browser
+        self.assertIn("resizeTo(window.outerWidth, Math.min(720", js)  # the width is left as it is
+
     def test_the_setting_explains_itself_on_hover(self):
         js = (Path(__file__).resolve().parent.parent / "cairn" / "web" / "app.js").read_text(encoding="utf-8")
         self.assertEqual(js.count("menubarHint:"), 2)  # French and English

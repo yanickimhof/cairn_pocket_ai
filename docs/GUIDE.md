@@ -171,7 +171,7 @@ The speech model stays loaded between recordings and is released after five idle
 
 Cairn runs as a small background service that starts at login and restarts if it stops. If the page does not answer, open `Cairn.app` again, or run `~/Cairn/bin/cairn service restart` (`service uninstall` removes the background mode).
 
-It is also an installable web app: Chrome, Install Cairn; Safari, File, Add to Dock. It then opens in its own window, still served from your computer.
+It is also an installable web app: Chrome, Install Cairn; Safari, File, Add to Dock. It then opens in its own window, still served from your computer, at a calm height the first time (resize it once and the browser remembers).
 
 ## "Not secure" in the address bar?
 
