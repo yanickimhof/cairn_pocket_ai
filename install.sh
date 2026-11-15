@@ -10,7 +10,8 @@
 # Optional variables: CAIRN_HOME (default ~/Cairn), CAIRN_PROFILE (light, standard or high: no question asked),
 # CAIRN_YES=1 (never ask: keep what is installed, or the Light models), CAIRN_LLM and CAIRN_WHISPER_REPO (name the models yourself),
 # CAIRN_REF (branch or tag to install; the default is the release this script belongs to),
-# CAIRN_NO_SERVICE=1 (macOS: no background mode, for a second copy next to one that is already running).
+# CAIRN_NO_SERVICE=1 (macOS: no background mode, for a second copy next to one that is already running),
+# CAIRN_NO_OPEN=1 (do not open the app in the browser when the install is done).
 set -euo pipefail
 umask 077
 
@@ -333,6 +334,8 @@ if [ "$(uname -s)" = "Darwin" ] && [ -z "${CI:-}" ] && [ -z "${CAIRN_NO_SERVICE:
   # Background mode: starts at login and restarts by itself if it stops (remove with: cairn service uninstall)
   "$CAIRN_HOME/bin/cairn" service install || true
   printf '\nCairn runs in the background. Open it with %s/Cairn.app\nor run: %s/bin/cairn service open\n' "$CAIRN_HOME" "$CAIRN_HOME"
+  # and open it now, so that the first thing you see is the app (CAIRN_NO_OPEN=1 to leave the browser alone)
+  if [ -z "${CAIRN_NO_OPEN:-}" ]; then "$CAIRN_HOME/bin/cairn" service open || true; fi
 else
   printf '\nStart Cairn: double-click Cairn.command in %s\nor run: %s/bin/cairn\n' "$CAIRN_HOME" "$CAIRN_HOME"
 fi

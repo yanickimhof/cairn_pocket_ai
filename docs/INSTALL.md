@@ -31,6 +31,7 @@ Set before the command.
 | `CAIRN_LLM`, `CAIRN_WHISPER_REPO` | Name the models yourself; nothing is asked. Models too small to be useful (Whisper tiny or base, language models under 3B) are refused |
 | `CAIRN_REF` | Branch or tag to install (default: the release the script belongs to) |
 | `CAIRN_NO_SERVICE=1` | macOS: no background mode (see below) |
+| `CAIRN_NO_OPEN=1` | macOS: do not open the app in the browser when the install is done |
 
 In a script, in CI or without a keyboard, nothing is asked: an update keeps what is installed and a first install gets the Light models. An existing Ollama and its models are reused. The encryption library for the Pocket vault (`cryptography`, `keyring`) is part of the default install.
 

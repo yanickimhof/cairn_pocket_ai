@@ -8,6 +8,9 @@ The installer reads your chip, memory and free disk space, advises Light, Standa
 **Updates keep your models.**
 Run the install again and what you chose stays, unless you pick something else.
 
+**Opens when it is ready.**
+At the end of the install, Cairn opens in your browser by itself.
+
 **A background mode that survives an update.**
 Replacing a running Cairn now waits for the old one to stop before starting the new one, instead of failing with an input/output error.
 
