@@ -5,6 +5,9 @@
 **An install that fits your Mac.**
 The installer advises Light, Standard or High models for your memory and disk space, and lets you choose. An update keeps the models you have.
 
+**A disk image for the Mac.**
+Download Cairn.dmg, double-click Install Cairn, and the same guided install runs. The models come afterwards.
+
 **Opens when it is ready.**
 At the end of the install, Cairn opens in your browser by itself.
 
