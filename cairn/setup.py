@@ -7,7 +7,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from . import config, llm, models, pocket, system
+from . import catalog, config, llm, models, pocket, system
 
 MIN_RAM_GB = 7.5      # the light models are meant for 8 GB
 MIN_FREE_GB = 3.0     # a note needs little; a model download needs room
@@ -57,5 +57,9 @@ def check():
     if free is not None:
         add("disk", "todo" if free < MIN_FREE_GB else ("warn" if free < LOW_FREE_GB else "ok"), gb=int(free))
     add("pocket", _pocket(), advisory=True)
+    if ram:
+        advised = catalog.advised_profile(ram, None, cfg.get("engine") or "mlx")["id"]
+        current = catalog.current_profile(cfg.get("llm"), models.selected_speech())
+        add("profile", "ok", advisory=True, advised=advised, current=current or "custom")
     ready = all(c["status"] != "todo" for c in checks if not c.get("advisory"))
     return {"ready": ready, "checks": checks, "platform": sys.platform}

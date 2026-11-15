@@ -1,5 +1,22 @@
 # Release notes
 
+## 0.8
+
+**An install that fits your Mac.**
+The installer reads your chip, memory and free disk space, advises Light, Standard or High models and lets you choose. Enter takes the advised one, and nothing leaves your computer to decide it.
+
+**Updates keep your models.**
+Run the install again and what you chose stays, unless you pick something else.
+
+**Models, at a glance.**
+First steps and About show which profile suits this computer and which one you use, with Settings, Models one tap away.
+
+**Install from Git, in the open.**
+A clone of the repository installs with `bash install.sh`, the same installer as the one-line command, and the README now sets both out side by side.
+
+**A tidier repository.**
+The README leads with the install and puts the optional features in one table, and the guide holds the details.
+
 ## 0.7
 
 **Any recording, with or without a Pocket.**

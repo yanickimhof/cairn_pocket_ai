@@ -57,31 +57,63 @@ What is new in each version: [Release notes](docs/RELEASE-NOTES.md).
 |---|
 | ![Email](docs/screenshots/email.png) |
 
-> **Status: v0.7.0, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
+> **Status: v0.8.0, stable.** Runs in your browser, offline. Tested end to end on macOS (Apple silicon); Windows is checked in CI, not yet on real hardware; Intel Mac and Linux are untested. See the [release notes](docs/RELEASE-NOTES.md).
 
 ## Install
 
-Paste one command in a terminal. It detects your system and installs everything in your own folder: no administrator rights, no system change. Not sure which one? The [install page](https://yanickimhof.github.io/cairn_pocket_ai/) shows the right command and the download sizes.
+Cairn installs itself in one folder of your home folder (`~/Cairn`): no administrator rights, no system change, and nothing to install beforehand (no Homebrew, no Python). Every download, with its version and size, is listed in [SECURITY.md](SECURITY.md). Delete the folder to uninstall.
 
-bash or zsh:
+| | macOS | Windows |
+|---|---|---|
+| **One command** | Guided: reads your Mac and advises the models | Installs the Light models |
+| **From a Git clone** | `bash install.sh` | `.\install.ps1` |
+
+### macOS: one command, guided
 
 ```
-curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.7.0/install.sh | bash
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.8.0/install.sh | bash
 ```
 
-PowerShell:
+The installer looks at your Mac (chip, memory, free disk space), **advises a set of models and lets you choose**. Press Enter to take the advised one.
+
+| Profile | Made for | Speech | Notes | Models to download |
+|---|---|---|---|---|
+| **Light** | 8 GB of memory | Whisper large-v3-turbo | Qwen3 4B | about 4.1 GB |
+| **Standard** | 16 GB | Whisper large-v3-turbo | Qwen3 8B | about 6.8 GB |
+| **High** | 32 GB or more | Whisper large-v3 | Qwen3 14B | about 12.4 GB |
+
+A profile that does not fit your free disk space is not offered. The Python packages and the model server (if you do not already have Ollama) come in addition: about 4.8 GB in all for Light. Nothing is final: **Settings, Models** changes any model later, and an update keeps what you have unless you choose otherwise. Not sure which one? Take the advised one.
+
+In a script or a test nothing is asked. `CAIRN_PROFILE=standard` picks a profile, `CAIRN_YES=1` never asks (it keeps what is installed, or takes Light), and `CAIRN_LLM` and `CAIRN_WHISPER_REPO` name the models yourself. All options: [docs/INSTALL.md](docs/INSTALL.md).
+
+### From a Git clone
 
 ```
-irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.7.0/install.ps1 | iex
+git clone https://github.com/yanickimhof/cairn_pocket_ai.git
+cd cairn_pocket_ai
+bash install.sh
 ```
+
+The same installer, run from your copy: you can read the code before it runs, and `git pull` followed by the same command updates Cairn. On Windows, run `.\install.ps1` in PowerShell instead.
+
+### Windows
+
+```
+irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.8.0/install.ps1 | iex
+```
+
+It installs the Light models. The guided choice of a profile is planned; until then, pick larger models afterwards in **Settings, Models**, or clone the repository as above.
+
+### Before you start
 
 | | Minimum | Recommended |
 |---|---|---|
 | Processor | 64-bit, 4 cores (Intel Mac or Windows PC: slower) | Apple silicon (M1 or later), or a recent 8-core PC |
 | Memory | 8 GB | 16 GB or more (larger models) |
-| Disk space | 12 GB free | 20 GB free |
+| Disk space | 12 GB free | 20 GB free (High profile: 18 GB at least) |
 | System | macOS 14, Windows 10 22H2 | Latest version |
-| Internet | Installation only: about 4.8 GB (Mac) or 7 GB (Windows), about 2.5 GB if Ollama and a Qwen3 model are already installed (estimates) | |
+| Internet | Installation only: about 4.8 GB (Mac, Light), 7.5 GB (Standard), 13 GB (High), 7 GB (Windows); about 2.5 GB less if Ollama and the Qwen3 model are already installed (estimates) | |
+| Pocket (optional) | A USB-C **data** cable | Audio files can be added without a Pocket |
 
 No graphics card needed. Everything works offline once installed.
 
@@ -95,21 +127,19 @@ In the Pocket mobile app, open the device settings, then:
 
 You need neither the Pocket desktop app nor a Pocket account on the computer.
 
-> **Battery (macOS):** when it can read the Pocket over Bluetooth, Cairn shows a small battery next to the Local badge (read only, no pairing). The Pocket accepts one Bluetooth connection at a time, so nothing shows while the Pocket app on your phone is connected to it: closing the app is not enough: switch the phone to airplane mode (or turn its Bluetooth off), and the battery appears.
+## Optional features
 
-> **Pocket status (macOS, optional):** in Settings, you can enter your own Pocket session key to also see the firmware, device state and storage used, read only. This is not required and nothing is captured by Cairn for you: see [docs/GUIDE.md](docs/GUIDE.md#pocket-status-macos-optional) for what the key is and where it comes from.
+Each one is off until you turn it on, and works fully on your computer.
 
-> **Speaker identification (optional):** in Settings, add your Hugging Face token, install its model (Settings > Models), then switch it on to see who's speaking in the transcript and the note. Speakers can be given a real name from the transcript view, and an older recording can be rediarized on demand. Off by default, fully local once installed; see [docs/GUIDE.md](docs/GUIDE.md#speaker-identification-diarization-optional) for setup, including the Hugging Face access you need to accept once. On a Mac with Apple silicon it runs on the graphics chip by default, at least four times faster with the same result; Settings can switch it to the processor.
-
-> **Names and places (optional):** in Settings, add the names of people and places and the rare terms you use to Vocabulary, one per line. Cairn writes close variants as listed in the transcript, tells the summary the spelling, and shows every correction on the note. `Brant, Brand => Brandt` always replaces each spelling, and `Open Day => BRANDT Day | awards, ceremony` only near those words. One tap then updates the notes that need it.
-
-> **Ask your notes (optional):** in Settings > Models, install a search model (Qwen3 Embedding 0.6B or BGE-M3). Then type a question in the magnifier and press Enter: your summary model answers from the passages it finds, each with its note and minute. Follow up, ask what is still open, or narrow it to a period or a tag. Nothing is stored and nothing leaves your computer. Details: [docs/GUIDE.md](docs/GUIDE.md#finding-listening-following-up).
-
-> **Lock and encryption (optional):** in Settings, turn on **Lock**, choose a password (10 characters or more) and write down the recovery phrase, shown once. Notes, settings, the search index and recordings are then encrypted on this computer, Cairn asks for the password when it opens and after the idle time you set, and Touch ID can replace typing it on a Mac that has it. Details and limits: [docs/GUIDE.md](docs/GUIDE.md#lock-and-encryption).
-
-> **Menu bar (macOS):** a small icon shows what Cairn is doing and what waits, and tells you once when notes are ready. Settings, **Menu bar**, turns it off.
-
-> **Choose your models (optional):** the default install uses Whisper large-v3-turbo and Qwen3 4B. In Settings > Models you can switch the speech model to Whisper large-v3 (3.1 GB, slower, 16 GB of memory advised), or on Apple silicon to Parakeet v3, much faster on a recording in a single language (it cannot be told which language to hear, so Whisper stays the default); `cairn bench` measures them on your own recordings ([guide](docs/GUIDE.md#test-bench)). The summary model can be Qwen3 8B or 14B. Nothing downloads until you confirm, and a model already in your Ollama is reused. Sizes shown for installed models are the real ones on your computer.
+| Feature | What it gives you | Details |
+|---|---|---|
+| Other models | A larger speech or notes model, or Parakeet v3 (much faster in a single language); `cairn bench` measures them on your recordings | [Models](docs/GUIDE.md#models) |
+| Ask your notes | A question in your own words, answered with the note and the minute behind it (needs a search model) | [Finding and asking](docs/GUIDE.md#finding-listening-following-up) |
+| Speaker identification | Who speaks in the transcript and the note (needs a Hugging Face token) | [Speakers](docs/GUIDE.md#speaker-identification-diarization-optional) |
+| Names and places | Your own spelling of names and rare terms, in every note | [Vocabulary](docs/GUIDE.md#names-and-places) |
+| Lock and encryption | Notes, settings, index and recordings encrypted on this computer; password or Touch ID | [Lock](docs/GUIDE.md#lock-and-encryption) |
+| Pocket battery and status (macOS) | Battery level, firmware, state and storage of the Pocket | [Pocket status](docs/GUIDE.md#pocket-status-macos-optional) |
+| Menu bar (macOS) | A small icon that shows what Cairn is doing | [Menu bar](docs/GUIDE.md#menu-bar-macos) |
 
 ## Use it
 

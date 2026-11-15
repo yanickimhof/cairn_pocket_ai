@@ -39,3 +39,39 @@ LLM_IDS = tuple(m["id"] for m in LLM)
 EMBED_IDS = tuple(m["id"] for m in EMBED)
 SPEECH_IDS = ("turbo", "large", "parakeet")
 DIAR_IDS = tuple(m["id"] for m in DIAR)
+
+# Profiles: one choice that sets the speech and the language model together, by the memory of the computer.
+# install.sh holds the same table (a test keeps the two identical); Settings, Models can still mix freely.
+PROFILES = [
+    {"id": "light", "llm": "qwen3:4b", "speech": "turbo", "ram": 8},
+    {"id": "standard", "llm": "qwen3:8b", "speech": "turbo", "ram": 16},
+    {"id": "high", "llm": "qwen3:14b", "speech": "large", "ram": 32},
+]
+PROFILE_IDS = tuple(p["id"] for p in PROFILES)
+PROFILE_MARGIN_GB = 5   # room kept beside the models: Python packages, the model server, working files
+
+
+def profile_bytes(profile, engine="mlx"):
+    """What the models of a profile take on disk (catalog estimates)."""
+    llm = next(m for m in LLM if m["id"] == profile["llm"])
+    speech = next(m for m in SPEECH.get(engine, SPEECH["mlx"]) if m["id"] == profile["speech"])
+    return llm["bytes"] + speech["bytes"]
+
+
+def advised_profile(ram_gb, free_gb=None, engine="mlx"):
+    """The largest profile that this memory is made for and that fits the free disk space; light as a last resort."""
+    best = PROFILES[0]
+    for entry in PROFILES:
+        fits_ram = ram_gb >= entry["ram"] - 0.5
+        fits_disk = free_gb is None or free_gb >= profile_bytes(entry, engine) / GB + PROFILE_MARGIN_GB
+        if fits_ram and fits_disk:
+            best = entry
+    return best
+
+
+def current_profile(llm_id, speech_id):
+    """The profile whose models are the ones in use, or None when they are mixed."""
+    for entry in PROFILES:
+        if entry["llm"] == llm_id and entry["speech"] == speech_id:
+            return entry["id"]
+    return None

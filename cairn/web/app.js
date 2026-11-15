@@ -6,7 +6,7 @@
       brand: "Cairn · Pocket AI souverain", components: "Composants",
       updAvail: "Mise à jour disponible : ", updFlash: "Relancez la commande d’installation",
       about: "À propos", aboutTagline: "Pocket AI souverain",
-      aboutText: "Importez, transcrivez et résumez vos enregistrements Pocket, entièrement sur cet ordinateur. Aucun compte, aucun cloud, aucune télémétrie.",
+      aboutProfile: "Les modèles s’adaptent à votre ordinateur : profil Léger, Standard ou Élevé. Réglages, Modèles pour changer.", aboutText: "Importez, transcrivez et résumez vos enregistrements Pocket, entièrement sur cet ordinateur. Aucun compte, aucun cloud, aucune télémétrie.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · Licence MIT · Non affilié à Pocket.", uiLang: "Langue de l’interface",
       off: "Non", on: "Oui",
       devGpuHint: "Identification des interlocuteurs sur la puce graphique (au moins 4 fois plus rapide, même résultat). Cliquer pour utiliser le processeur.", devCpuHint: "Identification des interlocuteurs sur le processeur. Cliquer pour utiliser la puce graphique.",
@@ -68,7 +68,7 @@
       exportLabel: "Exporter", exportHint: "Copier ou exporter la fiche", copyRich: "Copier", copyRichHint: "Copier, prêt à coller dans un courriel",
       copiedRich: "Copié", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exporté en ",
       setupTitle: "Premiers pas", setupSub: "Cairn vérifie que tout est prêt.", setupDone: "Terminer", setupCheck: "Vérifier l’installation", setupReady: "Tout est prêt. Branchez la Pocket ou ajoutez des fichiers audio avec l’icône en haut.", setupNotReady: "Il reste à régler :",
-      cSpeech: "Transcription", cOllama: "Serveur de modèles", cLlm: "Modèle de notes", cFfmpeg: "Lecture audio (ffmpeg)", cMemory: "Mémoire", cDisk: "Espace disque", cPocket: "Pocket",
+      cSpeech: "Transcription", cOllama: "Serveur de modèles", cLlm: "Modèle de notes", cFfmpeg: "Lecture audio (ffmpeg)", cMemory: "Mémoire", cDisk: "Espace disque", cPocket: "Pocket", cProfile: "Modèles", pProfile: "Conseillé pour cet ordinateur : {a}. En place : {c}. Réglages, Modèles pour changer.", pTier: { light: "Léger", standard: "Standard", high: "Élevé", custom: "Personnalisé" },
       hSpeech: "Le modèle de transcription n’est pas installé.", hOllama: "Le serveur de modèles (Ollama) ne répond pas : relancez Cairn ou réinstallez-le.", hLlm: "Le modèle de notes n’est pas installé.", hFfmpeg: "ffmpeg est introuvable : réinstallez Cairn.",
       hMemory: "{n} Go de mémoire : Cairn fonctionne, mais les modèles légers sont conseillés.", hDisk: "Il reste {n} Go : libérez de la place avant de télécharger des modèles.",
       pOk: "Pocket connectée", pAbsent: "Pas de Pocket ? Ajoutez des fichiers audio. Sinon : câble USB-C de données, USB Mode (Web Sync) activé, et synchronisation automatique de l’application désactivée.", pNoRecord: "La Pocket est vue, mais sans enregistrements : activez USB Mode (Web Sync) puis rebranchez-la.", cOk: "Prêt",
@@ -103,7 +103,7 @@
       brand: "Cairn · Sovereign Pocket AI", components: "Components",
       updAvail: "Update available: ", updFlash: "Run the install command again",
       about: "About", aboutTagline: "Sovereign Pocket AI",
-      aboutText: "Import, transcribe and summarize your Pocket recordings, entirely on this computer. No account, no cloud, no telemetry.",
+      aboutProfile: "The models fit your computer: Light, Standard or High profile. Settings, Models to change them.", aboutText: "Import, transcribe and summarize your Pocket recordings, entirely on this computer. No account, no cloud, no telemetry.",
       aboutLegal: "v{v} · © 2026 Yanick Imhof · MIT license · Not affiliated with Pocket.", uiLang: "Interface language",
       off: "Off", on: "On",
       devGpuHint: "Speaker identification runs on the graphics chip (at least 4 times faster, same result). Click to use the processor.", devCpuHint: "Speaker identification runs on the processor. Click to use the graphics chip.",
@@ -165,7 +165,7 @@
       exportLabel: "Export", exportHint: "Copy or export the note", copyRich: "Copy", copyRichHint: "Copy, ready to paste in an email",
       copiedRich: "Copied", expMdHint: "Markdown", expHtmlHint: "HTML", exported: "Exported as ",
       setupTitle: "First steps", setupSub: "Cairn checks that everything is ready.", setupDone: "Done", setupCheck: "Check the installation", setupReady: "All set. Plug in the Pocket or add audio files with the icon at the top.", setupNotReady: "Still to fix:",
-      cSpeech: "Transcription", cOllama: "Model server", cLlm: "Notes model", cFfmpeg: "Audio reading (ffmpeg)", cMemory: "Memory", cDisk: "Disk space", cPocket: "Pocket",
+      cSpeech: "Transcription", cOllama: "Model server", cLlm: "Notes model", cFfmpeg: "Audio reading (ffmpeg)", cMemory: "Memory", cDisk: "Disk space", cPocket: "Pocket", cProfile: "Models", pProfile: "Advised for this computer: {a}. In use: {c}. Settings, Models to change.", pTier: { light: "Light", standard: "Standard", high: "High", custom: "Custom" },
       hSpeech: "The transcription model is not installed.", hOllama: "The model server (Ollama) does not answer: restart Cairn or reinstall it.", hLlm: "The notes model is not installed.", hFfmpeg: "ffmpeg is missing: reinstall Cairn.",
       hMemory: "{n} GB of memory: Cairn works, but the light models are advised.", hDisk: "{n} GB left: free some space before downloading models.",
       pOk: "Pocket connected", pAbsent: "No Pocket? Add audio files. Otherwise: USB-C data cable, USB Mode (Web Sync) on, and the app's automatic sync off.", pNoRecord: "The Pocket is seen but shows no recordings: turn USB Mode (Web Sync) on, then plug it in again.", cOk: "Ready",
@@ -697,6 +697,7 @@
   function viewAbout(t) {
     var h = '<div class="card about"><div><div class="t">Cairn</div><div class="small">' + esc(t.aboutTagline) + "</div></div>";
     h += '<div class="text">' + esc(t.aboutText) + "</div>";
+    h += '<div class="small">' + esc(t.aboutProfile) + "</div>";
     h += '<div style="display:flex;flex-direction:column;gap:8px"><div class="text" style="font-size:14px;font-weight:600">' + esc(t.components) + "</div>";
     ((S.about && S.about.components) || []).forEach(function (c) {
       var fix = !c.ok && c.fix ? '<button type="button" class="mbtn" data-a="fixModel">' + esc(t.getIt) + "</button>" : "";
@@ -779,12 +780,13 @@
 
   function viewSetup(t) {
     var r = S.setup, h = '<div class="card about"><div><div class="t">' + esc(t.setupTitle) + '</div><div class="small">' + esc(t.setupSub) + "</div></div>";
-    var names = { speech: "cSpeech", ollama: "cOllama", llm: "cLlm", ffmpeg: "cFfmpeg", memory: "cMemory", disk: "cDisk", pocket: "cPocket" };
+    var names = { speech: "cSpeech", ollama: "cOllama", llm: "cLlm", ffmpeg: "cFfmpeg", memory: "cMemory", disk: "cDisk", pocket: "cPocket", profile: "cProfile" };
     var hints = { speech: "hSpeech", ollama: "hOllama", llm: "hLlm", ffmpeg: "hFfmpeg", memory: "hMemory", disk: "hDisk" };
     h += '<div style="display:flex;flex-direction:column;gap:8px">';
     ((r && r.checks) || []).forEach(function (c) {
       var ok = c.status === "ok", text = t.cOk;
       if (c.id === "pocket") { text = ok ? t.pOk : (c.status === "norecord" ? t.pNoRecord : t.pAbsent); }
+      else if (c.id === "profile") { text = t.pProfile.replace("{a}", t.pTier[c.advised]).replace("{c}", t.pTier[c.current] || t.pTier.custom); }
       else if (!ok) { text = t[hints[c.id]].replace("{n}", c.gb); }
       var fix = !ok && (c.id === "speech" || c.id === "llm") ? '<button type="button" class="mbtn" data-a="fixModel">' + esc(t.getIt) + "</button>" : "";
       h += '<div class="comp"><span class="cn">' + esc(t[names[c.id]]) + '</span><span class="cv" style="white-space:normal">' + esc(text) + "</span><span></span>" + (ok ? I.checkB : (fix || I.warnB)) + "</div>";

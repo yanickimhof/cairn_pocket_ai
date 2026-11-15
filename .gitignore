@@ -1,13 +1,14 @@
+# Your own settings and data: never committed
 .env
 *.env
 .cairn/
 data/
+
+# Recordings: never committed
 *.mp3
 *.m4a
-*.whisper.json
-*.brut.md
-*.nettoye.md
-*.resume.md
+
+# Python and macOS leftovers
 .venv*/
 __pycache__/
 .DS_Store

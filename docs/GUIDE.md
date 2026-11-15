@@ -108,7 +108,7 @@ The icon at the top, or a drop anywhere on the page, adds `.wav`, `.mp3`, `.m4a`
 
 ## First steps
 
-On a first launch with no note, and from **About**, a list shows what Cairn needs: the speech model, the model server and notes model, ffmpeg, memory, disk space and the Pocket. Each missing item says what to do. The Pocket is advisory: with no Pocket, add audio files. A drive that looks like a Pocket but shows no recordings usually means USB Mode (Web Sync) is off.
+On a first launch with no note, and from **About**, a list shows what Cairn needs: the speech model, the model server and notes model, ffmpeg, memory, disk space and the Pocket, and which model profile (Light, Standard or High) suits this computer next to the one in use. Each missing item says what to do. The Pocket is advisory: with no Pocket, add audio files. A drive that looks like a Pocket but shows no recordings usually means USB Mode (Web Sync) is off.
 
 ## Lock and encryption
 
@@ -138,13 +138,17 @@ The trash icon on a note deletes it for good, on the Pocket and on this computer
 
 ## Models
 
-The default install is the smallest that gives good results: Whisper large-v3-turbo (1.6 GB) and Qwen3 4B (2.5 GB). On a French recording, smaller speech models misheard names and produced wrong actions, so Cairn does not offer them.
+On a Mac, the installer advises one of three **profiles** by the memory and the free disk space of your computer, and you choose: **Light** (Whisper large-v3-turbo and Qwen3 4B, for 8 GB of memory), **Standard** (turbo and Qwen3 8B, for 16 GB) and **High** (Whisper large-v3 and Qwen3 14B, for 32 GB). The Light models are the smallest that give good results, and what a script gets by default: Whisper large-v3-turbo (1.6 GB) and Qwen3 4B (2.5 GB). Settings, Models mixes them freely at any time. On a French recording, smaller speech models misheard names and produced wrong actions, so Cairn does not offer them.
 
 **Parakeet v3** (2.5 GB, Apple silicon only) is offered as an optional speech model. It is much faster on a recording in one language, but it cannot be told which language to hear and may drift on a recording that mixes two: Whisper stays the default. Installing it adds a small set of pinned packages from a hashed list and changes none of those already installed. Use `cairn bench` to compare on your own recordings.
 
 For sharper notes, open **Settings, Models**, pick a larger model (Qwen3 8B or 14B, Whisper large-v3), confirm the download, then press **Use**. Nothing downloads without your click, and a model can be removed from the same screen to free disk space. If Qwen3 8B is already in your Ollama, Cairn uses it. It never modifies your existing Ollama or models.
 
 **Search by meaning** is optional: Qwen3 Embedding 0.6B (0.6 GB) or BGE-M3 (1.2 GB, many languages). Install one and your notes are indexed in the background; remove it and the index is deleted. It also powers **Ask your notes**.
+
+## Menu bar (macOS)
+
+A small icon shows what Cairn is doing and what waits, and tells you once when notes are ready. Settings, **Menu bar**, turns it off.
 
 ## Names and places
 

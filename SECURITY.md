@@ -8,19 +8,20 @@ Use GitHub's private vulnerability reporting (Security tab, "Report a vulnerabil
 
 | Component | Version | Size | From | Protection |
 |---|---|---|---|---|
-| Cairn files | The release named in the install command (`v0.7.0`), or the tag in `CAIRN_REF` | Under 1 MB | GitHub | HTTPS only (TLS 1.2 or later), fixed release rather than a moving branch |
+| Cairn files | The release named in the install command (`v0.8.0`), or the tag in `CAIRN_REF` | Under 1 MB | GitHub | HTTPS only (TLS 1.2 or later), fixed release rather than a moving branch |
 | Python manager (uv) | 0.11.32 | About 30 MB | GitHub (astral-sh/uv releases) | Fixed version, SHA-256 checked before use, kept in the Cairn folder, your shell profile is untouched; no installer script is run |
 | Python | 3.11 | About 90 MB | uv | Kept in the Cairn folder |
 | Python packages | Pinned in `requirements/` | Under 1 GB | PyPI | Versions and SHA-256 hashes pinned, installed with `--require-hashes --no-deps`, so nothing outside the hashed list is pulled in. `torch` is not part of this list: speaker identification adds it, with its own packages, from a second hashed list |
 | Model server (Ollama) | 0.40.13 | 0.2 to 1.7 GB, by system | GitHub (ollama/ollama releases) | Fixed release, SHA-256 checked, then code signature checked before use (macOS: also accepted as notarized by the system; Windows: signed by Ollama), installed for your user only |
 | Search model (optional) | Qwen3 Embedding 0.6B or BGE-M3, only if you choose one in Settings | 0.6 or 1.2 GB | Ollama registry | Layers verified by digest |
-| Language model | Qwen3 4B (`qwen3:4b`, default). On demand: Qwen3 8B (5.2 GB), 14B (9.3 GB) | 2.5 GB | Ollama registry | Layers verified by digest |
-| Speech model | Whisper large-v3-turbo. On demand: large-v3 (3.1 GB), and on Apple silicon Parakeet v3 (2.5 GB, with `parakeet-mlx` from a hashed list that changes no package already installed) | 1.6 GB | Hugging Face | Fixed revision (a commit of the repository), downloaded once, then offline (`HF_HUB_OFFLINE=1`) |
+| Language model | Qwen3 4B (`qwen3:4b`, Light profile and default in scripts), Qwen3 8B (Standard), Qwen3 14B (High). Chosen at install, or later in Settings | 2.5, 5.2 or 9.3 GB | Ollama registry | Layers verified by digest |
+| Speech model | Whisper large-v3-turbo (Light and Standard) or large-v3 (High, 3.1 GB). On demand on Apple silicon: Parakeet v3 (2.5 GB, with `parakeet-mlx` from a hashed list that changes no package already installed) | 1.6 or 3.1 GB | Hugging Face | Fixed revision (a commit of the repository), downloaded once, then offline (`HF_HUB_OFFLINE=1`) |
 
-About 4.8 GB in total on a clean Mac and 7 GB on Windows (estimates). An existing Ollama and Qwen3 model are reused. Optional models download only when you confirm in the app. The install page shows the exact minimum version and sizes for your system.
+About 4.8 GB in total on a clean Mac with the Light profile (7.5 GB Standard, 13 GB High) and 7 GB on Windows (estimates). An existing Ollama and Qwen3 model are reused. Optional models download only when you confirm in the app. The install page shows the exact minimum version and sizes for your system.
 
 ## Safeguards
 
+- The guided install reads the chip, the memory and the free disk space of this computer to advise a set of models. It runs on your computer, uses nothing but the system's own commands, and sends nothing anywhere.
 - No `sudo`, no administrator rights, no change to system settings.
 - One folder with owner-only permissions. Delete it to uninstall.
 - The model server listens on `127.0.0.1` only, and the self test refuses any other address.
@@ -61,7 +62,7 @@ An internal review, not a third-party audit. For 0.7 a second reviewer, given th
 Piping a script into a shell means trusting it. To read it first:
 
 ```
-curl --proto '=https' --tlsv1.2 -fsSLO https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.7.0/install.sh
+curl --proto '=https' --tlsv1.2 -fsSLO https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.8.0/install.sh
 less install.sh
 bash install.sh
 ```
