@@ -333,7 +333,7 @@ say "Done. Cairn is ready."
 if [ "$(uname -s)" = "Darwin" ] && [ -z "${CI:-}" ] && [ -z "${CAIRN_NO_SERVICE:-}" ]; then
   # Background mode: starts at login and restarts by itself if it stops (remove with: cairn service uninstall)
   "$CAIRN_HOME/bin/cairn" service install || true
-  printf '\nCairn runs in the background. Open it with %s/Cairn.app\nor run: %s/bin/cairn service open\n' "$CAIRN_HOME" "$CAIRN_HOME"
+  printf 'To open it again: %s/bin/cairn service open\n' "$CAIRN_HOME"
   # and open it now, so that the first thing you see is the app (CAIRN_NO_OPEN=1 to leave the browser alone)
   if [ -z "${CAIRN_NO_OPEN:-}" ]; then "$CAIRN_HOME/bin/cairn" service open || true; fi
 else
