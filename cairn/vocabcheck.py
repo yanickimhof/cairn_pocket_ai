@@ -102,7 +102,7 @@ def contribution(note):
     seen = {}
     if note.get("status") != "done":
         return note.get("id"), seen
-    for seg in note.get("segments") or []:
+    for index, seg in enumerate(note.get("segments") or []):
         if seg.get("edit"):
             continue  # corrected by hand
         text = str(seg.get("text") or "")
@@ -118,7 +118,7 @@ def contribution(note):
                     start = float(seg.get("start") or 0)
                 except (TypeError, ValueError):
                     start = 0.0
-                example = {"note": note.get("id"), "title": note.get("title") or "", "start": start, "text": excerpt(text, at, len(word)), "word": word, "weak": doubtful}
+                example = {"note": note.get("id"), "title": note.get("title") or "", "i": index, "start": start, "text": excerpt(text, at, len(word)), "word": word, "weak": doubtful}
                 if mine:
                     info["examples"][info["examples"].index(mine[0])] = example
                 elif len(info["examples"]) < 4:

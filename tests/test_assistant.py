@@ -111,6 +111,7 @@ class CheckListTest(unittest.TestCase):
             self.assertIn(e["word"], e["text"])
             self.assertLessEqual(len(e["text"]), vocabcheck.EXCERPT + 4)
         self.assertEqual(vocabcheck.excerpt("Short line with Brandt.", 16, 6), "Short line with Brandt.")
+        self.assertTrue(all(isinstance(e["i"], int) for e in item["examples"]))  # the line, to show its neighbours on demand
 
     def test_notes_not_finished_and_corrected_lines_are_not_looked_at(self):
         items = vocabcheck.candidates(self.notes(), [])

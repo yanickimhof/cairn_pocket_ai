@@ -51,7 +51,7 @@
       segHelp: "Corrigez le texte. « Ici seulement » ne change que cette ligne. « Toujours » ajoute une règle au vocabulaire pour toutes les notes.",
       segSaved: "Passage corrigé", segRule: "Règle ajoutée : {r}", segNoRule: "Pour apprendre une correction, modifiez un mot existant",
       vcTitle: "Mots à vérifier", vcOpen: "Mots à vérifier", vcNone: "Rien à vérifier pour le moment.", vcVariants: "Écrit de plusieurs façons dans {n} note(s)", vcDoubtful: "Le moteur n’était pas sûr de ce mot",
-      vcRight: "Bonne orthographe", vcOpenNote: "Ouvrir la note à ce moment", vcContext: "Seulement près de ces mots", vcApply: "Enregistrer et mettre à jour les notes", vcIgnore: "Ignorer ce mot", vcApplied: "Ajouté au vocabulaire",
+      vcRight: "Bonne orthographe", vcOpenNote: "Ouvrir la note à ce moment", vcMore: "Plus de contexte", vcLess: "Moins de contexte", vcContext: "Seulement près de ces mots", vcApply: "Enregistrer et mettre à jour les notes", vcIgnore: "Ignorer ce mot", vcApplied: "Ajouté au vocabulaire",
       vault: "Sécuriser mon Pocket", vaultTipRisk: "Des enregistrements du Pocket sont lisibles par n’importe qui. Ouvrez pour les sécuriser.", vaultTipOk: "Pocket sécurisé : ses enregistrements sont chiffrés. Un nouvel enregistrement l’est à la prochaine connexion.",
       vaultTipLocked: "Pocket verrouillé : saisir le mot de passe.", vaultTipOff: "Branchez le Pocket pour le sécuriser.", vaultTipWork: "Sécurisation en cours",
       vaultIntro: "Chiffre les enregistrements du Pocket avec un mot de passe : sur un autre ordinateur, personne ne peut les lire. Sur celui-ci, le déchiffrement reste automatique.",
@@ -148,7 +148,7 @@
       segHelp: "Fix the text. “Only here” changes this line only. “Always” adds a rule to the vocabulary for every note.",
       segSaved: "Passage corrected", segRule: "Rule added: {r}", segNoRule: "To teach a correction, change an existing word",
       vcTitle: "Words to check", vcOpen: "Words to check", vcNone: "Nothing to check for now.", vcVariants: "Written several ways in {n} note(s)", vcDoubtful: "The engine was not sure of this word",
-      vcRight: "Correct spelling", vcOpenNote: "Open the note at this moment", vcContext: "Only near these words", vcApply: "Save and update the notes", vcIgnore: "Ignore this word", vcApplied: "Added to the vocabulary",
+      vcRight: "Correct spelling", vcOpenNote: "Open the note at this moment", vcMore: "More context", vcLess: "Less context", vcContext: "Only near these words", vcApply: "Save and update the notes", vcIgnore: "Ignore this word", vcApplied: "Added to the vocabulary",
       vault: "Secure my Pocket", vaultTipRisk: "Some recordings on the Pocket can be read by anyone. Open to secure them.", vaultTipOk: "Pocket secured: its recordings are encrypted. A new recording is, at the next connection.",
       vaultTipLocked: "Pocket locked: enter the password.", vaultTipOff: "Connect the Pocket to secure it.", vaultTipWork: "Securing in progress",
       vaultIntro: "Encrypts the recordings on the Pocket with a password: on another computer, nobody can read them. On this one, decryption stays automatic.",
@@ -635,15 +635,34 @@
     return text.split(word).map(esc).join("<mark>" + esc(word) + "</mark>");  // every occurrence of the name in the extract
   }
 
+  function highlightAny(text, words) {
+    var found = words.filter(function (w) { return w && text.indexOf(w) >= 0; });
+    if (!found.length) { return esc(text); }
+    var rx = new RegExp("(" + found.map(function (w) { return w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|") + ")", "g");
+    return text.split(rx).map(function (piece, k) { return k % 2 ? "<mark>" + esc(piece) + "</mark>" : esc(piece); }).join("");
+  }
+
   function viewVocabCheck(t) {
     var items = S.vc;
     if (!items) { return '<div class="small" style="padding:8px 0 14px">…</div>'; }
     if (!items.length) { return '<div class="small" style="padding:8px 0 14px">' + esc(t.vcNone) + "</div>"; }
     return '<div class="vclist">' + items.map(function (item) {
       var right = S.vcDraft[item.key] != null ? S.vcDraft[item.key] : item.suggest;
+      var words = item.forms.map(function (f) { return f.text; });
       var exs = item.examples.map(function (ex) {
-        return '<button type="button" class="vcex" data-a="vcOpen" data-id="' + esc(ex.note) + '" data-v="' + esc(String(ex.start)) + '"' + tip(t.vcOpenNote) + ">" + highlight(ex.text, ex.word) +
-          '<span class="small"> · ' + esc((ex.title || ex.note) + " · " + fmtStamp(ex.start)) + "</span></button>";
+        var key = ex.note + ":" + ex.i, open = S.vcMore && S.vcMore[key], note = S.vcNotes && S.vcNotes[ex.note], body;
+        if (open && note && note.segments) {
+          body = note.segments.slice(Math.max(0, ex.i - 2), ex.i + 3).map(function (seg, k) {
+            var here = Math.max(0, ex.i - 2) + k === ex.i;
+            return '<div class="vcline' + (here ? " here" : "") + '"><span class="small">' + esc(fmtStamp(parseFloat(seg.start) || 0)) + "</span> " + highlightAny(String(seg.text || "").trim(), words) + "</div>";
+          }).join("");
+        } else {
+          body = '<div class="vcline here">' + highlight(ex.text, ex.word) + "</div>";
+          if (open && !note) { body += '<div class="small">…</div>'; }
+        }
+        return '<div class="vcex">' + body + '<div class="vcact"><span class="small">' + esc((ex.title || ex.note) + " · " + fmtStamp(ex.start)) + "</span>" +
+          '<button type="button" class="vclink" data-a="vcMore" data-id="' + esc(ex.note) + '" data-v="' + esc(String(ex.i)) + '">' + esc(open ? t.vcLess : t.vcMore) + "</button>" +
+          '<button type="button" class="vclink" data-a="vcOpen" data-id="' + esc(ex.note) + '" data-v="' + esc(String(ex.start)) + '">' + esc(t.vcOpenNote) + "</button></div></div>";
       }).join("");
       return '<div class="vcitem"><div class="vcforms">' + item.forms.map(function (f) { return '<span class="vcform">' + esc(f.text) + " <i>×" + f.count + "</i></span>"; }).join("") + "</div>" +
         '<div class="small">' + esc(item.reason === "variants" ? t.vcVariants.replace("{n}", item.notes) : t.vcDoubtful) + "</div>" +
@@ -1587,6 +1606,14 @@
     pplForget: function (v, id) { api("POST", "/api/people/forget", { name: id }).then(function () { flash(T().pplForgotten); loadPeople(); }); },
     pplForgetAll: function () { S.confirmKey = "pplForgetAll"; },
     pplForgetAllGo: function () { S.confirmKey = null; api("POST", "/api/people/forget", { all: true }).then(function () { flash(T().pplForgotten); S.full = {}; loadPeople(); }); },
+    vcMore: function (v, id) {
+      S.vcMore = S.vcMore || {}; S.vcNotes = S.vcNotes || {};
+      var key = id + ":" + v;
+      S.vcMore[key] = !S.vcMore[key];
+      if (S.vcMore[key] && !S.vcNotes[id]) {
+        api("GET", "/api/note/" + encodeURIComponent(id)).then(function (note) { S.vcNotes[id] = note; render(); }).catch(function () { S.vcMore[key] = false; render(); });
+      }
+    },
     vcOpen: function (v, id) { S.settingsOpen = false; A.findGo(v == null ? "" : v, id); },
     pplOpenNote: function (v, id) { S.settingsOpen = false; A.findGo("", id); },
     vcToggle: function () { S.vcOpen = !S.vcOpen; if (S.vcOpen) { S.vc = null; loadVc(); } },
