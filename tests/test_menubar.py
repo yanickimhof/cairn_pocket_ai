@@ -34,6 +34,17 @@ class ModelTest(unittest.TestCase):
         self.assertEqual(texts(built), ["Cairn", "Ouvrir Cairn", "Rien n’a quitté ce Mac · 06:00", "Quitter"])
         self.assertEqual(actions(built), ["open", "quit"])
 
+    def test_the_methods_of_the_menu_object_can_be_loaded_by_appkit(self):
+        """AppKit objects read a method name without underscore as a selector with no argument: a plain helper that takes one
+        must be marked python_method, or the process stops at start (this is only visible on a Mac, so it is checked here in the source)."""
+        import ast
+        tree = ast.parse((Path(__file__).resolve().parent.parent / "cairn" / "menubar.py").read_text(encoding="utf-8"))
+        controller = next(n for n in ast.walk(tree) if isinstance(n, ast.ClassDef) and n.name == "Controller")
+        for node in controller.body:
+            if isinstance(node, ast.FunctionDef) and node.name != "init" and len(node.args.args) > 1 and not node.name.endswith("_"):
+                marked = any(getattr(d, "attr", "") == "python_method" for d in node.decorator_list)
+                self.assertTrue(marked, node.name + " needs @objc.python_method")
+
     def test_the_icon_has_a_tip_for_the_pointer(self):
         self.assertEqual(menubar.model(None, "en", away=True)["tip"], "Cairn \u00b7 Cairn is not answering")
         self.assertEqual(menubar.model(None, "fr", locked=True)["tip"], "Cairn \u00b7 Verrouill\u00e9")

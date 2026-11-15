@@ -14,6 +14,9 @@ At the end of the install, Cairn opens in your browser by itself.
 **Updates while Cairn runs.**
 Replacing a running Cairn no longer fails with an input/output error. An update keeps the Python environment when nothing in it changes, and a slow self test warns instead of stopping it.
 
+**A search that understands a sentence.**
+Filler words and plurals no longer get in the way, and the search by meaning says "nothing" when nothing is close. The menu bar icon, which did not start, now does, with a tip on hover.
+
 ## 0.7
 
 **Any recording, with or without a Pocket.**

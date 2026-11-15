@@ -25,6 +25,15 @@ MAX_CHUNK = 1200
 BATCH = 16
 MIN_SCORE = 0.30
 RELATIVE = 0.80  # a note is related when it scores at least this share of the best one
+# Some search models are trained to read a question with a short instruction in front (the notes themselves are read as they are).
+# Without it every note scores about the same, and a nonsense question finds as many notes as a real one. With it the scores spread, so
+# a floor can say "nothing here": a question whose best note stays under it finds nothing.
+QUERY_PREFIX = {"qwen3-embedding": "Instruct: Given a question or keywords, retrieve the note passages that answer it\nQuery: "}
+PREFIXED_FLOOR = 0.40
+
+
+def _prefix(model):
+    return next((p for name, p in QUERY_PREFIX.items() if str(model).startswith(name)), "")
 MAX_NOTES = 12
 SNIPPET = 220
 KEEP_ALIVE = "10m"  # the small model stays loaded between two questions: a question costs milliseconds, not a load
@@ -205,7 +214,9 @@ def search(store, query, model=None):
     query = " ".join(str(query or "").split())[:300]
     if not model or not query:
         return []
-    vector = embed(model, [query])[0]
+    prefix = _prefix(model)
+    vector = embed(model, [prefix + query])[0]
+    floor = PREFIXED_FLOOR if prefix else MIN_SCORE
     folder = _folder(model)
     rows = {n["id"]: n for n in store.slim() if n.get("status") == "done"}
     found = []
@@ -225,11 +236,11 @@ def search(store, query, model=None):
     top = found[0][0]
     out = []
     for score, note_id, best, items in found[:MAX_NOTES]:
-        if score < max(MIN_SCORE, top * RELATIVE):
+        if score < max(floor, top * RELATIVE):
             break
         hits = []
         for i, s in best:
-            if s < max(MIN_SCORE, top * RELATIVE):
+            if s < max(floor, top * RELATIVE):
                 continue
             item = items[i]
             hits.append({"where": "similar" if item["w"] != "transcript" else "transcript", "start": item["s"], "parts": [{"t": item["t"][:SNIPPET] + ("…" if len(item["t"]) > SNIPPET else ""), "m": False}]})
@@ -294,7 +305,7 @@ def passages(store, query, model=None, limit=6, per_note=3, note=None, since="",
     query = " ".join(str(query or "").split())[:500]
     if not model or not query:
         return []
-    vector = embed(model, [query])[0]
+    vector = embed(model, [_prefix(model) + query])[0]
     folder = _folder(model)
     wanted = str(tag or "").strip().casefold()
     rows = {}

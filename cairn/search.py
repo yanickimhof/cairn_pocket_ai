@@ -4,6 +4,7 @@ import re
 import unicodedata
 
 from . import config, lock
+from .embed import STOP  # the filler words of a question ("le", "de", "what", "about"): they say nothing about a note
 
 MAX_NOTES = 30
 MAX_SNIPPETS = 3
@@ -29,9 +30,16 @@ def split_query(query):
     return re.sub(r"#[^\s#]+", " ", query or ""), [fold(t)[0] for t in tags]
 
 
+def _stem(word):
+    """Without a plural mark, so that "ventilations" finds "ventilation" (a match is a part of a word, the other way round already works)."""
+    return word[:-1] if len(word) > 4 and word[-1] == "s" and not word.isdigit() else word
+
+
 def terms(query):
-    words = re.findall(r"\w+", fold(query)[0])
-    return [w for w in dict.fromkeys(words) if len(w) > 1 or w.isdigit()][:8]
+    """The words that must be found: filler words left out (unless nothing else is left), plural marks removed."""
+    words = [w for w in dict.fromkeys(re.findall(r"\w+", fold(query)[0])) if len(w) > 1 or w.isdigit()]
+    meaningful = [w for w in words if w not in STOP]
+    return list(dict.fromkeys(_stem(w) for w in (meaningful or words)))[:8]
 
 
 def _pieces(note):
@@ -95,7 +103,10 @@ def _marked(text, wanted):
     spans = []
     for word in wanted:
         for m in re.finditer(re.escape(word), folded):
-            spans.append((back[m.start()], back[m.end() - 1] + 1))
+            end = m.end()
+            while end < len(folded) and (folded[end].isalnum() or folded[end] == "_") and end - m.end() < 3:  # the plural mark the search left out
+                end += 1
+            spans.append((back[m.start()], back[end - 1] + 1))
     if not spans:
         return [{"t": text[:2 * CONTEXT], "m": False}]
     spans.sort()
@@ -124,12 +135,21 @@ def find(folder, query):
     wanted = terms(text)
     if not wanted and not asked:
         return []
+    results = _scan(folder, wanted, asked, need=len(wanted))
+    if not results and len(wanted) > 2:  # a long question: no note has every word, so the notes with half of them come, most words first (two words stay strict)
+        results = _scan(folder, wanted, asked, need=(len(wanted) + 1) // 2)
+    results.sort(key=lambda r: (-r["score"], r["date"]), reverse=False)
+    return results[:MAX_NOTES]
+
+
+def _scan(folder, wanted, asked, need):
     results = []
     for note_id, title, date, pieces, tagset in _load(folder):
         if not all(t in tagset for t in asked):
             continue
         everything = " ".join(p[3] for p in pieces)
-        if not all(w in everything for w in wanted):
+        present = sum(1 for w in wanted if w in everything)
+        if present < need or (wanted and not present):
             continue
         score, hits = 0, []
         for where, start, text, folded in pieces:
@@ -141,5 +161,4 @@ def find(folder, query):
                 hits.append({"where": where, "start": start, "parts": _marked(text, wanted)})
         # a note whose words are spread over different lines still counts, at a lower rank
         results.append({"id": note_id, "title": title, "date": date, "score": score, "hits": hits})
-    results.sort(key=lambda r: (-r["score"], r["date"]), reverse=False)
-    return results[:MAX_NOTES]
+    return results

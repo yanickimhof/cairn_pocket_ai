@@ -272,6 +272,7 @@ def run(parent):
             last["state"] = None if locked else (state or last["state"])
             self.show(model(state, lang, locked=locked, away=away))
 
+        @objc.python_method
         def notify(self, text):
             safe = "".join(c for c in text if c.isalnum() or c in " ’'.,:-éèêàçùôîÉ")  # our own short text, nothing to escape
             try:
@@ -279,6 +280,7 @@ def run(parent):
             except (OSError, subprocess.SubprocessError):
                 pass  # a notification is a courtesy
 
+        @objc.python_method
         def show(self, built):
             if built["icon"] != shown["icon"]:
                 self.item.button().setImage_(image(built["icon"]))
