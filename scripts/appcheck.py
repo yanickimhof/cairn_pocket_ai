@@ -208,8 +208,16 @@ def main():
             fail("deleting must erase the encrypted file from the Pocket")
         print("OK: Pocket vault (secured, locked, unlocked, read, deleted)", flush=True)
 
-        if client.call("POST", "/api/privacy/check")[0] != 202:
-            fail("the privacy check was not accepted")
+        # a background task (sealing, reading the notes for the search) may still be finishing: the server then says
+        # "busy" (409), which is not a failure of the check. Wait for it to be free and ask again.
+        status = 409
+        for _ in range(30):
+            status = client.call("POST", "/api/privacy/check")[0]
+            if status != 409:
+                break
+            time.sleep(2)
+        if status != 202:
+            fail("the privacy check was not accepted (HTTP %s)" % status)
         for _ in range(120):
             time.sleep(2)
             if not client.call("GET", "/api/state")[1]["job"]["running"]:
