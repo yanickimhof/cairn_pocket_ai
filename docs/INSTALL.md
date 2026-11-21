@@ -2,6 +2,29 @@
 
 Three ways to install, the same installer: the disk image `Cairn.dmg` of the [latest release](https://github.com/yanickimhof/cairn/releases/latest) (macOS: double-click Install Cairn, then follow the guided questions in Terminal; it is not notarized, so macOS asks once, see "Read me first" in the image), the command in the [README](../README.md), or `bash install.sh` (`.\install.ps1` on Windows) from a clone of the repository. It detects your system, installs everything in the Cairn folder of your home folder, then runs a self test. No administrator rights, nothing to install beforehand.
 
+## Requirements
+
+| | Minimum | Recommended |
+|---|---|---|
+| Processor | 64-bit, 4 cores (Intel Mac or Windows PC: slower) | Apple silicon (M1 or later), or a recent 8-core PC |
+| Memory | 8 GB | 16 GB or more (larger models) |
+| Disk space | 12 GB free | 20 GB free (High profile: 18 GB at least) |
+| System | macOS 14, Windows 10 22H2 | Latest version |
+| Internet | Installation only: about 4.8 GB (Mac, Light), 7.5 GB (Standard), 13 GB (High), 7 GB (Windows); about 2.5 GB less if Ollama and the Qwen3 model are already installed (estimates) | |
+| Pocket (optional) | A USB-C **data** cable | Audio files can be added without a Pocket |
+
+No graphics card needed. Everything works offline once installed.
+
+## Set up your Pocket (once)
+
+In the Pocket mobile app, open the device settings, then:
+
+1. Turn **on** USB Mode (Pocket Web Sync). It is off by default, and the USB-C port then only charges.
+2. Turn **off** every automatic or cloud sync option (auto-sync, Wi-Fi or online sync, cloud backup and the like). Otherwise the Pocket sends recordings to Pocket's online service on its own, and the phone app then removes them from the drive, so Cairn never sees them. Option names vary between app versions.
+3. Connect the Pocket with a USB-C **data** cable. A drive named `Pocket` appears, and the dot in Cairn turns green. If no drive appears, see [troubleshooting](#troubleshooting). Close the Pocket desktop app if you use it, so that only one program reads the device.
+
+You need neither the Pocket desktop app nor a Pocket account on the computer.
+
 ## Choosing your models (macOS)
 
 In a terminal, the installer reads your Mac (chip, memory, free disk space), advises a profile and asks which one to install. Enter takes the advised one. It works with the piped command too: the question is read from the keyboard, not from the script.

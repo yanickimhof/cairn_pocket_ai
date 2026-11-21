@@ -56,14 +56,14 @@ class ProtocolTest(unittest.TestCase):
 
 class ToolTest(unittest.TestCase):
     def test_get_note_cuts_what_is_too_long_and_marks_it_as_data(self):
-        note = {"id": "n1", "title": "T", "date": "2026-11-17", "audio": "/Users/x/Audio/a.mp3", "sha256": "ff", "source": "2026/a.mp3",
+        note = {"id": "n1", "title": "T", "date": "2026-11-17", "audio": "/media/x/Audio/a.mp3", "sha256": "ff", "source": "2026/a.mp3",
                 "status": "done", "summary": {"tldr": "short"}, "clean": "word " * 20000}
         with mock.patch.object(mcp, "get", return_value=dict(note)):
             text = mcp.call("cairn_get_note", {"id": "n1", "transcript": True})["content"][0]["text"]
         self.assertTrue(text.startswith(mcp.NOTICE))
         self.assertLessEqual(len(text), mcp.LIMIT_CHARS + len(mcp.NOTICE) + 200)
         self.assertIn("Cut here", text)
-        self.assertNotIn("/Users/x", text)
+        self.assertNotIn("/media/x", text)
 
     def test_ids_are_checked_before_any_request(self):
         with mock.patch.object(mcp, "get") as get:
