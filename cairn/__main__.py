@@ -54,6 +54,10 @@ def main(argv=None):
     args_in = sys.argv[1:] if argv is None else argv
     if args_in[:1] == ["service"]:
         return service.main(args_in[1:])
+    if args_in[:1] == ["mcp"]:
+        from . import mcp
+
+        return mcp.main()
     if args_in[:1] == ["bench"]:
         from . import bench
 

@@ -166,6 +166,24 @@ class Jobs:
             note["speech_lang"] = None if speech_lang == "auto" else speech_lang
         self.store.save(note)
 
+    def _drop_audio(self, note):
+        """Privacy mode: once the transcript and summary are saved, the audio is overwritten and removed from this computer.
+        The recording on the Pocket is not touched. A failure leaves the audio in place and is tried again at the next processing."""
+        path = Path(note.get("audio") or "")
+        try:
+            if path.is_file():
+                pocket.shred(path, path.stat().st_size)
+                path.unlink()
+            note["audio_removed"] = True
+            self.store.save(note)
+            try:
+                if path.parent != Path(config.load_settings()["audio_dir"]):
+                    path.parent.rmdir()  # the dated folder, only when empty
+            except OSError:
+                pass
+        except OSError as error:
+            print("privacy mode: audio kept (%s)" % error, file=sys.stderr, flush=True)
+
     @staticmethod
     def _lang(note, settings):
         if note.get("lang") in config.LANGS:
@@ -370,7 +388,7 @@ class Jobs:
             and existing.get("sha256")
             and existing.get("size") == entry.size
             and existing.get("mtime") == entry.mtime
-            and os.path.exists(existing.get("audio", ""))
+            and (os.path.exists(existing.get("audio", "")) or existing.get("audio_removed"))  # privacy mode removed it on purpose: not fetched again
         ):
             return
         existing = self.store.get(existing["id"]) if existing else None
@@ -468,6 +486,8 @@ class Jobs:
             note.pop("attempts", None)
             note.pop("retry_after", None)
             keep()
+            if settings.get("audio_keep") is False:
+                self._drop_audio(note)
             spent = " ".join("%s=%ss" % (k, v) for k, v in timings.items() if isinstance(v, (int, float)))
             print("timing: %s audio=%ds %s%s" % (str(note_id)[:14], int(note.get("duration") or 0), spent,
                                                " reused=" + ",".join(reused) if reused else ""), file=sys.stderr, flush=True)

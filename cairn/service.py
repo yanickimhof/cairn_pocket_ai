@@ -38,14 +38,18 @@ def _launcher():
     return str(config.home() / "bin" / "cairn")
 
 
-def agent_plist():
-    """The launch agent definition: keep running, restart after a crash, log to ~/Cairn/cairn.log."""
+def _login_keys(on):
+    """Starting at login and being restarted after a crash go together: off means Cairn starts only when it is opened."""
+    return {"RunAtLoad": bool(on), "KeepAlive": bool(on)}
+
+
+def agent_plist(login=True):
+    """The launch agent definition: start at login, restart after a crash (unless login is off), log to ~/Cairn/cairn.log."""
     log = str(config.home() / "cairn.log")
     return {
         "Label": LABEL,
         "ProgramArguments": [_launcher(), "--no-browser"],
-        "RunAtLoad": True,
-        "KeepAlive": True,
+        **_login_keys(login),
         "ThrottleInterval": 10,
         "ProcessType": "Background",
         "StandardOutPath": log,
@@ -62,6 +66,38 @@ def app_files():
     }
     script = '#!/bin/bash\nexec "%s" service open\n' % _launcher()
     return plistlib.dumps(info), script
+
+
+def _read_plist():
+    try:
+        with open(agent_path(), "rb") as handle:
+            return plistlib.load(handle)
+    except (OSError, ValueError, plistlib.InvalidFileException):
+        return None
+
+
+def login_enabled():
+    """Whether the agent starts Cairn at login. True when there is no agent yet: that is how Cairn has always behaved."""
+    plist = _read_plist()
+    return True if plist is None else plist.get("RunAtLoad") is not False
+
+
+def login_state():
+    return {"available": sys.platform == "darwin" and agent_path().exists(), "on": login_enabled()}
+
+
+def apply_login(on):
+    """Record the choice in the agent definition. It applies from the next login: the running Cairn is not touched
+    (stopping the agent here would stop the page that is asking). Returns False when there is no agent."""
+    plist = _read_plist()
+    if plist is None:
+        return False
+    plist.update(_login_keys(on))
+    part = agent_path().with_name(agent_path().name + ".part")
+    with open(part, "wb") as handle:
+        plistlib.dump(plist, handle)
+    os.replace(part, agent_path())
+    return True
 
 
 def _launchctl(*args):
@@ -86,11 +122,12 @@ def _wait_unloaded(seconds):
         time.sleep(0.5)
 
 
-def install():
+def install(login=None):
+    login = login_enabled() if login is None else bool(login)  # a reinstall keeps the person's choice
     config.home().mkdir(parents=True, exist_ok=True)
     agent_path().parent.mkdir(parents=True, exist_ok=True)
     with open(agent_path(), "wb") as handle:
-        plistlib.dump(agent_plist(), handle)
+        plistlib.dump(agent_plist(login), handle)
     info, script = app_files()
     contents = app_path() / "Contents"
     (contents / "MacOS").mkdir(parents=True, exist_ok=True)
@@ -109,6 +146,8 @@ def install():
         result = _bootstrap()
     if result.returncode != 0:
         raise RuntimeError("launchctl: " + (result.stderr or result.stdout).strip())
+    if not login:
+        _launchctl("kickstart", _target())  # loaded but not started by the system: start it now, as the person asked to open Cairn
 
 
 def stop():

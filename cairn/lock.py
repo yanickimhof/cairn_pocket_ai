@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import secrets
+import stat
 import tempfile
 import threading
 import time
@@ -31,7 +32,18 @@ _state = {"dek": None, "seen": time.time(), "fails": 0, "migrating": False, "ope
 _guard = threading.RLock()
 _attempts = threading.Lock()  # one guess at a time, so the delay after wrong tries cannot be beaten by sending them in parallel
 RECHECK_SECONDS = 6 * 3600
+_edit = threading.RLock()  # one change of lock.json at a time: each reads it, spends a second in scrypt, then writes it back
 _pass = threading.Lock()  # one pass of sealing or opening at a time
+
+
+def _serial(function):
+    import functools
+
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        with _edit:
+            return function(*args, **kwargs)
+    return wrapper
 
 
 class LockError(Exception):
@@ -109,6 +121,47 @@ def _unwrap(kek, wrapped):
         return None
 
 
+# The key file: an optional second factor. A random 32-byte file kept outside the Cairn folder (a USB stick, say) is mixed into what
+# the password is turned into, so the password alone no longer opens the data key. The recovery phrase is not affected: it is the
+# way back when the file is lost, and it switches the key file off again.
+KEYFILE_BYTES = 32
+
+
+def _keyfile_read(path):
+    """The 32 bytes of a key file. Only a regular file is opened (a pipe would block, a link is not followed)."""
+    try:
+        fd = os.open(str(path), os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_NOFOLLOW", 0))
+    except (OSError, ValueError, TypeError):
+        raise LockError("keyfile_missing")
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise LockError("keyfile_missing")
+        raw = os.read(fd, KEYFILE_BYTES + 1)
+    except OSError:
+        raise LockError("keyfile_missing")
+    finally:
+        os.close(fd)
+    if len(raw) != KEYFILE_BYTES:
+        raise LockError("keyfile_invalid")
+    return raw
+
+
+def _pw(password, cfg, keyfile=None):
+    """What the password wrap is derived from: the password, plus the key file when one is required. A missing or wrong
+    file is reported before any guess is counted."""
+    password = str(password or "")
+    wanted = cfg.get("keyfile")
+    if not wanted:
+        return password
+    try:
+        raw = _keyfile_read(keyfile or wanted.get("path"))
+    except LockError:
+        if keyfile and keyfile != wanted.get("path"):
+            raise LockError("keyfile_missing")  # a path given by the client reveals nothing about other files
+        raise
+    return password + "\x00" + raw.hex()
+
+
 def phrase_new():
     """The recovery phrase: 128 random bits in groups, shown once."""
     text = base64.b32encode(secrets.token_bytes(16)).decode("ascii").rstrip("=")
@@ -141,7 +194,7 @@ def info():
 
     return {"enabled": True, "locked": _state["dek"] is None, "auto_min": cfg.get("auto_min", DEFAULT_AUTO),
             "biometric": {"available": biometric.available(), "enabled": bool(cfg.get("biometric")), "reason": biometric.status()}, "migrating": _state["migrating"],
-            "sealed": bool(cfg.get("migrated")), "opening": bool(cfg.get("opening"))}
+            "sealed": bool(cfg.get("migrated")), "opening": bool(cfg.get("opening")), "keyfile": keyfile_info(cfg)}
 
 
 class _Codec:
@@ -210,6 +263,88 @@ def lock_now():
             pass
 
 
+def _inside(folder, home):
+    """Whether folder is home or below it, even when the volume ignores the case of names."""
+    for level in [folder, *folder.parents]:
+        try:
+            if level == home or (level.exists() and home.exists() and os.path.samefile(level, home)):
+                return True
+        except OSError:
+            continue
+    return False
+
+
+def keyfile_info(cfg=None):
+    cfg = cfg if cfg is not None else _read()
+    wanted = (cfg or {}).get("keyfile")
+    if not wanted:
+        return {"on": False}
+    path = wanted.get("path")
+    return {"on": True, "path": path, "present": os.path.isfile(path or "")}
+
+
+@_serial
+def keyfile_enable(password, path):
+    """Require a key file as well as the password. The file is created here (never overwritten), outside the Cairn folder, readable by
+    this user only. Cairn must be open: the data key is wrapped again under password + file. Keep a copy of the file, or the recovery
+    phrase: without one of them, a lost file means lost data."""
+    cfg = _read()
+    if cfg is None:
+        raise LockError("not_enabled")
+    if cfg.get("keyfile"):
+        raise LockError("keyfile_already")
+    dek = _open_with(_pw(password, cfg), cfg, "wrap")
+    if dek is None:
+        raise LockError("wrong_password")
+    _key()
+    target = Path(str(path or "")).expanduser()
+    if not target.is_absolute() or not target.parent.is_dir():
+        raise LockError("keyfile_path")
+    folder, home = target.parent.resolve(), config.home().resolve()
+    if _inside(folder, home):
+        raise LockError("keyfile_inside")  # next to the data it protects, it would protect nothing
+    try:
+        fd = os.open(str(target), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:
+        raise LockError("keyfile_exists")
+    except OSError:
+        raise LockError("keyfile_path")
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(secrets.token_bytes(KEYFILE_BYTES))
+            handle.flush()
+            os.fsync(handle.fileno())
+        new = dict(cfg, keyfile={"path": str(target)})
+        if cfg.get("biometric"):
+            new["biometric"] = False  # Touch ID would open Cairn without the file
+        _rewrap(new, dek, password)
+        if cfg.get("biometric"):
+            from . import biometric as bio
+
+            bio.forget()
+    except BaseException:
+        try:
+            os.unlink(str(target))  # nothing refers to it: lock.json was not changed
+        except OSError:
+            pass
+        raise
+
+
+@_serial
+def keyfile_disable(password, keyfile=None):
+    """Back to the password alone. Needs the file now (to prove the person still has it); the file itself is left where it is."""
+    cfg = _read()
+    if cfg is None:
+        raise LockError("not_enabled")
+    if not cfg.get("keyfile"):
+        raise LockError("keyfile_off")
+    dek = _open_with(_pw(password, cfg, keyfile), cfg, "wrap")
+    if dek is None:
+        raise LockError("wrong_password")
+    _key()
+    _rewrap({k: v for k, v in cfg.items() if k != "keyfile"}, dek, password)
+
+
 def _key():
     dek = _state["dek"]
     if dek is None:
@@ -232,11 +367,11 @@ def _open_with(secret, cfg, which):
         return dek
 
 
-def unlock(password):
+def unlock(password, keyfile=None):
     cfg = _read()
     if cfg is None:
         raise LockError("not_enabled")
-    dek = _open_with(str(password or ""), cfg, "wrap")
+    dek = _open_with(_pw(password, cfg, keyfile), cfg, "wrap")
     if dek is None:
         raise LockError("wrong_password")
     _install(dek)
@@ -258,6 +393,7 @@ def unlock_biometric():
     return True
 
 
+@_serial
 def recover(phrase, new_password):
     cfg = _read()
     if cfg is None:
@@ -266,6 +402,7 @@ def recover(phrase, new_password):
     dek = _open_with(_normal(phrase), cfg, "rwrap")
     if dek is None:
         raise LockError("wrong_phrase")
+    cfg = {k: v for k, v in cfg.items() if k != "keyfile"}  # the way back: the password alone again; the key file can be set up again
     _rewrap(cfg, dek, new_password)
     _install(dek)
 
@@ -275,18 +412,19 @@ def _check_password(password):
         raise LockError("password_short")
 
 
-def _rewrap(cfg, dek, password):
+def _rewrap(cfg, dek, password, keyfile=None):
     salt = secrets.token_bytes(16)
-    cfg = dict(cfg, salt=_b64(salt), wrap=_wrap(_kek(password, salt, cfg["n"], cfg["r"], cfg["p"]), dek))
+    cfg = dict(cfg, salt=_b64(salt), wrap=_wrap(_kek(_pw(password, cfg, keyfile), salt, cfg["n"], cfg["r"], cfg["p"]), dek))
     _write(cfg)
 
 
-def new_phrase(password):
+@_serial
+def new_phrase(password, keyfile=None):
     """A new recovery phrase, after the password was given again. The old phrase stops working. Shown once, like the first."""
     cfg = _read()
     if cfg is None:
         raise LockError("not_enabled")
-    dek = _open_with(str(password or ""), cfg, "wrap")
+    dek = _open_with(_pw(password, cfg, keyfile), cfg, "wrap")
     if dek is None:
         raise LockError("wrong_password")
     rsalt, phrase = secrets.token_bytes(16), phrase_new()
@@ -294,19 +432,21 @@ def new_phrase(password):
     return phrase
 
 
-def change_password(old, new):
+@_serial
+def change_password(old, new, keyfile=None):
     cfg = _read()
     if cfg is None:
         raise LockError("not_enabled")
     _check_password(new)
-    dek = _open_with(str(old or ""), cfg, "wrap")
+    dek = _open_with(_pw(old, cfg, keyfile), cfg, "wrap")
     if dek is None:
         raise LockError("wrong_password")
-    _rewrap(cfg, dek, new)
+    _rewrap(cfg, dek, new, keyfile)
 
 
 # Switching on and off
 
+@_serial
 def enable(password, biometric=False, auto_min=DEFAULT_AUTO):
     """Create the lock. Returns the recovery phrase. The data already on disk is sealed afterwards by migrate()."""
     if enabled():
@@ -326,6 +466,7 @@ def enable(password, biometric=False, auto_min=DEFAULT_AUTO):
     return phrase
 
 
+@_serial
 def settings(auto_min=None, biometric=None):
     cfg = _read()
     if cfg is None:
@@ -337,6 +478,8 @@ def settings(auto_min=None, biometric=None):
             raise LockError("bad_value")
         cfg["auto_min"] = auto_min
     if biometric is not None:
+        if biometric and cfg.get("keyfile"):
+            raise LockError("keyfile_biometric")  # Touch ID would open Cairn without the file
         if biometric:
             if not bio.available() or not bio.remember(_key()):
                 raise LockError("no_biometric")
@@ -346,12 +489,13 @@ def settings(auto_min=None, biometric=None):
     _write(cfg)
 
 
-def disable(password):
+@_serial
+def disable(password, keyfile=None):
     """Open every file again and remove the lock. The password is asked again: a session left open cannot switch it off."""
     cfg = _read()
     if cfg is None:
         raise LockError("not_enabled")
-    if _open_with(str(password or ""), cfg, "wrap") is None:
+    if _open_with(_pw(password, cfg, keyfile), cfg, "wrap") is None:
         raise LockError("wrong_password")
     _key()
     # From here, what is written stays plain (nothing is sealed behind the pass) and the state says so on disk: a stop in the middle is taken up again.

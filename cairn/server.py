@@ -20,7 +20,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-from . import ask, battery, catalog, config, diarize, embed, jobs, llm, lock, menubar, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, setup, speech, tags, templates, upload, vault, vocab, vocabcheck, voices
+from . import ask, battery, catalog, config, diarize, embed, jobs, llm, lock, menubar, models, netguard, notes, pocket, pocket_status, privacy, render, score, search, service, setup, speech, tags, templates, upload, vault, vocab, vocabcheck, voices
 
 WEB = Path(__file__).parent / "web"
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/favicon.svg": "favicon.svg",
@@ -28,6 +28,8 @@ STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "
 PUBLIC = {"/favicon.svg", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"}  # nothing private: the browser fetches them without the session cookie
 COOKIE = "cairn_session"  # only read, for older pages: Cairn no longer issues it (a cookie goes to every server on 127.0.0.1, whatever the port)
 KEY_HEADER = "X-Cairn-Key"
+CLIENT_HEADER = "X-Cairn-Client"  # set by the MCP server: such a request may only read notes, and only when MCP access is on
+MCP_PATH = re.compile(r"/api/(?:mcp/notes|search|note/[A-Za-z0-9._-]+)")
 MAX_BODY = 1 << 20
 EXPORTS = {"md": ("text/markdown", ".md"), "html": ("text/html", ".html"), "text": ("text/plain", ".txt")}
 CSP = (
@@ -213,6 +215,7 @@ class App:
             "update": self.update_info,
             "lock": lock.info(),
             "menubar": {"available": menubar.available()},
+            "login": service.login_state(),
             "privacy": _privacy_summary(),
             "diar_installed": models.diar_installed(),
             "search": self.search_state(),
@@ -716,11 +719,16 @@ def make_handler(app):
                     return self._static(url)
                 if not self._authorized():
                     raise ApiError(403, "forbidden")
+                mcp = self.headers.get(CLIENT_HEADER) == "mcp"
+                if mcp and (method != "GET" or not MCP_PATH.fullmatch(url.path)):
+                    raise ApiError(403, "mcp_read_only")  # nothing is changed, and nothing of the settings or the lock is reached, from there
                 if url.path == "/api/lock" or url.path.startswith("/api/lock/"):
                     body = self._body() if method == "POST" else {}
                     return self._lock_api(method, url.path, body)
                 if lock.locked():
                     raise ApiError(423, "locked")  # sealed data: nothing but the way to open it is answered
+                if mcp and not config.load_settings().get("mcp"):
+                    raise ApiError(403, "mcp_off")
                 if method == "POST":
                     lock.touch()  # a change comes from the person: the idle time starts again (a poll of the list does not count)
                 if method == "POST" and url.path == "/api/import/file":
@@ -762,7 +770,9 @@ def make_handler(app):
             return self._json(200, {"ok": True, "id": note["id"], "duplicate": duplicate})
 
         LOCK_STATUS = {"wrong_password": 401, "wrong_phrase": 401, "biometric_refused": 401, "no_biometric": 400, "password_short": 400,
-                       "not_enabled": 400, "already_enabled": 409, "bad_value": 400}
+                       "not_enabled": 400, "already_enabled": 409, "bad_value": 400,
+                       "keyfile_missing": 400, "keyfile_invalid": 400, "keyfile_exists": 409, "keyfile_inside": 400, "keyfile_path": 400,
+                       "keyfile_already": 409, "keyfile_off": 409, "keyfile_biometric": 409}
 
         def _lock_api(self, method, path, body):
             """Opening and closing. The only part of the API that answers while Cairn is locked."""
@@ -771,9 +781,11 @@ def make_handler(app):
             if method != "POST":
                 raise ApiError(404, "not_found")
             action = path[len("/api/lock/"):]
+            keyfile = body.get("keyfile")
+            keyfile = keyfile.strip()[:1024] if isinstance(keyfile, str) and keyfile.strip() else None  # where the file is now, when it moved
             try:
                 if action == "unlock":
-                    lock.unlock(body.get("password"))
+                    lock.unlock(body.get("password"), keyfile)
                 elif action == "biometric":
                     lock.unlock_biometric()
                 elif action == "recover":
@@ -802,16 +814,20 @@ def make_handler(app):
                             pass
                         return self._json(200, {"ok": True, "recovery": phrase})
                     elif action == "phrase":
-                        return self._json(200, {"ok": True, "recovery": lock.new_phrase(body.get("password"))})
+                        return self._json(200, {"ok": True, "recovery": lock.new_phrase(body.get("password"), keyfile)})
                     elif action == "disable":
-                        lock.disable(body.get("password"))
+                        lock.disable(body.get("password"), keyfile)
                         try:
                             app.jobs.start_unseal()
                         except Exception:
                             lock.abort_disable()  # nothing was started: leave the lock as it was
                             raise
+                    elif action == "keyfile-on":
+                        lock.keyfile_enable(body.get("password"), str(body.get("path") or "").strip()[:1024])
+                    elif action == "keyfile-off":
+                        lock.keyfile_disable(body.get("password"), keyfile)
                     elif action == "password":
-                        lock.change_password(body.get("old"), body.get("new"))
+                        lock.change_password(body.get("old"), body.get("new"), keyfile)
                     elif action == "settings":
                         lock.settings(body.get("auto_min"), body.get("biometric"))
                     else:
@@ -894,6 +910,16 @@ def make_handler(app):
                     return self._json(200, config.public_settings(config.save_settings(body)))
                 except (ValueError, OSError) as error:
                     raise ApiError(400, str(error))
+            if method == "POST" and path == "/api/login":
+                if not isinstance(body.get("on"), bool):
+                    raise ApiError(400, "invalid")
+                if not service.login_state()["available"]:
+                    raise ApiError(409, "unavailable")
+                try:
+                    service.apply_login(body["on"])
+                except OSError as error:
+                    raise ApiError(500, str(error)[:200])
+                return self._json(200, service.login_state())
             if method == "GET" and path == "/api/models":
                 return self._json(200, models.listing(app.downloads.state()))
             if method == "POST" and path == "/api/models/install":
@@ -984,6 +1010,16 @@ def make_handler(app):
                 return self._ask(body)
             if method == "POST" and path == "/api/ask/warm":
                 return self._json(200, {"ok": True, "started": ask.warm()})
+            if method == "GET" and path == "/api/mcp/notes":
+                rows = app.store.slim()
+                since, tag = (query.get("since") or [""])[0][:10], (query.get("tag") or [""])[0][:40].casefold().lstrip("#")
+                try:
+                    limit = max(1, min(50, int((query.get("limit") or ["20"])[0])))
+                except ValueError:
+                    limit = 20
+                rows = [r for r in rows if (not since or str(r.get("date") or "")[:10] >= since) and (not tag or tag in [str(t).casefold() for t in r.get("tags") or []])]
+                rows.sort(key=lambda r: str(r.get("date") or ""), reverse=True)
+                return self._json(200, {"notes": [{k: r.get(k) for k in ("id", "title", "date", "duration", "status", "tags")} for r in rows[:limit]]})
             if method == "GET" and path == "/api/actions":
                 return self._json(200, {"actions": app.actions()})
             if method == "POST" and path == "/api/pick-folder":
