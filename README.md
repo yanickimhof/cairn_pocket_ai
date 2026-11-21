@@ -65,18 +65,18 @@ Cairn installs itself in one folder of your home folder (`~/Cairn`): no administ
 
 | | macOS | Windows |
 |---|---|---|
-| **Download** | [Cairn.dmg](https://github.com/yanickimhof/cairn_pocket_ai/releases/latest/download/Cairn.dmg): double-click Install Cairn, same guided installer | not yet |
+| **Download** | [Cairn.dmg](https://github.com/yanickimhof/cairn/releases/latest/download/Cairn.dmg): double-click Install Cairn, same guided installer | not yet |
 | **One command** | Guided: reads your Mac and advises the models | Installs the Light models |
 | **From a Git clone** | `bash install.sh` | `.\install.ps1` |
 
 ### macOS: the disk image
 
-Download [Cairn.dmg](https://github.com/yanickimhof/cairn_pocket_ai/releases/latest/download/Cairn.dmg) (a few hundred KB; the models come afterwards), open it and double-click **Install Cairn**. It opens Terminal and runs the same guided installer as the command below. The app is not signed with an Apple developer certificate, so macOS asks once: on macOS 15 use System Settings, Privacy & Security, **Open Anyway**; on macOS 14 Control-click, Open. The page of the release gives the SHA-256 of the image.
+Download [Cairn.dmg](https://github.com/yanickimhof/cairn/releases/latest/download/Cairn.dmg) (a few hundred KB; the models come afterwards), open it and double-click **Install Cairn**. It opens Terminal and runs the same guided installer as the command below. The app is not signed with an Apple developer certificate, so macOS asks once: on macOS 15 use System Settings, Privacy & Security, **Open Anyway**; on macOS 14 Control-click, Open. The page of the release gives the SHA-256 of the image.
 
 ### macOS: one command, guided
 
 ```
-curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.8.0/install.sh | bash
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn/v0.8.0/install.sh | bash
 ```
 
 The installer looks at your Mac (chip, memory, free disk space), **advises a set of models and lets you choose**. Press Enter to take the advised one.
@@ -94,8 +94,8 @@ In a script or a test nothing is asked. `CAIRN_PROFILE=standard` picks a profile
 ### From a Git clone
 
 ```
-git clone https://github.com/yanickimhof/cairn_pocket_ai.git
-cd cairn_pocket_ai
+git clone https://github.com/yanickimhof/cairn.git
+cd cairn
 bash install.sh
 ```
 
@@ -104,7 +104,7 @@ The same installer, run from your copy: you can read the code before it runs, an
 ### Windows
 
 ```
-irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.8.0/install.ps1 | iex
+irm https://raw.githubusercontent.com/yanickimhof/cairn/v0.8.0/install.ps1 | iex
 ```
 
 It installs the Light models. The guided choice of a profile is planned; until then, pick larger models afterwards in **Settings, Models**, or clone the repository as above.

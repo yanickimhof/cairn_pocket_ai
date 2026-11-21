@@ -1,7 +1,7 @@
 # Cairn installer for PowerShell.
 # Detects the system, then installs everything in your own folder: no administrator rights.
 #
-#   irm https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.8.0/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/yanickimhof/cairn/v0.8.0/install.ps1 | iex
 #
 # Optional variables: CAIRN_HOME (default %USERPROFILE%\Cairn), CAIRN_LLM (default qwen3:4b),
 # CAIRN_WHISPER_REPO (speech model), CAIRN_REF (branch or tag to install).
@@ -15,7 +15,7 @@ function Say($m) { Write-Host "`n==> $m" }
 function Fail($m) { throw "Error: $m" }
 function Opt($name, $default) { $v = [Environment]::GetEnvironmentVariable($name); if ([string]::IsNullOrEmpty($v)) { $default } else { $v } }
 
-$Repo = 'yanickimhof/cairn_pocket_ai'
+$Repo = 'yanickimhof/cairn'
 $Ref = Opt 'CAIRN_REF' 'v0.8.0'   # a fixed release, never a moving branch
 $UvVersion = '0.11.32'
 $CairnHome = Opt 'CAIRN_HOME' (Join-Path $env:USERPROFILE 'Cairn')

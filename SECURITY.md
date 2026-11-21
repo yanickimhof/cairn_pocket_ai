@@ -63,7 +63,7 @@ An internal review, not a third-party audit. For 0.7 a second reviewer, given th
 Piping a script into a shell means trusting it. To read it first:
 
 ```
-curl --proto '=https' --tlsv1.2 -fsSLO https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.8.0/install.sh
+curl --proto '=https' --tlsv1.2 -fsSLO https://raw.githubusercontent.com/yanickimhof/cairn/v0.8.0/install.sh
 less install.sh
 bash install.sh
 ```

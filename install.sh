@@ -2,7 +2,7 @@
 # Cairn installer for bash and zsh.
 # Detects the system, then installs everything in your own folder: no sudo, no system change.
 #
-#   curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn_pocket_ai/v0.8.0/install.sh | bash
+#   curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/yanickimhof/cairn/v0.8.0/install.sh | bash
 #
 # In a terminal it reads your Mac (chip, memory, free disk space), advises a set of models (Light, Standard or High) and asks
 # which to install. In a script nothing is asked: an update keeps what is installed, a first install gets the Light models.
@@ -15,7 +15,7 @@
 set -euo pipefail
 umask 077
 
-REPO="yanickimhof/cairn_pocket_ai"
+REPO="yanickimhof/cairn"
 REF="${CAIRN_REF:-v0.8.0}"   # a fixed release, never a moving branch
 UV_VERSION="0.11.32"
 OLLAMA_VERSION="v0.40.13"                 # Ollama is installed at a fixed release and checked against this SHA-256
@@ -34,7 +34,7 @@ trap cleanup EXIT
 # 1. Detect the system and pick the speech engine
 OS="$(uname -s)"
 ARCH="$(uname -m)"
-[ "$OS" = "Darwin" ] || die "This installer is for macOS. On Windows, use the PowerShell command from the README (https://github.com/yanickimhof/cairn_pocket_ai)."
+[ "$OS" = "Darwin" ] || die "This installer is for macOS. On Windows, use the PowerShell command from the README (https://github.com/yanickimhof/cairn)."
 if [ "$ARCH" = "arm64" ]; then
   ENGINE="mlx"
   REQ="mlx-macos-arm64.txt"

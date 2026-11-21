@@ -10,7 +10,7 @@ from pathlib import Path
 from . import catalog, templates, vocab
 
 VERSION = "0.8.0"
-REPO = "yanickimhof/cairn_pocket_ai"
+REPO = "yanickimhof/cairn"
 REFERRAL_URL = "https://referral.heypocketai.com/refer/39179caf?source=desktop_qr"
 AUDIO_EXT = (".mp3", ".wav", ".m4a", ".opus", ".ogg", ".flac")
 LOOPBACK = re.compile(r"127\.0\.0\.1:\d{2,5}")

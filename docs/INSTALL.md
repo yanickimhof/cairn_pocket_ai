@@ -1,6 +1,6 @@
 # Install
 
-Three ways to install, the same installer: the disk image `Cairn.dmg` of the [latest release](https://github.com/yanickimhof/cairn_pocket_ai/releases/latest) (macOS: double-click Install Cairn, then follow the guided questions in Terminal; it is not notarized, so macOS asks once, see "Read me first" in the image), the command in the [README](../README.md), or `bash install.sh` (`.\install.ps1` on Windows) from a clone of the repository. It detects your system, installs everything in the Cairn folder of your home folder, then runs a self test. No administrator rights, nothing to install beforehand.
+Three ways to install, the same installer: the disk image `Cairn.dmg` of the [latest release](https://github.com/yanickimhof/cairn/releases/latest) (macOS: double-click Install Cairn, then follow the guided questions in Terminal; it is not notarized, so macOS asks once, see "Read me first" in the image), the command in the [README](../README.md), or `bash install.sh` (`.\install.ps1` on Windows) from a clone of the repository. It detects your system, installs everything in the Cairn folder of your home folder, then runs a self test. No administrator rights, nothing to install beforehand.
 
 ## Choosing your models (macOS)
 

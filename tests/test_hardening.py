@@ -22,10 +22,10 @@ class ReleaseTest(unittest.TestCase):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn('REF="${CAIRN_REF:-%s}"' % tag, sh)
         self.assertIn("Opt 'CAIRN_REF' '%s'" % tag, ps)
-        self.assertIn("cairn_pocket_ai/%s/install.sh" % tag, sh)
-        self.assertIn("cairn_pocket_ai/%s/install.ps1" % tag, ps)
-        self.assertIn("cairn_pocket_ai/%s/install.sh" % tag, readme)
-        self.assertIn("cairn_pocket_ai/%s/install.ps1" % tag, readme)
+        self.assertIn("cairn/%s/install.sh" % tag, sh)
+        self.assertIn("cairn/%s/install.ps1" % tag, ps)
+        self.assertIn("cairn/%s/install.sh" % tag, readme)
+        self.assertIn("cairn/%s/install.ps1" % tag, readme)
 
     def test_installers_download_nothing_unverified(self):
         sh = (ROOT / "install.sh").read_text(encoding="utf-8")
